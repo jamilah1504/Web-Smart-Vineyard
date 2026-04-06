@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Smart Vineyard - Saung Tinanggur</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+        body { font-family: 'Inter', sans-serif; }
+    </style>
+</head>
+<body class="antialiased bg-slate-50">
+    
+    <div class="min-h-screen bg-gradient-to-br from-green-50 to-emerald-50 p-6">
+        <div class="max-w-7xl mx-auto">
+            
+            <div class="mb-8 text-center md:text-left flex flex-col md:flex-row justify-between items-center">
+                <div>
+                    <h1 class="text-3xl md:text-4xl font-bold text-green-900 mb-2">Smart Vineyard Dashboard</h1>
+                    <p class="text-green-700 font-medium">Saung Tinanggur - Integrated Fertigation System</p>
+                </div>
+                <div class="mt-4 md:mt-0 flex items-center gap-3">
+                    <span class="px-3 py-1 bg-green-200 text-green-800 rounded-full text-sm font-semibold flex items-center gap-2">
+                        <i data-lucide="wifi" class="w-4 h-4"></i> System Online
+                    </span>
+                    <div class="text-right">
+                        <p class="text-sm text-gray-500">Last Update</p>
+                        <p class="font-bold text-gray-800">10:45 AM</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+
+                <div class="rounded-xl border bg-white text-slate-900 shadow-sm hover:shadow-md transition-shadow">
+                    <div class="p-6 flex flex-row items-center justify-between space-y-0 pb-2">
+                        <h3 class="tracking-tight text-sm font-medium text-gray-500">Nutrisi Tanah (NPK)</h3>
+                        <i data-lucide="sprout" class="h-5 w-5 text-green-600"></i>
+                    </div>
+                    <div class="p-6 pt-0">
+                        <div class="flex justify-between items-end mb-2">
+                            <div class="text-center">
+                                <span class="text-xs font-bold text-gray-400">N</span>
+                                <div class="text-2xl font-bold text-emerald-600">120</div>
+                            </div>
+                            <div class="text-center">
+                                <span class="text-xs font-bold text-gray-400">P</span>
+                                <div class="text-2xl font-bold text-blue-600">45</div>
+                            </div>
+                            <div class="text-center">
+                                <span class="text-xs font-bold text-gray-400">K</span>
+                                <div class="text-2xl font-bold text-purple-600">180</div>
+                            </div>
+                        </div>
+                        <div class="border-t pt-2 flex justify-between items-center">
+                            <span class="text-sm font-medium">pH Tanah: <strong>6.5</strong></span>
+                            <span class="inline-flex items-center rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-800">
+                                Optimal
+                            </span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="rounded-xl border bg-white text-slate-900 shadow-sm hover:shadow-md transition-shadow">
+                    <div class="p-6 flex flex-row items-center justify-between space-y-0 pb-2">
+                        <h3 class="tracking-tight text-sm font-medium text-gray-500">Kondisi Lingkungan</h3>
+                        <i data-lucide="thermometer-sun" class="h-5 w-5 text-orange-500"></i>
+                    </div>
+                    <div class="p-6 pt-0">
+                        <div class="flex items-baseline gap-2">
+                            <div class="text-4xl font-bold text-gray-900">72%</div>
+                            <span class="text-sm text-gray-500">Kelembapan Tanah</span>
+                        </div>
+                        <div class="mt-4 grid grid-cols-2 gap-2 text-sm">
+                            <div class="flex items-center gap-1 text-gray-600">
+                                <i data-lucide="sun" class="w-4 h-4"></i> Udara: 29°C
+                            </div>
+                            <div class="flex items-center gap-1 text-gray-600">
+                                <i data-lucide="cloud-rain" class="w-4 h-4"></i> RH: 65%
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="rounded-xl border bg-white text-slate-900 shadow-sm hover:shadow-md transition-shadow">
+                    <div class="p-6 flex flex-row items-center justify-between space-y-0 pb-2">
+                        <h3 class="tracking-tight text-sm font-medium text-gray-500">Stok Air & Nutrisi</h3>
+                        <i data-lucide="cylinder" class="h-5 w-5 text-blue-500"></i>
+                    </div>
+                    <div class="p-6 pt-0">
+                        <div class="space-y-3">
+                            <div>
+                                <div class="flex justify-between text-sm mb-1">
+                                    <span>Air Baku (Tandon Utama)</span>
+                                    <span class="font-bold text-blue-600">85%</span>
+                                </div>
+                                <div class="w-full bg-gray-200 rounded-full h-2.5">
+                                    <div class="bg-blue-600 h-2.5 rounded-full" style="width: 85%"></div>
+                                </div>
+                            </div>
+                            <div>
+                                <div class="flex justify-between text-sm mb-1">
+                                    <span>Pupuk Cair (Pekat)</span>
+                                    <span class="font-bold text-yellow-600">40%</span>
+                                </div>
+                                <div class="w-full bg-gray-200 rounded-full h-2.5">
+                                    <div class="bg-yellow-500 h-2.5 rounded-full" style="width: 40%"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="rounded-xl border bg-white text-slate-900 shadow-sm hover:shadow-md transition-shadow md:col-span-2 lg:col-span-1">
+                    <div class="p-6 flex flex-row items-center justify-between space-y-0 pb-2">
+                        <h3 class="tracking-tight text-sm font-medium text-gray-500">AI Diagnosis (Visual)</h3>
+                        <i data-lucide="scan-eye" class="h-5 w-5 text-purple-600"></i>
+                    </div>
+                    <div class="p-6 pt-0 flex gap-4 items-center">
+                        <div class="relative w-20 h-20 bg-gray-100 rounded-lg overflow-hidden border border-gray-200 flex items-center justify-center">
+                            <i data-lucide="image" class="text-gray-400"></i>
+                            </div>
+                        <div class="flex-1">
+                            <div class="text-lg font-bold text-yellow-600">Klorosis Ringan</div>
+                            <p class="text-xs text-gray-500 mb-2">Confidence: 88% • Defisiensi Nitrogen</p>
+                            <button class="text-xs bg-purple-100 text-purple-700 px-2 py-1 rounded hover:bg-purple-200 transition">
+                                Lihat Analisis Detail
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="rounded-xl border bg-white text-slate-900 shadow-sm hover:shadow-md transition-shadow md:col-span-2 lg:col-span-2">
+                    <div class="p-6 flex flex-row items-center justify-between space-y-0 pb-2">
+                        <h3 class="tracking-tight text-sm font-medium text-gray-500">Kontrol Fertigasi Manual</h3>
+                        <i data-lucide="settings-2" class="h-5 w-5 text-slate-600"></i>
+                    </div>
+                    <div class="p-6 pt-0 grid grid-cols-1 md:grid-cols-2 gap-4">
+                        
+                        <div class="bg-slate-50 p-3 rounded-lg border flex items-center justify-between">
+                            <div class="flex items-center gap-3">
+                                <div class="p-2 bg-blue-100 rounded-full text-blue-600">
+                                    <i data-lucide="droplets" class="w-5 h-5"></i>
+                                </div>
+                                <div>
+                                    <p class="font-semibold text-sm">Pompa Irigasi</p>
+                                    <p class="text-xs text-gray-500">Status: <span class="text-green-600 font-bold">MENYIRAM</span></p>
+                                </div>
+                            </div>
+                            <label class="relative inline-flex items-center cursor-pointer">
+                                <input type="checkbox" checked class="sr-only peer">
+                                <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                            </label>
+                        </div>
+
+                        <div class="bg-slate-50 p-3 rounded-lg border flex items-center justify-between">
+                            <div class="flex items-center gap-3">
+                                <div class="p-2 bg-yellow-100 rounded-full text-yellow-600">
+                                    <i data-lucide="flask-conical" class="w-5 h-5"></i>
+                                </div>
+                                <div>
+                                    <p class="font-semibold text-sm">Injeksi Nutrisi</p>
+                                    <p class="text-xs text-gray-500">Status: <span class="text-gray-400">STANDBY</span></p>
+                                </div>
+                            </div>
+                            <label class="relative inline-flex items-center cursor-pointer">
+                                <input type="checkbox" class="sr-only peer">
+                                <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-yellow-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-yellow-500"></div>
+                            </label>
+                        </div>
+
+                    </div>
+                </div>
+
+            </div>
+
+            <div class="rounded-xl border bg-white text-slate-900 shadow-sm p-6">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="font-semibold text-lg">Tren Kelembapan & Nutrisi (24 Jam)</h3>
+                    <select class="text-sm border rounded px-2 py-1 bg-slate-50">
+                        <option>Hari Ini</option>
+                        <option>Minggu Ini</option>
+                    </select>
+                </div>
+                <div class="w-full h-64 bg-slate-50 rounded flex items-center justify-center border border-dashed border-slate-300">
+                    <p class="text-gray-400 flex items-center gap-2">
+                        <i data-lucide="bar-chart-2"></i> Area Grafik Recharts (NPK & Moisture)
+                    </p>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        lucide.createIcons();
+    </script>
+</body>
+</html>
