@@ -142,7 +142,7 @@ function SmartVisionPage() {
   if (loading) return <div className="page page-with-padding">Menganalisis Data AI...</div>;
 
   return (
-    <div className="page page-with-padding page-shell">
+    <div className="page page-with-padding page-shell" style={{ backgroundColor: '#f8f9fa' }}>
       <div className="page-header u-mb-15">
         <div>
           <div className="page-title page-title-lg">Smart Vision (AI Diagnosis)</div>

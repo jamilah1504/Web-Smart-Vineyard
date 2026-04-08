@@ -84,11 +84,11 @@ function DeviceManagementPage() {
   }
 
   const getStatusColor = (status) => {
-    return status === 'Online' ? '#27ae60' : status === 'Offline' ? '#e74c3c' : '#f39c12'
+    return status === 'Online' ? '#1B5E20' : status === 'Offline' ? '#d9534f' : '#f39c12'
   }
 
   return (
-    <div className="page page-with-padding page-shell">
+    <div className="page page-with-padding page-shell" style={{ backgroundColor: '#f8f9fa' }}>
       <div className="page-header u-mb-15">
         <div>
           <div className="page-title page-title-lg">Manajemen Perangkat IoT</div>
@@ -103,7 +103,7 @@ function DeviceManagementPage() {
         <button 
           onClick={handleAddClick}
           className="btn-primary btn-pill-primary"
-          style={{ backgroundColor: '#27ae60', borderColor: '#27ae60' }}
+          style={{ backgroundColor: '#1B5E20', borderColor: '#1B5E20' }}
         >
           ➕ Daftarkan Perangkat Baru
         </button>
@@ -177,7 +177,7 @@ function DeviceManagementPage() {
               <button 
                 type="submit" 
                 className="btn-primary btn-pill-primary"
-                style={{ backgroundColor: '#27ae60', borderColor: '#27ae60', flex: 1 }}
+                style={{ backgroundColor: '#1B5E20', borderColor: '#1B5E20', flex: 1 }}
               >
                 ✓ Daftarkan Perangkat
               </button>
@@ -215,7 +215,7 @@ function DeviceManagementPage() {
             </div>
           </div>
           <div className="simple-card-list u-mt-05">
-            <div className="big-number" style={{ color: '#27ae60' }}>
+            <div className="big-number" style={{ color: '#1B5E20' }}>
               {perangkatList.filter(p => p.status_koneksi === 'Online').length}
             </div>
             <div className="small-text text-sm-muted">Siap beroperasi</div>
@@ -229,7 +229,7 @@ function DeviceManagementPage() {
             </div>
           </div>
           <div className="simple-card-list u-mt-05">
-            <div className="big-number" style={{ color: '#e74c3c' }}>
+            <div className="big-number" style={{ color: '#d9534f' }}>
               {perangkatList.filter(p => p.status_koneksi === 'Offline').length}
             </div>
             <div className="small-text text-sm-muted">Perlu dicek</div>
@@ -260,13 +260,13 @@ function DeviceManagementPage() {
           <div className="table-wrapper u-mt-05">
             <table className="table table-compact">
               <thead>
-                <tr style={{ borderBottom: '3px solid #27ae60' }}>
-                  <th style={{ color: '#27ae60' }}>Nama Node</th>
-                  <th style={{ color: '#27ae60' }}>MAC Address</th>
-                  <th style={{ color: '#27ae60' }}>Blok/Lahan</th>
-                  <th style={{ color: '#27ae60' }}>Varietas</th>
-                  <th style={{ color: '#27ae60' }}>Status</th>
-                  <th style={{ color: '#27ae60' }}>Aksi</th>
+                <tr style={{ borderBottom: '3px solid #1B5E20' }}>
+                  <th style={{ color: '#1B5E20' }}>Nama Node</th>
+                  <th style={{ color: '#1B5E20' }}>MAC Address</th>
+                  <th style={{ color: '#1B5E20' }}>Blok/Lahan</th>
+                  <th style={{ color: '#1B5E20' }}>Varietas</th>
+                  <th style={{ color: '#1B5E20' }}>Status</th>
+                  <th style={{ color: '#1B5E20' }}>Aksi</th>
                 </tr>
               </thead>
               <tbody>
@@ -281,7 +281,7 @@ function DeviceManagementPage() {
                         display: 'inline-block',
                         padding: '4px 12px',
                         borderRadius: '12px',
-                        backgroundColor: getStatusColor(perangkat.status_koneksi) === '#27ae60' ? '#e8f5e9' : getStatusColor(perangkat.status_koneksi) === '#e74c3c' ? '#fadbd8' : '#fef5e7',
+                        backgroundColor: getStatusColor(perangkat.status_koneksi) === '#1B5E20' ? '#f5ede3' : getStatusColor(perangkat.status_koneksi) === '#d9534f' ? '#fadbd8' : '#fef5e7',
                         color: getStatusColor(perangkat.status_koneksi),
                         fontSize: '0.9rem',
                         fontWeight: 'bold'
@@ -313,4 +313,5 @@ function DeviceManagementPage() {
 }
 
 export default DeviceManagementPage
+
 

@@ -14,7 +14,6 @@ import OwnerTanksPage from '../modules/owner/pages/TanksPage.jsx'
 import OwnerManualControlPage from '../modules/owner/pages/ManualControlPage.jsx'
 import OwnerThresholdsPage from '../modules/owner/pages/ThresholdsPage.jsx'
 import OwnerTrendsPage from '../modules/owner/pages/TrendsPage.jsx'
-import OwnerDiagnosaPage from '../modules/owner/pages/DiagnosaPage.jsx'
 
 export function OwnerRoutes() {
   return (

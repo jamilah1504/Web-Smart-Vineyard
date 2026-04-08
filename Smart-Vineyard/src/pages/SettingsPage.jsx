@@ -51,7 +51,7 @@ export default function SettingsPage() {
   }, [logQuery])
 
   return (
-    <div className="page page-with-padding page-shell">
+    <div className="page page-with-padding page-shell" style={{ backgroundColor: '#f8f9fa' }}>
       <section className="card card-elevated u-mb-15">
         <div className="card-header card-header-top">
           <div>

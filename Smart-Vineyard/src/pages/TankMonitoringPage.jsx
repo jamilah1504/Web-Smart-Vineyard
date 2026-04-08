@@ -26,7 +26,7 @@ function TankMonitoringPage() {
   const latest = filtered[filtered.length - 1] ?? tankSamples[tankSamples.length - 1]
 
   return (
-    <div className="page page-with-padding page-shell">
+    <div className="page page-with-padding page-shell" style={{ backgroundColor: '#f8f9fa' }}>
       <div className="page-header u-mb-15">
         <div>
           <div className="page-title page-title-lg">Monitoring Tandon</div>

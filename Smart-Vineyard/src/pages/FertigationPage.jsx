@@ -5,7 +5,7 @@ function FertigationPage() {
   const [solenoidOn, setSolenoidOn] = useState(false)
 
   return (
-    <div className="page page-with-padding page-shell">
+    <div className="page page-with-padding page-shell" style={{ backgroundColor: '#f8f9fa' }}>
       <div className="page-header u-mb-15">
         <div>
           <div className="page-title page-title-lg">Smart Fertigation</div>
@@ -103,4 +103,5 @@ function FertigationPage() {
 }
 
 export default FertigationPage
+
 

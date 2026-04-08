@@ -1,5 +1,5 @@
-import AnalysisPage from '../../../pages/AnalysisPage.jsx'
+import SmartVisionPage from '../../../pages/SmartVisionPage.jsx'
 
 export default function AgronomisAnalysisPage() {
-  return <AnalysisPage />
+  return <SmartVisionPage />
 }

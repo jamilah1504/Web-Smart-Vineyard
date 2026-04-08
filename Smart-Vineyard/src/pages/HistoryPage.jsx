@@ -68,7 +68,7 @@ export default function HistoryPage() {
   }, [items, query, block, type])
 
   return (
-    <div className="page page-with-padding page-shell">
+    <div className="page page-with-padding page-shell" style={{ backgroundColor: '#f8f9fa' }}>
       <section className="card card-elevated u-mb-15">
         <div className="card-header card-header-top card-header-top-gap">
           <div>
@@ -144,3 +144,4 @@ export default function HistoryPage() {
     </div>
   )
 }
+

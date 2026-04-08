@@ -6,8 +6,8 @@
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  color: #123028;
-  background-color: #e8f6ea;
+  color: #1F3A1F;
+  background-color: #FFFBF0;
 }
 
 *,
@@ -20,7 +20,7 @@ body {
   margin: 0;
   min-width: 320px;
   min-height: 100vh;
-  background: radial-gradient(circle at top, #e9f9f1 0, #d9f1de 35%, #c4e4cf 100%);
+  background: radial-gradient(circle at top, #FFFBF0 0, #faf8f4 35%, #f5ede3 100%);
   overflow-x: hidden;
 }
 

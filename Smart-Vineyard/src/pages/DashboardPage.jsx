@@ -60,15 +60,15 @@ function DashboardPage() {
   // Utility function untuk status badge
   const getStatusBadge = (value, minOptimal) => {
     if (value >= minOptimal) {
-      return { text: 'Optimal', color: '#27ae60', bg: '#e8f8f5' };
+      return { text: 'Optimal', color: '#1B5E20', bg: '#f5ede3' };
     }
-    return { text: 'Rendah', color: '#e74c3c', bg: '#fadbd8' };
+    return { text: 'Rendah', color: '#d9534f', bg: '#fadbd8' };
   };
 
   const statusN = getStatusBadge(latest?.n_val || 0, 30);
 
   return (
-    <div className="page page-with-padding page-shell">
+    <div className="page page-with-padding page-shell" style={{ backgroundColor: '#f8f9fa' }}>
       <style>{`
         @keyframes pulse {
           0%, 100% { opacity: 1; }
@@ -279,14 +279,14 @@ function DashboardPage() {
             <SkeletonCard />
           ) : (
             <div style={{
-              backgroundColor: '#e8f8f5',
+              backgroundColor: '#f5ede3',
               borderRadius: '10px',
               padding: '16px',
               textAlign: 'center',
-              border: '2px solid #27ae60'
+              border: '2px solid #1B5E20'
             }}>
               <div style={{ fontSize: '24px', marginBottom: '8px' }}>✓</div>
-              <div style={{ fontSize: '18px', fontWeight: '600', color: '#27ae60' }}>Normal</div>
+              <div style={{ fontSize: '18px', fontWeight: '600', color: '#1B5E20' }}>Normal</div>
               <div style={{ fontSize: '12px', color: '#16a085', marginTop: '8px' }}>Belum ada gejala penyakit</div>
             </div>
           )}
@@ -320,7 +320,7 @@ function DashboardPage() {
               <div style={{ fontSize: '14px', fontWeight: '500', color: '#2c3e50' }}>Pompa Irigasi</div>
               <div style={{
                 fontSize: '12px',
-                color: pumpOn ? '#27ae60' : '#95a5a6',
+                color: pumpOn ? '#1B5E20' : '#95a5a6',
                 fontWeight: '500'
               }}>
                 {pumpOn ? '🟢 MENYIRAM' : '⚪ STANDBY'}
@@ -333,7 +333,7 @@ function DashboardPage() {
                 height: '32px',
                 borderRadius: '16px',
                 border: 'none',
-                backgroundColor: pumpOn ? '#27ae60' : '#bdc3c7',
+                backgroundColor: pumpOn ? '#1B5E20' : '#bdc3c7',
                 cursor: 'pointer',
                 position: 'relative',
                 transition: 'all 0.3s ease',
@@ -439,8 +439,8 @@ function DashboardPage() {
               <LineChart data={chartData} margin={{ top: 5, right: 30, left: 0, bottom: 5 }}>
                 <defs>
                   <linearGradient id="colorMoisture" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#27ae60" stopOpacity={0.8} />
-                    <stop offset="95%" stopColor="#27ae60" stopOpacity={0} />
+                    <stop offset="5%" stopColor="#1B5E20" stopOpacity={0.8} />
+                    <stop offset="95%" stopColor="#1B5E20" stopOpacity={0} />
                   </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" stroke="#ecf0f1" />
@@ -456,9 +456,9 @@ function DashboardPage() {
                   cursor={{ stroke: '#ecf0f1', strokeWidth: 2 }}
                 />
                 <Legend wrapperStyle={{ paddingTop: '15px' }} />
-                <Line type="monotone" dataKey="soilMoisture" stroke="#27ae60" name="Moisture (%)" strokeWidth={3} dot={{ r: 5, fill: '#27ae60' }} activeDot={{ r: 7 }} />
+                <Line type="monotone" dataKey="soilMoisture" stroke="#1B5E20" name="Moisture (%)" strokeWidth={3} dot={{ r: 5, fill: '#1B5E20' }} activeDot={{ r: 7 }} />
                 <Line type="monotone" dataKey="N" stroke="#3498db" name="Nitrogen" strokeWidth={2} dot={false} />
-                <Line type="monotone" dataKey="pH" stroke="#e74c3c" name="pH" strokeWidth={2} dot={false} />
+                <Line type="monotone" dataKey="pH" stroke="#d9534f" name="pH" strokeWidth={2} dot={false} />
               </LineChart>
             </ResponsiveContainer>
           </div>

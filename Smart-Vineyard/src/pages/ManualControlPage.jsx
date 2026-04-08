@@ -16,7 +16,7 @@ function OwnerManualControlPage() {
   return (
     <div style={{ 
       minHeight: '100vh', 
-      background: 'linear-gradient(180deg, #27ae60 0%, #2d8f5e 15%, #3a7a5a 30%, #4a6b5a 45%, #5a5a6a 60%, #6b5a7a 75%, #7a6b5a 100%)',
+      background: '#f8f9fa',
       padding: '0',
       margin: '0'
     }}>

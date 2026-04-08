@@ -115,7 +115,7 @@ function PlantManagementPage() {
   }
 
   return (
-    <div className="page page-with-padding page-shell">
+    <div className="page page-with-padding page-shell" style={{ backgroundColor: '#f8f9fa' }}>
       <div className="page-header u-mb-15">
         <div>
           <div className="page-title page-title-lg">Manajemen Tanaman</div>
@@ -130,7 +130,7 @@ function PlantManagementPage() {
         <button 
           onClick={handleAddClick}
           className="btn-primary btn-pill-primary"
-          style={{ backgroundColor: '#27ae60', borderColor: '#27ae60' }}
+          style={{ backgroundColor: '#1B5E20', borderColor: '#1B5E20' }}
         >
           ➕ Tambah Varietas
         </button>
@@ -231,7 +231,7 @@ function PlantManagementPage() {
               <button 
                 type="submit" 
                 className="btn-primary btn-pill-primary"
-                style={{ backgroundColor: '#27ae60', borderColor: '#27ae60', flex: 1 }}
+                style={{ backgroundColor: '#1B5E20', borderColor: '#1B5E20', flex: 1 }}
               >
                 {editingId ? '💾 Simpan Perubahan' : '➕ Buat Varietas'}
               </button>
@@ -271,14 +271,14 @@ function PlantManagementPage() {
           <div className="table-wrapper u-mt-05">
             <table className="table table-compact">
               <thead>
-                <tr style={{ borderBottom: '3px solid #27ae60' }}>
-                  <th style={{ color: '#27ae60' }}>Nama Varietas</th>
-                  <th style={{ color: '#27ae60' }}>Min N</th>
-                  <th style={{ color: '#27ae60' }}>Min P</th>
-                  <th style={{ color: '#27ae60' }}>Min K</th>
-                  <th style={{ color: '#27ae60' }}>pH Range</th>
-                  <th style={{ color: '#27ae60' }}>Min Moisture</th>
-                  <th style={{ color: '#27ae60' }}>Aksi</th>
+                <tr style={{ borderBottom: '3px solid #1B5E20' }}>
+                  <th style={{ color: '#1B5E20' }}>Nama Varietas</th>
+                  <th style={{ color: '#1B5E20' }}>Min N</th>
+                  <th style={{ color: '#1B5E20' }}>Min P</th>
+                  <th style={{ color: '#1B5E20' }}>Min K</th>
+                  <th style={{ color: '#1B5E20' }}>pH Range</th>
+                  <th style={{ color: '#1B5E20' }}>Min Moisture</th>
+                  <th style={{ color: '#1B5E20' }}>Aksi</th>
                 </tr>
               </thead>
               <tbody>

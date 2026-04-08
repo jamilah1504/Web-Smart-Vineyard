@@ -13,7 +13,7 @@ function TrendsPage() {
   }, []);
 
   return (
-    <div className="page page-with-padding page-shell">
+    <div className="page page-with-padding page-shell" style={{ backgroundColor: '#f8f9fa' }}>
       {/* Header */}
       <div className="page-header u-mb-15">
         <div>
