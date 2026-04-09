@@ -42,11 +42,16 @@ function SmartVisionPage() {
   // --- LOGIKA KAMERA ---
   const handleOpenCamera = async () => {
     try {
-      console.log('Mencoba membuka kamera...');
+      console.log('🎬 Mencoba membuka kamera...');
+      setShowCamera(true); // Show modal immediately so video element mounts
+      
+      // Wait a tick for video element to mount
+      await new Promise(resolve => setTimeout(resolve, 100));
       
       // Try with environment camera first, fallback to any camera
       let stream;
       try {
+        console.log('📷 Trying environment camera...');
         stream = await navigator.mediaDevices.getUserMedia({ 
           video: { 
             facingMode: 'environment',
@@ -55,28 +60,58 @@ function SmartVisionPage() {
           },
           audio: false
         });
+        console.log('✅ Environment camera berhasil!');
       } catch (err) {
-        console.warn('Environment camera gagal, mencoba kamera default...', err);
+        console.warn('⚠️ Environment camera gagal:', err.name, err.message);
+        console.log('📷 Trying any available camera...');
         // Fallback: try any available camera
         stream = await navigator.mediaDevices.getUserMedia({ 
-          video: true,
+          video: {
+            width: { ideal: 1280 },
+            height: { ideal: 720 }
+          },
           audio: false
         });
+        console.log('✅ Default camera berhasil!');
       }
       
-      console.log('Kamera berhasil diakses:', stream);
+      console.log('📊 Stream info:', {
+        active: stream.active,
+        videoTracks: stream.getVideoTracks().length,
+        audioTracks: stream.getAudioTracks().length
+      });
+      
       streamRef.current = stream;
       
       if (videoRef.current) {
+        console.log('🎥 Setting srcObject to video element...');
         videoRef.current.srcObject = stream;
-        // Ensure video plays
-        videoRef.current.play().catch(err => {
-          console.error('Error playing video:', err);
+        
+        // Wait for video to be ready
+        await new Promise((resolve, reject) => {
+          const timeout = setTimeout(() => {
+            reject(new Error('Video play timeout'));
+          }, 5000);
+          
+          videoRef.current.oncanplay = () => {
+            clearTimeout(timeout);
+            console.log('✅ Video ready to play');
+            resolve();
+          };
         });
+        
+        // Ensure video plays
+        try {
+          await videoRef.current.play();
+          console.log('▶️ Video playback started');
+        } catch (err) {
+          console.error('❌ Error playing video:', err);
+          throw err;
+        }
       }
-      setShowCamera(true);
     } catch (error) {
-      console.error('Error detail:', error);
+      console.error('❌ Error detail:', error);
+      setShowCamera(false);
       let errorMsg = error.message;
       
       // Provide specific error messages
@@ -86,6 +121,8 @@ function SmartVisionPage() {
         errorMsg = 'Kamera tidak ditemukan pada perangkat ini';
       } else if (error.name === 'NotReadableError') {
         errorMsg = 'Kamera sedang digunakan oleh aplikasi lain';
+      } else if (error.message.includes('timeout')) {
+        errorMsg = 'Kamera memerlukan waktu terlalu lama untuk terhubung';
       }
       
       alert('❌ Gagal akses kamera: ' + errorMsg);
@@ -94,33 +131,44 @@ function SmartVisionPage() {
 
   const handleCapturePhoto = () => {
     try {
+      console.log('📸 Attempting to capture photo...');
+      
       if (!videoRef.current || !canvasRef.current) {
-        alert('Video atau canvas tidak tersedia');
-        return;
+        throw new Error('Video atau canvas tidak tersedia');
       }
+      
+      const video = videoRef.current;
+      const canvas = canvasRef.current;
       
       // Check if video has valid dimensions
-      if (videoRef.current.videoWidth === 0 || videoRef.current.videoHeight === 0) {
-        alert('Video belum siap. Tunggu sebentar dan coba lagi.');
-        return;
+      if (video.videoWidth === 0 || video.videoHeight === 0) {
+        throw new Error('Video belum siap. Tunggu sebentar dan coba lagi.');
       }
       
-      const context = canvasRef.current.getContext('2d');
+      console.log('📊 Video dimensions:', {
+        videoWidth: video.videoWidth,
+        videoHeight: video.videoHeight,
+        readyState: video.readyState
+      });
+      
+      const context = canvas.getContext('2d');
       if (!context) {
-        alert('Gagal mendapatkan canvas context');
-        return;
+        throw new Error('Gagal mendapatkan canvas context');
       }
       
       // Set canvas size sesuai video
-      canvasRef.current.width = videoRef.current.videoWidth;
-      canvasRef.current.height = videoRef.current.videoHeight;
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
       
-      context.drawImage(videoRef.current, 0, 0);
+      console.log('📐 Canvas set to:', canvas.width, 'x', canvas.height);
       
-      const base64 = canvasRef.current.toDataURL('image/jpeg');
+      // Draw video frame to canvas
+      context.drawImage(video, 0, 0);
+      
+      const base64 = canvas.toDataURL('image/jpeg', 0.9);
+      console.log('📷 Photo captured, size:', base64.length, 'bytes');
+      
       setPhotoPreview(base64);
-      
-      console.log('Foto berhasil diambil, ukuran:', base64.length);
       
       // Convert base64 to File object untuk selectedPhoto
       fetch(base64)
@@ -128,15 +176,15 @@ function SmartVisionPage() {
         .then(blob => {
           const file = new File([blob], "camera-capture.jpg", { type: "image/jpeg" });
           setSelectedPhoto(file);
-          console.log('File object created:', file);
+          console.log('✅ File object created:', file.name, file.size, 'bytes');
         })
         .catch(err => {
-          console.error('Error converting base64 to file:', err);
+          console.error('❌ Error converting base64 to file:', err);
         });
 
       handleCloseCamera();
     } catch (error) {
-      console.error('Error capturing photo:', error);
+      console.error('❌ Error capturing photo:', error.message);
       alert('❌ Gagal mengambil foto: ' + error.message);
     }
   };
@@ -247,31 +295,33 @@ function SmartVisionPage() {
         <div style={{ position: 'fixed', inset: 0, backgroundColor: '#000', zIndex: 3000, display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center' }}>
           <video 
             ref={videoRef} 
-            autoPlay 
-            playsInline 
-            muted
+            autoPlay={true}
+            playsInline={true}
+            muted={true}
             style={{ 
               flex: 1, 
               width: '100%', 
               height: '100%',
               objectFit: 'cover',
-              backgroundColor: '#000'
+              backgroundColor: '#000',
+              display: 'block'
             }}
             onLoadedMetadata={() => {
-              console.log('✓ Video metadata loaded:', {
+              console.log('📊 ✓ Video metadata loaded:', {
                 width: videoRef.current?.videoWidth,
-                height: videoRef.current?.videoHeight
+                height: videoRef.current?.videoHeight,
+                readyState: videoRef.current?.readyState
               });
             }}
-            onError={(e) => {
-              console.error('❌ Video error:', e);
-              alert('❌ Error dengan video stream');
-            }}
             onCanPlay={() => {
-              console.log('✓ Video can play now');
+              console.log('▶️ ✓ Video can play now');
             }}
-            onPlay={() => {
-              console.log('✓ Video playing');
+            onPlaying={() => {
+              console.log('▶️ ✓ Video is playing');
+            }}
+            onError={(e) => {
+              console.error('❌ Video error:', e.target?.error?.code, e.target?.error?.message);
+              alert('❌ Error dengan video stream');
             }}
           />
           <div style={{ 
