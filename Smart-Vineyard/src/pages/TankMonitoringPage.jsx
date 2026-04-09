@@ -29,7 +29,7 @@ function TankMonitoringPage() {
     <div className="page page-with-padding page-shell" style={{ backgroundColor: '#f8f9fa' }}>
       <div className="page-header u-mb-15">
         <div>
-          <div className="page-title page-title-lg">Monitoring Tandon</div>
+          <div className="page-title page-title-lg">💧 Monitoring Tandon</div>
           <div className="page-caption page-caption-lg">
             Pantau persentase stok air dan nutrisi di tandon utama untuk mencegah dry-run pompa.
           </div>

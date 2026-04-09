@@ -118,7 +118,7 @@ function PlantManagementPage() {
     <div className="page page-with-padding page-shell" style={{ backgroundColor: '#f8f9fa' }}>
       <div className="page-header u-mb-15">
         <div>
-          <div className="page-title page-title-lg">Manajemen Tanaman</div>
+          <div className="page-title page-title-lg">🌱 Manajemen Tanaman</div>
           <div className="page-caption page-caption-lg">
             Atur varietas anggur dan parameter target untuk kontrol otomatis.
           </div>

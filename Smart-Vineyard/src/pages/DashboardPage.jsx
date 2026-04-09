@@ -36,7 +36,7 @@ function DashboardPage() {
   const chartData = useMemo(() => {
     return sensorData.map(item => ({
       time: new Date(item.timestamp).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }),
-      soilMoisture: item.moisture_val,
+      soilMoisture: item.kelembapan_val,
       N: item.n_val,
       P: item.p_val,
       K: item.k_val,
@@ -90,7 +90,7 @@ function DashboardPage() {
 
       <div className="page-header u-mb-2" style={{ marginBottom: '30px' }}>
         <div>
-          <div className="page-title page-title-lg" style={{ fontSize: '2.5rem', fontWeight: '700', marginBottom: '8px' }}>Dashboard Monitoring</div>
+          <div className="page-title page-title-lg" style={{ fontSize: '2.5rem', fontWeight: '700', marginBottom: '8px' }}>📊 Dashboard Monitoring</div>
           <div className="page-caption page-caption-lg" style={{ fontSize: '1.1rem', color: '#7f8c8d' }}>Realtime data sensor dan kontrol fertigasi otomatis</div>
         </div>
       </div>
@@ -190,7 +190,7 @@ function DashboardPage() {
             textAlign: 'center',
             fontSize: '12px'
           }}>
-            Area Akar
+            {latest?.kelembapan_val ? `Kondisi ${latest.kelembapan_val > 60 ? 'Basah' : latest.kelembapan_val > 40 ? 'Tips' : 'Kering'}` : 'Area Akar'}
           </div>
         </div>
 
