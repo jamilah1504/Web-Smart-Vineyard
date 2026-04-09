@@ -126,10 +126,10 @@ function ThresholdsPage() {
         }
       `}</style>
 
-      <div className="page-header u-mb-2" style={{ marginBottom: '30px' }}>
+      <div className="page-header u-mb-15">
         <div>
-          <div className="page-title page-title-lg" style={{ fontSize: '2.5rem', fontWeight: '700', marginBottom: '8px' }}>⚙️ Atur Threshold Varietas</div>
-          <div className="page-caption page-caption-lg" style={{ fontSize: '1.1rem', color: '#7f8c8d' }}>Sesuaikan ambang batas sensor untuk setiap varietas anggur</div>
+          <div className="page-title page-title-lg">⚙️ Atur Threshold Varietas</div>
+          <div className="page-caption page-caption-lg">Sesuaikan ambang batas sensor untuk setiap varietas anggur</div>
         </div>
       </div>
 

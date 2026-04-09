@@ -111,22 +111,13 @@ function OwnerManualControlPage() {
         }
       `}</style>
 
-      {/* PAGE HEADER WITH GRADIENT */}
-      <div style={{ 
-        marginBottom: '40px',
-        background: 'linear-gradient(135deg, #27ae60 0%, #1e8449 100%)',
-        borderRadius: '20px',
-        padding: '40px 24px',
-        color: 'white',
-        boxShadow: '0 8px 32px rgba(39, 174, 96, 0.3)',
-        animation: 'slideIn 0.6s ease-out'
-      }}>
-        <h1 style={{ fontSize: '2.8rem', fontWeight: '800', marginBottom: '12px', margin: 0 }}>
-          ⚙️ Kontrol Manual Sistem
-        </h1>
-        <p style={{ fontSize: '1.05rem', opacity: 0.95, marginTop: '0', margin: '12px 0 0 0', fontWeight: '500' }}>
-          Kelola pompa irigasi, solenoid valve, dan perangkat sistem secara real-time
-        </p>
+      <div className="page-header u-mb-15">
+        <div>
+          <div className="page-title page-title-lg">⚙️ Kontrol Manual Sistem</div>
+          <div className="page-caption page-caption-lg">
+            Kelola pompa irigasi, solenoid valve, dan perangkat sistem secara real-time
+          </div>
+        </div>
       </div>
 
       {/* PUMP CONTROLS SECTION */}

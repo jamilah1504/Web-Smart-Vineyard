@@ -42,22 +42,75 @@ function SmartVisionPage() {
   // --- LOGIKA KAMERA ---
   const handleOpenCamera = async () => {
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ 
-        video: { facingMode: 'environment' } 
-      });
+      console.log('Mencoba membuka kamera...');
+      
+      // Try with environment camera first, fallback to any camera
+      let stream;
+      try {
+        stream = await navigator.mediaDevices.getUserMedia({ 
+          video: { 
+            facingMode: 'environment',
+            width: { ideal: 1280 },
+            height: { ideal: 720 }
+          },
+          audio: false
+        });
+      } catch (err) {
+        console.warn('Environment camera gagal, mencoba kamera default...', err);
+        // Fallback: try any available camera
+        stream = await navigator.mediaDevices.getUserMedia({ 
+          video: true,
+          audio: false
+        });
+      }
+      
+      console.log('Kamera berhasil diakses:', stream);
       streamRef.current = stream;
+      
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
+        // Ensure video plays
+        videoRef.current.play().catch(err => {
+          console.error('Error playing video:', err);
+        });
       }
       setShowCamera(true);
     } catch (error) {
-      alert('Gagal akses kamera: ' + error.message);
+      console.error('Error detail:', error);
+      let errorMsg = error.message;
+      
+      // Provide specific error messages
+      if (error.name === 'NotAllowedError') {
+        errorMsg = 'Silakan izinkan akses kamera di pengaturan browser';
+      } else if (error.name === 'NotFoundError') {
+        errorMsg = 'Kamera tidak ditemukan pada perangkat ini';
+      } else if (error.name === 'NotReadableError') {
+        errorMsg = 'Kamera sedang digunakan oleh aplikasi lain';
+      }
+      
+      alert('❌ Gagal akses kamera: ' + errorMsg);
     }
   };
 
   const handleCapturePhoto = () => {
-    if (videoRef.current && canvasRef.current) {
+    try {
+      if (!videoRef.current || !canvasRef.current) {
+        alert('Video atau canvas tidak tersedia');
+        return;
+      }
+      
+      // Check if video has valid dimensions
+      if (videoRef.current.videoWidth === 0 || videoRef.current.videoHeight === 0) {
+        alert('Video belum siap. Tunggu sebentar dan coba lagi.');
+        return;
+      }
+      
       const context = canvasRef.current.getContext('2d');
+      if (!context) {
+        alert('Gagal mendapatkan canvas context');
+        return;
+      }
+      
       // Set canvas size sesuai video
       canvasRef.current.width = videoRef.current.videoWidth;
       canvasRef.current.height = videoRef.current.videoHeight;
@@ -67,24 +120,44 @@ function SmartVisionPage() {
       const base64 = canvasRef.current.toDataURL('image/jpeg');
       setPhotoPreview(base64);
       
+      console.log('Foto berhasil diambil, ukuran:', base64.length);
+      
       // Convert base64 to File object untuk selectedPhoto
       fetch(base64)
         .then(res => res.blob())
         .then(blob => {
           const file = new File([blob], "camera-capture.jpg", { type: "image/jpeg" });
           setSelectedPhoto(file);
+          console.log('File object created:', file);
+        })
+        .catch(err => {
+          console.error('Error converting base64 to file:', err);
         });
 
       handleCloseCamera();
+    } catch (error) {
+      console.error('Error capturing photo:', error);
+      alert('❌ Gagal mengambil foto: ' + error.message);
     }
   };
 
   const handleCloseCamera = () => {
-    if (streamRef.current) {
-      streamRef.current.getTracks().forEach(track => track.stop());
-      streamRef.current = null;
+    try {
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach(track => {
+          console.log('Stopping track:', track.label);
+          track.stop();
+        });
+        streamRef.current = null;
+      }
+      if (videoRef.current) {
+        videoRef.current.srcObject = null;
+      }
+      setShowCamera(false);
+    } catch (error) {
+      console.error('Error closing camera:', error);
+      setShowCamera(false);
     }
-    setShowCamera(false);
   };
 
   // --- LOGIKA FILE / GALERI ---
@@ -171,11 +244,63 @@ function SmartVisionPage() {
 
       {/* Camera Modal */}
       {showCamera && (
-        <div style={{ position: 'fixed', inset: 0, backgroundColor: '#000', zIndex: 3000, display: 'flex', flexDirection: 'column' }}>
-          <video ref={videoRef} autoPlay playsInline style={{ flex: 1, width: '100%', objectFit: 'cover' }} />
-          <div style={{ padding: '20px', display: 'flex', justifyContent: 'center', gap: '20px' }}>
-            <button className="btn-primary" onClick={handleCapturePhoto} style={{ borderRadius: '50%', width: '70px', height: '70px', fontSize: '24px' }}>📸</button>
-            <button className="btn-pill-outline" onClick={handleCloseCamera} style={{ color: '#fff' }}>Batal</button>
+        <div style={{ position: 'fixed', inset: 0, backgroundColor: '#000', zIndex: 3000, display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center' }}>
+          <video 
+            ref={videoRef} 
+            autoPlay 
+            playsInline 
+            muted
+            style={{ 
+              flex: 1, 
+              width: '100%', 
+              height: '100%',
+              objectFit: 'cover',
+              backgroundColor: '#000'
+            }}
+            onLoadedMetadata={() => {
+              console.log('✓ Video metadata loaded:', {
+                width: videoRef.current?.videoWidth,
+                height: videoRef.current?.videoHeight
+              });
+            }}
+            onError={(e) => {
+              console.error('❌ Video error:', e);
+              alert('❌ Error dengan video stream');
+            }}
+            onCanPlay={() => {
+              console.log('✓ Video can play now');
+            }}
+            onPlay={() => {
+              console.log('✓ Video playing');
+            }}
+          />
+          <div style={{ 
+            position: 'absolute',
+            bottom: 0,
+            left: 0,
+            right: 0,
+            padding: '20px', 
+            display: 'flex', 
+            justifyContent: 'center', 
+            gap: '20px', 
+            backgroundColor: 'rgba(51, 51, 51, 0.95)' 
+          }}>
+            <button 
+              className="btn-primary btn-pill-primary" 
+              onClick={handleCapturePhoto} 
+              style={{ borderRadius: '50%', width: '70px', height: '70px', fontSize: '24px', flex: 'none' }}
+              title="Ambil foto"
+            >
+              📸
+            </button>
+            <button 
+              className="btn-pill-outline" 
+              onClick={handleCloseCamera} 
+              style={{ color: '#fff', padding: '15px 30px', flex: 'none' }}
+              title="Tutup kamera"
+            >
+              Batal
+            </button>
           </div>
         </div>
       )}

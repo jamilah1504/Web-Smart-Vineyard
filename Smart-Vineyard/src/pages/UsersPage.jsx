@@ -148,14 +148,13 @@ export default function OwnerUsersPage() {
         }
       `}</style>
 
-      {/* PAGE HEADER */}
-      <div style={{ marginBottom: '30px' }}>
-        <h1 style={{ fontSize: '2.5rem', fontWeight: '700', marginBottom: '8px', color: '#2c3e50' }}>
-          👥 Manajemen Pengguna
-        </h1>
-        <p style={{ fontSize: '1.1rem', color: '#7f8c8d' }}>
-          Total {users.length} pengguna terdaftar dalam sistem
-        </p>
+      <div className="page-header u-mb-15">
+        <div>
+          <div className="page-title page-title-lg">👥 Manajemen Pengguna</div>
+          <div className="page-caption page-caption-lg">
+            Kelola akun pengguna, peran, dan status sistem
+          </div>
+        </div>
       </div>
 
       {/* STATS CARDS */}

@@ -50,10 +50,10 @@ function ReportsPage() {
         }
       `}</style>
 
-      <div className="page-header u-mb-2" style={{ marginBottom: '30px' }}>
+      <div className="page-header u-mb-15">
         <div>
-          <div className="page-title page-title-lg" style={{ fontSize: '2.5rem', fontWeight: '700', marginBottom: '8px' }}>📊 Laporan & Export</div>
-          <div className="page-caption page-caption-lg" style={{ fontSize: '1.1rem', color: '#7f8c8d' }}>Generate dan download laporan data sensor, aktivitas, dan analisis trend</div>
+          <div className="page-title page-title-lg">📊 Laporan & Export</div>
+          <div className="page-caption page-caption-lg">Generate dan download laporan data sensor, aktivitas, dan analisis trend</div>
         </div>
       </div>
 

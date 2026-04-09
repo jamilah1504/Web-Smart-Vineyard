@@ -52,17 +52,14 @@ export default function SettingsPage() {
 
   return (
     <div className="page page-with-padding page-shell" style={{ backgroundColor: '#f8f9fa' }}>
-      <section className="card card-elevated u-mb-15">
-        <div className="card-header card-header-top">
-          <div>
-            <div className="card-title card-title-lg">Pengaturan Sistem</div>
-            <div className="card-subtitle card-subtitle-lg">
-              Konfigurasi & log aktivitas (dummy — siap dihubungkan ke API).
-            </div>
+      <div className="page-header u-mb-15">
+        <div>
+          <div className="page-title page-title-lg">Pengaturan Sistem</div>
+          <div className="page-caption page-caption-lg">
+            Konfigurasi & log aktivitas (dummy — siap dihubungkan ke API).
           </div>
-          <span className="badge-pill-neutral">Owner</span>
         </div>
-      </section>
+      </div>
 
       <section className="card card-elevated u-mb-15">
         <div className="card-header card-header-top">

@@ -43,13 +43,22 @@ export default function UploadImagePage() {
 
   return (
     <div className="page page-with-padding page-shell" style={{ backgroundColor: '#f8f9fa' }}>
+      <div className="page-header u-mb-15">
+        <div>
+          <div className="page-title page-title-lg">Upload Citra Daun</div>
+          <div className="page-caption page-caption-lg">
+            Upload foto daun, preview, lalu jalankan analisis AI (dummy — siap ke endpoint{' '}
+            <strong>/api/ai/analyze</strong>).
+          </div>
+        </div>
+      </div>
+
       <section className="card card-elevated u-mb-15">
         <div className="card-header card-header-top card-header-top-gap">
           <div>
-            <div className="card-title card-title-lg">Upload Citra Daun</div>
+            <div className="card-title card-title-lg">Pilih dan Analisis Citra</div>
             <div className="card-subtitle card-subtitle-lg">
-              Upload foto daun, preview, lalu jalankan analisis AI (dummy — siap ke endpoint{' '}
-              <strong>/api/ai/analyze</strong>).
+              Upload foto daun untuk diagnosis AI
             </div>
           </div>
           <div className="u-flex u-gap-075 u-flex-wrap">

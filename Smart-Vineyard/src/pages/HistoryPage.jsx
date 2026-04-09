@@ -69,17 +69,25 @@ export default function HistoryPage() {
 
   return (
     <div className="page page-with-padding page-shell" style={{ backgroundColor: '#f8f9fa' }}>
+      <div className="page-header u-mb-15">
+        <div>
+          <div className="page-title page-title-lg">Riwayat Data & Aktivitas</div>
+          <div className="page-caption page-caption-lg">
+            Riwayat sensor, hasil AI, dan tindakan (dummy — siap sinkron ke backend).
+          </div>
+        </div>
+      </div>
+
       <section className="card card-elevated u-mb-15">
         <div className="card-header card-header-top card-header-top-gap">
           <div>
-            <div className="card-title card-title-lg">Riwayat Data & Aktivitas</div>
+            <div className="card-title card-title-lg">Filter Data</div>
             <div className="card-subtitle card-subtitle-lg">
-              Riwayat sensor, hasil AI, dan tindakan (dummy — siap sinkron ke backend).
+              Cari berdasarkan event, blok, atau tipe aktivitas
             </div>
           </div>
           <span className="badge-pill-neutral">Total {items.length}</span>
         </div>
-
         <div className="form-grid-3">
           <div>
             <div className="text-sm-muted">Cari</div>

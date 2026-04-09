@@ -87,10 +87,10 @@ function MonitoringPage() {
       `}</style>
 
       {/* Header */}
-      <div className="page-header u-mb-2" style={{ marginBottom: '30px' }}>
+      <div className="page-header u-mb-15">
         <div>
-          <div className="page-title page-title-lg" style={{ fontSize: '2.5rem', fontWeight: '700', marginBottom: '8px' }}>📊 Monitoring Sensor</div>
-          <div className="page-caption page-caption-lg" style={{ fontSize: '1.1rem', color: '#7f8c8d' }}>Tren real-time soil moisture, pH, dan NPK dari perangkat IoT</div>
+          <div className="page-title page-title-lg">📊 Monitoring Sensor</div>
+          <div className="page-caption page-caption-lg">Tren real-time soil moisture, pH, dan NPK dari perangkat IoT</div>
         </div>
       </div>
 
