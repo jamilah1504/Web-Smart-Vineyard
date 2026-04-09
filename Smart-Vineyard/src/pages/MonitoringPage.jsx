@@ -269,7 +269,7 @@ function MonitoringPage() {
             ) : (
               <div style={{ display: 'flex', alignItems: 'flex-end', gap: '12px' }}>
                 <div style={{ fontSize: '48px', fontWeight: '700', lineHeight: '1' }}>
-                  {latestData?.moisture_val || '--'}
+                  {latestData?.kelembapan_val || '--'}
                 </div>
                 <div style={{ fontSize: '18px', marginBottom: '6px', opacity: 0.9 }}>%</div>
               </div>
@@ -350,7 +350,7 @@ function MonitoringPage() {
                         fontWeight: '500'
                       }}>Blok A</span>
                     </td>
-                    <td style={{ padding: '12px 16px', fontWeight: '500', color: '#3498db' }}>{row.moisture_val}%</td>
+                    <td style={{ padding: '12px 16px', fontWeight: '500', color: '#3498db' }}>{row.kelembapan_val}%</td>
                     <td style={{ padding: '12px 16px', fontWeight: '500' }}>{row.ph_val}</td>
                     <td style={{ padding: '12px 16px' }}>{row.n_val}</td>
                     <td style={{ padding: '12px 16px' }}>{row.p_val}</td>
