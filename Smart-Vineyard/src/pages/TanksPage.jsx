@@ -46,7 +46,7 @@ function TanksPage() {
     <div className="page page-with-padding page-shell" style={{ backgroundColor: '#f8f9fa' }}>
       <div className="page-header u-mb-15">
         <div>
-          <div className="page-title page-title-lg">Manajemen Tandon Air</div>
+          <div className="page-title page-title-lg">🏗️ Manajemen Tandon Air</div>
           <div className="page-caption">Monitoring Real-time Node: <strong>{perangkatId}</strong></div>
         </div>
       </div>

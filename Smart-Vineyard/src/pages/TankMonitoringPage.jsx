@@ -1,35 +1,77 @@
-import { useMemo, useState } from 'react'
+import { useMemo, useState, useEffect, useCallback } from 'react'
+import { getLatestWaterLevel } from '../services/controlApi'
 
-const tankSamples = [
-  { time: '2026-03-12 07:00:00', tank: 'Tandon Air Baku', level: 92, status: 'normal' },
-  { time: '2026-03-12 09:00:00', tank: 'Tandon Air Baku', level: 86, status: 'normal' },
-  { time: '2026-03-12 11:00:00', tank: 'Tandon Air Baku', level: 78, status: 'normal' },
-  { time: '2026-03-12 13:00:00', tank: 'Tandon Air Baku', level: 63, status: 'warning' },
-  { time: '2026-03-12 15:00:00', tank: 'Tandon Air Baku', level: 48, status: 'critical' },
-]
+const DEVICE_ID = "ESP32-MAC-A001"; // ID Perangkat
 
 function TankMonitoringPage() {
   const [dateFrom, setDateFrom] = useState('')
   const [dateTo, setDateTo] = useState('')
   const [tank, setTank] = useState('all')
+  const [tankData, setTankData] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
+
+  // === FUNGSI TARIK DATA ===
+  const fetchTankData = useCallback(async () => {
+    try {
+      const response = await getLatestWaterLevel(DEVICE_ID)
+      
+      // Transform data dari API ke format yang sesuai
+      // Asumsi API mengembalikan: { data: [ { timestamp, ketinggian_air, status } ] }
+      if (response.data && Array.isArray(response.data)) {
+        setTankData(response.data.map(item => ({
+          time: new Date(item.timestamp).toLocaleString('id-ID'),
+          tank: 'Tandon Air Baku',
+          level: Math.round(parseFloat(item.ketinggian_air) || 0),
+          status: item.status || determinateStatus(parseFloat(item.ketinggian_air) || 0)
+        })))
+      }
+      setError('')
+      setLoading(false)
+    } catch (err) {
+      console.error("🔴 Gagal menarik data tandon:", err)
+      setError(err.message || 'Gagal mengambil data tandon')
+      setLoading(false)
+    }
+  }, [])
+
+  // === TRIGGER: AUTO REFRESH ===
+  useEffect(() => {
+    fetchTankData()
+    const intervalId = setInterval(fetchTankData, 15000)
+    return () => clearInterval(intervalId)
+  }, [fetchTankData])
+
+  // Helper function untuk tentukan status
+  const determinateStatus = (level) => {
+    if (level >= 60) return 'normal'
+    if (level >= 30) return 'warning'
+    return 'critical'
+  }
 
   const filtered = useMemo(() => {
-    return tankSamples.filter((row) => {
+    return tankData.filter((row) => {
       const d = row.time.split(' ')[0].split('-').reverse().join('-')
       const matchesFrom = !dateFrom || d >= dateFrom
       const matchesTo = !dateTo || d <= dateTo
       const matchesTank = tank === 'all' || row.tank === tank
       return matchesFrom && matchesTo && matchesTank
     })
-  }, [dateFrom, dateTo, tank])
+  }, [dateFrom, dateTo, tank, tankData])
 
-  const latest = filtered[filtered.length - 1] ?? tankSamples[tankSamples.length - 1]
+  const latest = filtered.length > 0 ? filtered[filtered.length - 1] : null
 
   return (
     <div className="page page-with-padding page-shell" style={{ backgroundColor: '#f8f9fa' }}>
+      {error && (
+        <div className="alert alert-danger u-mb-15">
+          <strong>Peringatan:</strong> {error}
+        </div>
+      )}
+      
       <div className="page-header u-mb-15">
         <div>
-          <div className="page-title page-title-lg">Monitoring Tandon</div>
+          <div className="page-title page-title-lg">💧 Monitoring Tandon</div>
           <div className="page-caption page-caption-lg">
             Pantau persentase stok air dan nutrisi di tandon utama untuk mencegah dry-run pompa.
           </div>
@@ -101,15 +143,27 @@ function TankMonitoringPage() {
             </div>
           </div>
           <div className="simple-card-list u-mt-05">
-            <div className="small-stat">
-              <div className="small-text text-sm-muted">Nama Tandon</div>
-              <div className="big-number">{latest?.tank ?? '-'}</div>
-            </div>
-            <div className="small-stat">
-              <div className="small-text text-sm-muted">Level Isi</div>
-              <div className="big-number">{latest?.level ?? '-'}%</div>
-              <div className="small-text text-sm-muted">Persentase volume terhadap kapasitas</div>
-            </div>
+            {loading ? (
+              <div className="text-center text-muted">
+                <p>Memuat data...</p>
+              </div>
+            ) : latest ? (
+              <>
+                <div className="small-stat">
+                  <div className="small-text text-sm-muted">Nama Tandon</div>
+                  <div className="big-number">{latest.tank}</div>
+                </div>
+                <div className="small-stat">
+                  <div className="small-text text-sm-muted">Level Isi</div>
+                  <div className="big-number">{latest.level}%</div>
+                  <div className="small-text text-sm-muted">Persentase volume terhadap kapasitas</div>
+                </div>
+              </>
+            ) : (
+              <div className="text-center text-muted">
+                <p>Tidak ada data tersedia</p>
+              </div>
+            )}
           </div>
         </div>
 
@@ -151,32 +205,42 @@ function TankMonitoringPage() {
           </div>
         </div>
         <div className="table-wrapper u-mt-05">
-          <table className="table table-compact">
-            <thead>
-              <tr>
-                <th>Waktu</th>
-                <th>Nama Tandon</th>
-                <th>Level (%)</th>
-                <th>Status</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filtered.map((row) => (
-                <tr key={`${row.time}-${row.tank}`}>
-                  <td>{row.time}</td>
-                  <td>{row.tank}</td>
-                  <td>{row.level}</td>
-                  <td>
-                    {row.status === 'critical'
-                      ? 'Kritis · Segera isi ulang'
-                      : row.status === 'warning'
-                      ? 'Warning · Siapkan pengisian'
-                      : 'Normal'}
-                  </td>
+          {loading ? (
+            <div className="text-center text-muted" style={{ padding: '2rem' }}>
+              <p>Memuat data riwayat...</p>
+            </div>
+          ) : filtered.length > 0 ? (
+            <table className="table table-compact">
+              <thead>
+                <tr>
+                  <th>Waktu</th>
+                  <th>Nama Tandon</th>
+                  <th>Level (%)</th>
+                  <th>Status</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {filtered.map((row) => (
+                  <tr key={`${row.time}-${row.tank}`}>
+                    <td>{row.time}</td>
+                    <td>{row.tank}</td>
+                    <td>{row.level}</td>
+                    <td>
+                      {row.status === 'critical'
+                        ? 'Kritis · Segera isi ulang'
+                        : row.status === 'warning'
+                        ? 'Warning · Siapkan pengisian'
+                        : 'Normal'}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          ) : (
+            <div className="text-center text-muted" style={{ padding: '2rem' }}>
+              <p>Tidak ada data yang sesuai dengan filter</p>
+            </div>
+          )}
         </div>
       </section>
     </div>

@@ -272,7 +272,7 @@ function SmartVisionPage() {
     <div className="page page-with-padding page-shell" style={{ backgroundColor: '#f8f9fa' }}>
       <div className="page-header u-mb-15">
         <div>
-          <div className="page-title page-title-lg">Smart Vision (AI Diagnosis)</div>
+          <div className="page-title page-title-lg">🔬 Smart Vision (AI Diagnosis)</div>
           <div className="page-caption page-caption-lg">Deteksi kesehatan daun secara real-time.</div>
         </div>
       </div>
@@ -392,10 +392,48 @@ function SmartVisionPage() {
         </div>
 
         {/* Saran */}
-        <div className="card card-elevated">
-          <div className="card-header"><div className="card-title">Rekomendasi</div></div>
-          <div className="u-p-1" style={{ fontSize: '0.9rem', lineHeight: '1.6' }}>
-            {latest ? latest.saran_tindakan : "Gunakan fitur kamera untuk mendapatkan saran perawatan."}
+        <div className="card card-elevated" style={{
+          background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+          color: 'white',
+          position: 'relative',
+          overflow: 'hidden'
+        }}>
+          <div style={{ position: 'absolute', top: 0, right: 0, opacity: 0.1, fontSize: '80px' }}>💡</div>
+          <div className="card-header" style={{ borderBottom: '1px solid rgba(255,255,255,0.2)' }}>
+            <div className="card-title" style={{ color: 'white' }}>💡 Rekomendasi</div>
+            <div className="card-subtitle" style={{ color: 'rgba(255,255,255,0.8)' }}>
+              {latest ? 'Saran perawatan otomatis' : 'Ambil foto untuk mendapat saran'}
+            </div>
+          </div>
+          <div className="u-p-1" style={{ 
+            fontSize: '0.95rem', 
+            lineHeight: '1.7',
+            backgroundColor: 'rgba(255,255,255,0.05)',
+            borderRadius: '12px',
+            padding: '20px',
+            backdropFilter: 'blur(10px)',
+            minHeight: '120px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center'
+          }}>
+            {latest ? (
+              <div style={{ textAlign: 'center' }}>
+                <div style={{ 
+                  fontSize: '16px', 
+                  marginBottom: '12px',
+                  fontWeight: '600',
+                  textShadow: '0 2px 4px rgba(0,0,0,0.2)'
+                }}>
+                  {latest.hasil_diagnosis === 'Sehat' ? '✅ Tanaman Sehat' : '⚠️ Perlu Perhatian'}
+                </div>
+                <div>{latest.saran_tindakan}</div>
+              </div>
+            ) : (
+              <div style={{ textAlign: 'center', opacity: 0.9 }}>
+                📷 Gunakan fitur kamera untuk mendapatkan saran perawatan
+              </div>
+            )}
           </div>
         </div>
       </section>

@@ -45,7 +45,7 @@ export default function UploadImagePage() {
     <div className="page page-with-padding page-shell" style={{ backgroundColor: '#f8f9fa' }}>
       <div className="page-header u-mb-15">
         <div>
-          <div className="page-title page-title-lg">Upload Citra Daun</div>
+          <div className="page-title page-title-lg">📸 Upload Citra Daun</div>
           <div className="page-caption page-caption-lg">
             Upload foto daun, preview, lalu jalankan analisis AI (dummy — siap ke endpoint{' '}
             <strong>/api/ai/analyze</strong>).

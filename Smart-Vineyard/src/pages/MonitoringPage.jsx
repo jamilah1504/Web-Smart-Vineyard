@@ -46,22 +46,18 @@ function MonitoringPage() {
 
   const latestData = sensorData.length > 0 ? sensorData[0] : null;
 
-  // Generate chart data - 24-hour mock data
+  // Transform real sensor data untuk chart
   const chartData = useMemo(() => {
-    const data = []
-    const now = new Date()
-    for (let i = 23; i >= 0; i--) {
-      const time = new Date(now)
-      time.setHours(time.getHours() - i)
-      data.push({
-        time: time.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }),
-        soilMoisture: 40 + Math.random() * 40,
-        pH: 6.0 + Math.random() * 1.5,
-        N: 20 + Math.random() * 30,
-      })
-    }
-    return data
-  }, [])
+    if (sensorData.length === 0) return [];
+    
+    return sensorData.map(item => ({
+      time: new Date(item.timestamp).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }),
+      soilMoisture: parseFloat(item.kelembapan_val) || 0,
+      pH: parseFloat(item.ph_val) || 0,
+      N: parseFloat(item.n_val) || 0,
+      suhu: parseFloat(item.suhu_val) || 0
+    }));
+  }, [sensorData]);
 
   return (
     <div className="page page-with-padding page-shell" style={{ backgroundColor: '#f8f9fa' }}>
@@ -310,7 +306,8 @@ function MonitoringPage() {
               }}>
                 <th style={{ padding: '12px 16px', textAlign: 'left', color: '#2c3e50', fontWeight: '600' }}>Waktu</th>
                 <th style={{ padding: '12px 16px', textAlign: 'left', color: '#2c3e50', fontWeight: '600' }}>Lokasi</th>
-                <th style={{ padding: '12px 16px', textAlign: 'left', color: '#2c3e50', fontWeight: '600' }}>Moisture</th>
+                <th style={{ padding: '12px 16px', textAlign: 'left', color: '#2c3e50', fontWeight: '600' }}>Kelembapan</th>
+                <th style={{ padding: '12px 16px', textAlign: 'left', color: '#2c3e50', fontWeight: '600' }}>Suhu</th>
                 <th style={{ padding: '12px 16px', textAlign: 'left', color: '#2c3e50', fontWeight: '600' }}>pH</th>
                 <th style={{ padding: '12px 16px', textAlign: 'left', color: '#2c3e50', fontWeight: '600' }}>N</th>
                 <th style={{ padding: '12px 16px', textAlign: 'left', color: '#2c3e50', fontWeight: '600' }}>P</th>
@@ -320,7 +317,7 @@ function MonitoringPage() {
             <tbody>
               {loading && sensorData.length === 0 ? (
                 <tr>
-                  <td colSpan="7" style={{ padding: '20px', textAlign: 'center', color: '#95a5a6' }}>
+                  <td colSpan="8" style={{ padding: '20px', textAlign: 'center', color: '#95a5a6' }}>
                     ⏳ Memuat data sensor...
                   </td>
                 </tr>
@@ -351,6 +348,7 @@ function MonitoringPage() {
                       }}>Blok A</span>
                     </td>
                     <td style={{ padding: '12px 16px', fontWeight: '500', color: '#3498db' }}>{row.kelembapan_val}%</td>
+                    <td style={{ padding: '12px 16px', fontWeight: '500', color: '#e67e22' }}>{row.suhu_val}°C</td>
                     <td style={{ padding: '12px 16px', fontWeight: '500' }}>{row.ph_val}</td>
                     <td style={{ padding: '12px 16px' }}>{row.n_val}</td>
                     <td style={{ padding: '12px 16px' }}>{row.p_val}</td>
@@ -359,7 +357,7 @@ function MonitoringPage() {
                 ))
               ) : (
                 <tr>
-                  <td colSpan="7" style={{ padding: '20px', textAlign: 'center', color: '#95a5a6' }}>
+                  <td colSpan="8" style={{ padding: '20px', textAlign: 'center', color: '#95a5a6' }}>
                     📭 Tidak ada data tersedia
                   </td>
                 </tr>
@@ -416,8 +414,9 @@ function MonitoringPage() {
                 />
                 <Legend wrapperStyle={{ paddingTop: '15px' }} />
                 <Line type="monotone" dataKey="soilMoisture" stroke="#27ae60" name="Moisture (%)" strokeWidth={3} dot={false} />
+                <Line type="monotone" dataKey="suhu" stroke="#e67e22" name="Suhu (°C)" strokeWidth={2} dot={false} />
                 <Line type="monotone" dataKey="pH" stroke="#e74c3c" name="pH" strokeWidth={2} dot={false} />
-                <Line type="monotone" dataKey="N" stroke="#3498db" name="Nitrogen" strokeWidth={2} dot={false} />
+                <Line type="monotone" dataKey="N" stroke="#3498db" name="Nitrogen (N)" strokeWidth={2} dot={false} />
               </LineChart>
             </ResponsiveContainer>
           </div>

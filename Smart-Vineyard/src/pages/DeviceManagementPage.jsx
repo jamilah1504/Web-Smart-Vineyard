@@ -91,7 +91,7 @@ function DeviceManagementPage() {
     <div className="page page-with-padding page-shell" style={{ backgroundColor: '#f8f9fa' }}>
       <div className="page-header u-mb-15">
         <div>
-          <div className="page-title page-title-lg">Manajemen Perangkat IoT</div>
+          <div className="page-title page-title-lg">🔧 Manajemen Perangkat IoT</div>
           <div className="page-caption page-caption-lg">
             Pantau status ESP32, kamera, dan sensor di kebun. Kelola lahan dan perangkat.
           </div>

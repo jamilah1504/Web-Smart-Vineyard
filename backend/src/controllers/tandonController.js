@@ -57,12 +57,13 @@ exports.getLatestWaterLevel = async (req, res) => {
     try {
         const { perangkat_id } = req.params;
 
-        const data = await LogTandon.findOne({
+        const data = await LogTandon.findAll({
             where: { perangkat_id },
-            order: [['createdAt', 'DESC']]
+            order: [['createdAt', 'DESC']],
+            limit: 10
         });
 
-        if (!data) {
+        if (!data || data.length === 0) {
             return res.status(404).json({ 
                 status: 'error', 
                 message: 'Data tidak ditemukan untuk perangkat ini.' 

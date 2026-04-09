@@ -109,7 +109,7 @@ export default function RecommendationPage() {
     <div className="page page-with-padding page-shell" style={{ backgroundColor: '#f8f9fa' }}>
       <div className="page-header u-mb-15">
         <div>
-          <div className="page-title page-title-lg">Rekomendasi Perawatan</div>
+          <div className="page-title page-title-lg">💡 Rekomendasi Perawatan</div>
           <div className="page-caption page-caption-lg">
             Catatan agronomis berbasis data sensor & hasil analisis AI (dummy — siap ke API).
           </div>

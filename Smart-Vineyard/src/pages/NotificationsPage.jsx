@@ -50,7 +50,7 @@ function NotificationsPage() {
       {/* Header */}
       <div className="page-header u-mb-15">
         <div>
-          <div className="page-title page-title-lg">Pusat Notifikasi</div>
+          <div className="page-title page-title-lg">🔔 Pusat Notifikasi</div>
           <div className="page-caption page-caption-lg">
             Pantau semua peringatan, informasi, dan status sistem dalam satu tempat.
           </div>

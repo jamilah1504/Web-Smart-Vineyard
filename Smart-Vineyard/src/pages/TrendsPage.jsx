@@ -1,15 +1,30 @@
-import { useMemo } from 'react'
+import { useMemo, useState, useEffect } from 'react'
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts'
+import { getWeatherForecast } from '../services/trendsApi'
 
 function TrendsPage() {
-  // Generate 7-day forecast data
-  const forecastData = useMemo(() => {
-    const days = ['13 Mar', '14 Mar', '15 Mar', '16 Mar', '17 Mar', '18 Mar', '19 Mar']
-    return days.map((day, i) => ({
-      name: day,
-      soilMoisture: 30 + Math.random() * 50,
-      rainfall: i === 2 ? 15 : Math.random() * 5,
-    }))
+  const [forecastData, setForecastData] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+
+  // Fetch cuaca dari Open-Meteo API
+  useEffect(() => {
+    const fetchWeather = async () => {
+      try {
+        setLoading(true);
+        const data = await getWeatherForecast();
+        setForecastData(data);
+        setError('');
+      } catch (err) {
+        console.error("Error:", err);
+        setError('Gagal mengambil data cuaca');
+        setLoading(false);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchWeather();
   }, []);
 
   return (
@@ -17,12 +32,32 @@ function TrendsPage() {
       {/* Header */}
       <div className="page-header u-mb-15">
         <div>
-          <div className="page-title page-title-lg">Prediksi Tren 7 Hari</div>
+          <div className="page-title page-title-lg">📈 Prediksi Tren 7 Hari</div>
           <div className="page-caption page-caption-lg">
             Analisis tren cuaca & parameter lingkungan untuk perencanaan irigasi & manajemen risiko.
           </div>
         </div>
       </div>
+
+      {error && (
+        <div style={{
+          backgroundColor: '#fadbd8',
+          color: '#c62828',
+          padding: '16px',
+          borderRadius: '12px',
+          marginBottom: '20px',
+          border: '2px solid #e74c3c',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '12px'
+        }}>
+          <span>⚠️</span>
+          <div>
+            <strong>Error Data Cuaca</strong>
+            <div style={{ fontSize: '13px', marginTop: '4px' }}>{error}</div>
+          </div>
+        </div>
+      )}
 
       {/* Forecast Summary */}
       <section className="card-grid-3 u-mb-1" style={{ marginBottom: '30px', gap: '15px' }}>
@@ -33,20 +68,20 @@ function TrendsPage() {
               <div className="card-subtitle card-subtitle-lg">7 hari ke depan</div>
             </div>
           </div>
-          <div className="simple-card-list u-mt-05">
-            <div className="small-stat">
-              <div className="small-text text-sm-muted">13 Mar (Besok)</div>
-              <div style={{ fontSize: '0.9rem' }}>☀️ Cerah</div>
+          {loading ? (
+            <div className="simple-card-list u-mt-05">
+              <div style={{ textAlign: 'center', color: '#95a5a6' }}>⏳ Memuat...</div>
             </div>
-            <div className="small-stat">
-              <div className="small-text text-sm-muted">14 Mar</div>
-              <div style={{ fontSize: '0.9rem' }}>⛅ Sebagian Berawan</div>
+          ) : (
+            <div className="simple-card-list u-mt-05">
+              {forecastData.slice(0, 3).map((day, idx) => (
+                <div key={idx} className="small-stat">
+                  <div className="small-text text-sm-muted">{day.date}</div>
+                  <div style={{ fontSize: '0.9rem' }}>{day.weather}</div>
+                </div>
+              ))}
             </div>
-            <div className="small-stat">
-              <div className="small-text text-sm-muted">15 Mar</div>
-              <div style={{ fontSize: '0.9rem' }}>🌧️ Hujan Ringan</div>
-            </div>
-          </div>
+          )}
         </div>
 
         <div className="card card-animate card-elevated">
@@ -56,18 +91,30 @@ function TrendsPage() {
               <div className="card-subtitle card-subtitle-lg">Perkiraan Blok A</div>
             </div>
           </div>
-          <div className="simple-card-list u-mt-05">
-            <div className="small-stat">
-              <div className="small-text text-sm-muted">Hari ini</div>
-              <div className="big-number">65%</div>
-              <div className="small-text text-sm-muted">Kondisi optimal</div>
+          {loading ? (
+            <div className="simple-card-list u-mt-05">
+              <div style={{ textAlign: 'center', color: '#95a5a6' }}>⏳ Memuat...</div>
             </div>
-            <div className="small-stat">
-              <div className="small-text text-sm-muted">Prediksi 3 hari</div>
-              <div className="big-number" style={{ color: '#e74c3c' }}>35%</div>
-              <div className="small-text text-sm-muted">⚠️ Perlu irigasi</div>
+          ) : (
+            <div className="simple-card-list u-mt-05">
+              <div className="small-stat">
+                <div className="small-text text-sm-muted">Hari ini</div>
+                <div className="big-number">{forecastData[0]?.soilMoisturePrediction || '--'}%</div>
+                <div className="small-text text-sm-muted">
+                  {forecastData[0]?.soilMoisturePrediction > 60 ? '✓ Optimal' : '⚠️ Perlu irigasi'}
+                </div>
+              </div>
+              <div className="small-stat">
+                <div className="small-text text-sm-muted">Prediksi 3 hari</div>
+                <div className="big-number" style={{ color: forecastData[2]?.soilMoisturePrediction < 40 ? '#e74c3c' : '#27ae60' }}>
+                  {forecastData[2]?.soilMoisturePrediction || '--'}%
+                </div>
+                <div className="small-text text-sm-muted">
+                  {forecastData[2]?.soilMoisturePrediction < 40 ? '⚠️ Perlu irigasi' : '✓ Baik'}
+                </div>
+              </div>
             </div>
-          </div>
+          )}
         </div>
 
         <div className="card card-animate card-elevated">
@@ -100,32 +147,38 @@ function TrendsPage() {
           </div>
         </div>
         <div style={{ width: '100%', minHeight: '340px', padding: 'clamp(0.75rem, 2%, 1.5rem) 0', backgroundColor: '#fafbfc', borderRadius: '8px', marginTop: '15px' }}>
-          <ResponsiveContainer width="100%" height={320}>
-            <BarChart data={forecastData} margin={{ top: 5, right: 30, left: 0, bottom: 5 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#e0e7e3" />
-              <XAxis 
-                dataKey="name"
-                stroke="#789487"
-                style={{ fontSize: 'clamp(0.65rem, 1.5vw, 0.8rem)' }}
-                tick={{ fill: '#789487' }}
-              />
-              <YAxis 
-                stroke="#789487"
-                style={{ fontSize: 'clamp(0.65rem, 1.5vw, 0.8rem)' }}
-                tick={{ fill: '#789487' }}
-              />
-              <Tooltip 
-                contentStyle={{
-                  backgroundColor: '#ffffff',
-                  border: '1px solid #27ae60',
-                  borderRadius: '0.8rem',
-                  boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
-                  fontSize: 'clamp(0.7rem, 2vw, 0.85rem)',
-                }}
-              />
-              <Bar dataKey="soilMoisture" fill="#27ae60" name="Soil Moisture (%)" radius={[8, 8, 0, 0]} />
-            </BarChart>
-          </ResponsiveContainer>
+          {loading ? (
+            <div style={{ height: '320px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#95a5a6' }}>
+              ⏳ Memuat data cuaca...
+            </div>
+          ) : (
+            <ResponsiveContainer width="100%" height={320}>
+              <BarChart data={forecastData} margin={{ top: 5, right: 30, left: 0, bottom: 5 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#e0e7e3" />
+                <XAxis 
+                  dataKey="date"
+                  stroke="#789487"
+                  style={{ fontSize: 'clamp(0.65rem, 1.5vw, 0.8rem)' }}
+                  tick={{ fill: '#789487' }}
+                />
+                <YAxis 
+                  stroke="#789487"
+                  style={{ fontSize: 'clamp(0.65rem, 1.5vw, 0.8rem)' }}
+                  tick={{ fill: '#789487' }}
+                />
+                <Tooltip 
+                  contentStyle={{
+                    backgroundColor: '#ffffff',
+                    border: '1px solid #27ae60',
+                    borderRadius: '0.8rem',
+                    boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+                    fontSize: 'clamp(0.7rem, 2vw, 0.85rem)',
+                  }}
+                />
+                <Bar dataKey="soilMoisturePrediction" fill="#27ae60" name="Soil Moisture (%)" radius={[8, 8, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          )}
         </div>
       </section>
 
@@ -148,36 +201,30 @@ function TrendsPage() {
               </tr>
             </thead>
             <tbody>
-              <tr>
-                <td>13 Mar</td>
-                <td>Cerah</td>
-                <td>52</td>
-                <td>Irigasi pagi</td>
-              </tr>
-              <tr>
-                <td>14 Mar</td>
-                <td>Berawan</td>
-                <td>45</td>
-                <td>Irigasi pagi</td>
-              </tr>
-              <tr>
-                <td>15 Mar</td>
-                <td>Hujan Ringan</td>
-                <td>68</td>
-                <td>Tunda irigasi</td>
-              </tr>
-              <tr>
-                <td>16 Mar</td>
-                <td>Cerah</td>
-                <td>38</td>
-                <td>Irigasi sore</td>
-              </tr>
-              <tr>
-                <td>17 Mar</td>
-                <td>Cerah</td>
-                <td>30</td>
-                <td>Irigasi dobel</td>
-              </tr>
+              {loading ? (
+                <tr>
+                  <td colSpan="4" style={{ textAlign: 'center', color: '#95a5a6', padding: '20px' }}>
+                    ⏳ Memuat data...
+                  </td>
+                </tr>
+              ) : (
+                forecastData.map((day, idx) => (
+                  <tr key={idx}>
+                    <td>{day.date}</td>
+                    <td>{day.weather}</td>
+                    <td style={{ fontWeight: '600', color: day.soilMoisturePrediction > 60 ? '#27ae60' : '#e74c3c' }}>
+                      {day.soilMoisturePrediction}%
+                    </td>
+                    <td>
+                      {day.soilMoisturePrediction > 60 
+                        ? 'Tunda irigasi' 
+                        : day.soilMoisturePrediction > 40 
+                        ? 'Irigasi normal' 
+                        : 'Irigasi intensif'}
+                    </td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
           <div className="small-text text-sm-muted u-mt-05" style={{ textAlign: 'center', padding: '12px', color: '#95a5a6' }}>
