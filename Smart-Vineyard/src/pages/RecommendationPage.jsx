@@ -107,12 +107,21 @@ export default function RecommendationPage() {
 
   return (
     <div className="page page-with-padding page-shell" style={{ backgroundColor: '#f8f9fa' }}>
+      <div className="page-header u-mb-15">
+        <div>
+          <div className="page-title page-title-lg">Rekomendasi Perawatan</div>
+          <div className="page-caption page-caption-lg">
+            Catatan agronomis berbasis data sensor & hasil analisis AI (dummy — siap ke API).
+          </div>
+        </div>
+      </div>
+
       <section className="card card-elevated u-mb-15">
         <div className="card-header card-header-top card-header-top-gap">
           <div>
-            <div className="card-title card-title-lg">Rekomendasi Perawatan</div>
+            <div className="card-title card-title-lg">Filter Rekomendasi</div>
             <div className="card-subtitle card-subtitle-lg">
-              Catatan agronomis berbasis data sensor & hasil analisis AI (dummy — siap ke API).
+              Cari berdasarkan blok, prioritas, atau kata kunci
             </div>
           </div>
           <span className="badge-pill-neutral">Total {items.length}</span>
