@@ -1,48 +1,16 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { getMyNotifications } from '../services/notificationApi.js'
 
 function NotificationsPage() {
-  const [notifications] = useState([
-    {
-      id: 1,
-      time: '2026-03-12 10:30',
-      type: 'warning',
-      title: 'Kelembapan Kritical',
-      message: 'Kelembapan Blok A turun di bawah 40%. Pompa irigasi akan diaktifkan otomatis dalam 5 menit.',
-    },
-    {
-      id: 2,
-      time: '2026-03-12 08:15',
-      type: 'info',
-      title: 'Irigasi Otomatis Selesai',
-      message: 'Pompa Blok B selesai irigasi. Total durasi: 60 menit, volume: 3,000 liter.',
-    },
-    {
-      id: 3,
-      time: '2026-03-11 22:45',
-      type: 'critical',
-      title: 'Sensor Error',
-      message: 'Sensor pH Blok A tidak merespons. Silakan periksa koneksi atau lakukan reset.',
-    },
-    {
-      id: 4,
-      time: '2026-03-11 15:20',
-      type: 'success',
-      title: 'Analisis AI Selesai',
-      message: 'Analisis kesehatan tanaman Blok C selesai. Tidak ada anomali terdeteksi. Status: Normal.',
-    },
-    {
-      id: 5,
-      time: '2026-03-11 09:00',
-      type: 'warning',
-      title: 'Threshold Terlampaui',
-      message: 'EC (salinitas) Blok B mencapai 1.6 dS/m. Rekomendasi: lakukan irigasi dengan air tawar.',
-    },
-  ])
+  const [notifications, setNotifications] = useState([])
+  const [loading, setLoading] = useState(true)
 
+  // Pastikan kunci (key) di sini sesuai dengan isi kolom 'tipe' di database
   const typeColor = {
     info: '#2b8aef',
     warning: '#f39c12',
     critical: '#e74c3c',
+    danger: '#e74c3c', // Tambahan jika di DB pake tipe 'danger'
     success: '#27ae60',
   }
 
@@ -50,8 +18,32 @@ function NotificationsPage() {
     info: '📢',
     warning: '⚠️',
     critical: '🔴',
+    danger: '🔥',
     success: '✓',
   }
+
+  // Integrasi API
+  useEffect(() => {
+    const fetchNotif = async () => {
+      try {
+        const response = await getMyNotifications();
+        // Sesuai controller backend: res.status(200).json({ status: 'success', data });
+        // Kita cek apakah response.data ada, jika tidak default ke array kosong
+        if (response && response.data) {
+          setNotifications(response.data);
+        }
+      } catch (error) {
+        console.error("Gagal mengambil notifikasi:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchNotif();
+    
+    // Opsional: Refresh otomatis setiap 30 detik agar notifikasi baru dari ESP-CAM muncul
+    const interval = setInterval(fetchNotif, 30000);
+    return () => clearInterval(interval);
+  }, []);
 
   return (
     <div className="page page-with-padding page-shell" style={{ backgroundColor: '#f8f9fa' }}>
@@ -60,16 +52,14 @@ function NotificationsPage() {
         <div>
           <div className="page-title page-title-lg">Pusat Notifikasi</div>
           <div className="page-caption page-caption-lg">
-            Pantau semua peringatan, informasi, dan status sistem dalam satu tempat.</div>
+            Pantau semua peringatan, informasi, dan status sistem dalam satu tempat.
+          </div>
         </div>
       </div>
 
-      <section
-        className="card card-animate card-animate-delay-1 card-elevated u-mb-1"
-      >
-        <div
-          className="card-header card-header-top-md"
-        >
+      {/* Filter Riwayat */}
+      <section className="card card-animate card-animate-delay-1 card-elevated u-mb-1">
+        <div className="card-header card-header-top-md">
           <div>
             <div className="card-title card-title-lg">Filter Riwayat</div>
             <div className="card-subtitle card-subtitle-lg">
@@ -98,12 +88,9 @@ function NotificationsPage() {
         </div>
       </section>
 
-      <section
-        className="card card-animate card-animate-delay-2 card-elevated"
-      >
-        <div
-          className="card-header card-header-top"
-        >
+      {/* Daftar Notifikasi */}
+      <section className="card card-animate card-animate-delay-2 card-elevated">
+        <div className="card-header card-header-top">
           <div>
             <div className="card-title card-title-lg">Riwayat Notifikasi</div>
             <div className="card-subtitle card-subtitle-lg">
@@ -111,8 +98,45 @@ function NotificationsPage() {
             </div>
           </div>
         </div>
-        <div className="small-text text-body">
-          Tabel riwayat notifikasi akan ditampilkan di sini.
+        
+        <div className="u-p-1">
+          {loading ? (
+            <div className="small-text">Memuat notifikasi...</div>
+          ) : notifications && notifications.length > 0 ? (
+            <div className="simple-card-list">
+              {notifications.map((notif) => (
+                <div 
+                  key={notif.id} 
+                  style={{ 
+                    padding: '15px', 
+                    borderLeft: `5px solid ${typeColor[notif.tipe] || '#ccc'}`,
+                    backgroundColor: '#fff',
+                    marginBottom: '10px',
+                    borderRadius: '4px',
+                    boxShadow: '0 2px 4px rgba(0,0,0,0.05)'
+                  }}
+                >
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div style={{ fontWeight: 'bold', color: typeColor[notif.tipe] || '#333' }}>
+                      {/* PERBAIKAN: Gunakan notif.tipe dan notif.perangkat_id */}
+                      {typeLabel[notif.tipe] || '•'} {notif.perangkat_id}
+                    </div>
+                    <div className="small-text text-sm-muted" style={{ fontSize: '0.8rem' }}>
+                      {new Date(notif.createdAt).toLocaleString('id-ID')}
+                    </div>
+                  </div>
+                  <div className="small-text u-mt-05" style={{ color: '#555' }}>
+                    {/* PERBAIKAN: Gunakan notif.pesan sesuai nama kolom di database */}
+                    {notif.pesan}
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="small-text text-body">
+              Belum ada notifikasi yang tersedia.
+            </div>
+          )}
         </div>
       </section>
     </div>
@@ -120,4 +144,3 @@ function NotificationsPage() {
 }
 
 export default NotificationsPage
-
