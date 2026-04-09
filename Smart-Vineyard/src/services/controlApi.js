@@ -1,10 +1,11 @@
 import axios from 'axios';
+import { getAccessToken } from '../utils/authStorage';
 
 const API_URL = "https://d34f3d5l-5000.asse.devtunnels.ms/api/controls";
 
 // Fungsi untuk ambil config header otomatis
 const getAuthHeaders = () => {
-  const token = localStorage.getItem('token'); // CEK: apakah saat login kamu simpan dengan nama 'token'?
+  const token = getAccessToken();
   return {
     headers: {
       'Authorization': `Bearer ${token}`
@@ -22,4 +23,23 @@ export const updatePumpStatus = async (id, data) => {
   // PUT request dengan data dan headers
   const response = await axios.put(`${API_URL}/pump/${id}`, data, getAuthHeaders());
   return response.data;
+};
+
+// Get latest water level data for a specific device
+export const getLatestWaterLevel = async (perangkatId) => {
+  const token = getAccessToken();
+  const res = await fetch(`${API_URL}/tandon/latest/${perangkatId}`, {
+    method: 'GET',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`
+    }
+  });
+
+  if (!res.ok) {
+    const errorData = await res.json().catch(() => ({}));
+    throw new Error(errorData.message || 'Gagal mengambil data level tandon');
+  }
+
+  return await res.json();
 };
