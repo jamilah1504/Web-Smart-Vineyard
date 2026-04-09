@@ -1,5 +1,5 @@
 import { getAccessToken } from '../utils/authStorage';
-const BASE_URL = 'http://localhost:5000/api/varietas';
+const BASE_URL = 'https://d34f3d5l-5000.asse.devtunnels.ms/api/varietas';
 
 export async function getAllVarietas() {
   const token = getAccessToken();

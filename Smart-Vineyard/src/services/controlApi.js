@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_URL = "http://localhost:5000/api/controls";
+const API_URL = "https://d34f3d5l-5000.asse.devtunnels.ms/api/controls";
 
 // Fungsi untuk ambil config header otomatis
 const getAuthHeaders = () => {
@@ -14,7 +14,7 @@ const getAuthHeaders = () => {
 
 export const getAllDevices = async () => {
   // Route ini biasanya ada di perangkatRoutes.js
-  const response = await axios.get(`http://localhost:5000/api/perangkat`, getAuthHeaders());
+  const response = await axios.get(`https://d34f3d5l-5000.asse.devtunnels.ms/api/perangkat`, getAuthHeaders());
   return response.data;
 };
 

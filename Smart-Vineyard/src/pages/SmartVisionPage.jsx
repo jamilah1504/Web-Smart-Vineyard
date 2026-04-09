@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import axios from 'axios';
 import { getLatestDiagnosis, getDiagnosisHistory } from '../services/diagnosisApi';
 
 function SmartVisionPage() {
@@ -9,33 +10,36 @@ function SmartVisionPage() {
   const [photoPreview, setPhotoPreview] = useState(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [showCamera, setShowCamera] = useState(false);
+  
   const fileInputRef = useRef(null);
-  const cameraInputRef = useRef(null);
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
   const streamRef = useRef(null);
 
-  const DEVICE_ID = "ESP32-MAC-A001"; 
+  const DEVICE_ID = "ESP32-MAC-A001"; // ID Perangkat Default
   const BASE_URL = "http://localhost:5000";
 
+  // Load Initial Data
   useEffect(() => {
-    const fetchAIStatus = async () => {
-      try {
-        const res = await getLatestDiagnosis(DEVICE_ID);
-        if (res.status === 'success') setLatest(res.data);
-        
-        const resHistory = await getDiagnosisHistory(DEVICE_ID);
-        if (resHistory.status === 'success') setHistory(resHistory.data);
-      } catch (err) {
-        console.error("Gagal ambil data AI:", err);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchAIStatus();
+    fetchInitialData();
   }, []);
 
-  // Handle camera access
+  const fetchInitialData = async () => {
+    try {
+      setLoading(true);
+      const res = await getLatestDiagnosis(DEVICE_ID);
+      if (res.status === 'success') setLatest(res.data);
+      
+      const resHistory = await getDiagnosisHistory(DEVICE_ID);
+      if (resHistory.status === 'success') setHistory(resHistory.data);
+    } catch (err) {
+      console.error("Gagal ambil data AI:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // --- LOGIKA KAMERA ---
   const handleOpenCamera = async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ 
@@ -47,33 +51,34 @@ function SmartVisionPage() {
       }
       setShowCamera(true);
     } catch (error) {
-      console.error('Error accessing camera:', error);
-      alert('Tidak bisa akses kamera. Error: ' + error.message);
+      alert('Gagal akses kamera: ' + error.message);
     }
   };
 
-  // Capture photo dari camera
   const handleCapturePhoto = () => {
     if (videoRef.current && canvasRef.current) {
       const context = canvasRef.current.getContext('2d');
-      context.drawImage(videoRef.current, 0, 0, canvasRef.current.width, canvasRef.current.height);
+      // Set canvas size sesuai video
+      canvasRef.current.width = videoRef.current.videoWidth;
+      canvasRef.current.height = videoRef.current.videoHeight;
       
-      canvasRef.current.toBlob((blob) => {
-        const file = new File([blob], `photo-${Date.now()}.jpg`, { type: 'image/jpeg' });
-        setSelectedPhoto(file);
-        const reader = new FileReader();
-        reader.onload = (e) => {
-          setPhotoPreview(e.target?.result);
-        };
-        reader.readAsDataURL(blob);
-      }, 'image/jpeg');
+      context.drawImage(videoRef.current, 0, 0);
       
-      // Stop camera
+      const base64 = canvasRef.current.toDataURL('image/jpeg');
+      setPhotoPreview(base64);
+      
+      // Convert base64 to File object untuk selectedPhoto
+      fetch(base64)
+        .then(res => res.blob())
+        .then(blob => {
+          const file = new File([blob], "camera-capture.jpg", { type: "image/jpeg" });
+          setSelectedPhoto(file);
+        });
+
       handleCloseCamera();
     }
   };
 
-  // Close camera
   const handleCloseCamera = () => {
     if (streamRef.current) {
       streamRef.current.getTracks().forEach(track => track.stop());
@@ -82,323 +87,173 @@ function SmartVisionPage() {
     setShowCamera(false);
   };
 
-  // Handle file selection dari galeri
+  // --- LOGIKA FILE / GALERI ---
   const handleFileSelect = (event) => {
-    const file = event.target.files?.[0]
-    if (!file) return
+    const file = event.target.files?.[0];
+    if (!file) return;
 
-    // Validasi ukuran file (max 5MB)
     if (file.size > 5 * 1024 * 1024) {
-      alert('Ukuran file terlalu besar. Maksimal 5MB.')
-      return
+      alert('File terlalu besar (Maks 5MB)');
+      return;
     }
 
-    // Validasi tipe file
-    if (!['image/jpeg', 'image/png', 'image/jpg'].includes(file.type)) {
-      alert('Format file tidak didukung. Gunakan JPG atau PNG.')
-      return
-    }
+    setSelectedPhoto(file);
+    const reader = new FileReader();
+    reader.onload = (e) => setPhotoPreview(e.target?.result);
+    reader.readAsDataURL(file);
+  };
 
-    setSelectedPhoto(file)
-    const reader = new FileReader()
-    reader.onload = (e) => {
-      setPhotoPreview(e.target?.result)
-    }
-    reader.readAsDataURL(file)
-  }
-
-  // Analisis foto
+  // --- INTEGRASI BACKEND (ANALISIS) ---
   const handleAnalyzePhoto = async () => {
-    if (!selectedPhoto) {
-      alert('Silakan pilih foto terlebih dahulu!')
-      return
-    }
+    if (!photoPreview) return;
 
-    setIsAnalyzing(true)
-    
+    setIsAnalyzing(true);
+    const token = localStorage.getItem('sv_access_token');
+
     try {
-      alert('Analisis foto sedang diproses dengan AI...')
-      setTimeout(() => {
-        setIsAnalyzing(false)
-        alert('Foto berhasil dianalisis!')
-        setSelectedPhoto(null)
-        setPhotoPreview(null)
-      }, 2000)
+      const response = await axios.post(`${BASE_URL}/api/diagnosis/detect`, {
+        perangkat_id: DEVICE_ID,
+        image_base64: photoPreview // Mengirim string base64 yang sudah ada di preview
+      }, {
+        headers: { 
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (response.data.status === 'success') {
+        alert(`Analisis Berhasil: ${response.data.diagnosis}`);
+        
+        // Update UI secara instan
+        setLatest(response.data.data);
+        setHistory(prev => [response.data.data, ...prev]);
+        
+        // Reset Preview
+        handleClearPhoto();
+      }
     } catch (error) {
-      console.error('Error analyzing photo:', error)
-      alert('Gagal menganalisis foto: ' + error.message)
-      setIsAnalyzing(false)
+      console.error('Error:', error);
+      alert('Gagal menganalisis: ' + (error.response?.data?.message || error.message));
+    } finally {
+      setIsAnalyzing(false);
     }
-  }
+  };
 
-  // Bersihkan preview
   const handleClearPhoto = () => {
-    setSelectedPhoto(null)
-    setPhotoPreview(null)
-    if (fileInputRef.current) fileInputRef.current.value = ''
-    if (cameraInputRef.current) cameraInputRef.current.value = ''
-  }
+    setSelectedPhoto(null);
+    setPhotoPreview(null);
+    if (fileInputRef.current) fileInputRef.current.value = '';
+  };
 
-  if (loading) return <div className="page page-with-padding">Menganalisis Data AI...</div>;
+  if (loading) return <div className="page page-with-padding">Memuat Data Vision...</div>;
 
   return (
     <div className="page page-with-padding page-shell" style={{ backgroundColor: '#f8f9fa' }}>
       <div className="page-header u-mb-15">
         <div>
           <div className="page-title page-title-lg">Smart Vision (AI Diagnosis)</div>
-          <div className="page-caption page-caption-lg">Analisis visual daun anggur via Roboflow AI.</div>
+          <div className="page-caption page-caption-lg">Deteksi kesehatan daun secara real-time.</div>
         </div>
       </div>
 
-      {/* Quick Action Buttons */}
+      {/* Buttons */}
       <section className="u-mb-1">
-        <div style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))',
-          gap: '12px',
-          marginBottom: '20px'
-        }}>
-          <button 
-            type="button" 
-            className="btn-primary btn-pill-primary"
-            onClick={handleOpenCamera}
-            style={{
-              padding: '16px 20px',
-              fontSize: '1rem',
-              fontWeight: 'bold',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: '8px',
-              borderRadius: '12px',
-              transition: 'all 0.3s'
-            }}
-          >
-            <span style={{ fontSize: '1.5rem' }}>📷</span>
-            <span>Ambil Foto</span>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+          <button className="btn-primary btn-pill-primary" onClick={handleOpenCamera} style={{ padding: '15px' }}>
+            📷 Ambil Foto
           </button>
-
-          <button 
-            type="button" 
-            className="btn-pill-outline"
-            onClick={() => fileInputRef.current?.click()}
-            style={{
-              padding: '16px 20px',
-              fontSize: '1rem',
-              fontWeight: 'bold',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: '8px',
-              borderRadius: '12px',
-              transition: 'all 0.3s'
-            }}
-          >
-            <span style={{ fontSize: '1.5rem' }}>📁</span>
-            <span>Pilih Galeri</span>
+          <button className="btn-pill-outline" onClick={() => fileInputRef.current.click()} style={{ padding: '15px' }}>
+            📁 Dari Galeri
           </button>
         </div>
+        <input ref={fileInputRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={handleFileSelect} />
       </section>
-
-      {/* Hidden Canvas untuk capture */}
-      <canvas ref={canvasRef} style={{ display: 'none' }} width={1280} height={720} />
 
       {/* Camera Modal */}
       {showCamera && (
-        <div style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          backgroundColor: '#000',
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          justifyContent: 'center',
-          zIndex: 2000
-        }}>
-          <div style={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '20px' }}>
-            <video
-              ref={videoRef}
-              autoPlay
-              playsInline
-              style={{
-                width: '100%',
-                maxWidth: '600px',
-                height: 'auto',
-                borderRadius: '12px',
-                backgroundColor: '#000'
-              }}
-            />
-            <div style={{ display: 'flex', gap: '12px' }}>
-              <button
-                type="button"
-                className="btn-primary btn-pill-primary"
-                onClick={handleCapturePhoto}
-              >
-                ✓ Ambil Foto
-              </button>
-              <button
-                type="button"
-                className="btn-pill-outline"
-                onClick={handleCloseCamera}
-              >
-                ✕ Tutup
-              </button>
-            </div>
+        <div style={{ position: 'fixed', inset: 0, backgroundColor: '#000', zIndex: 3000, display: 'flex', flexDirection: 'column' }}>
+          <video ref={videoRef} autoPlay playsInline style={{ flex: 1, width: '100%', objectFit: 'cover' }} />
+          <div style={{ padding: '20px', display: 'flex', justifyContent: 'center', gap: '20px' }}>
+            <button className="btn-primary" onClick={handleCapturePhoto} style={{ borderRadius: '50%', width: '70px', height: '70px', fontSize: '24px' }}>📸</button>
+            <button className="btn-pill-outline" onClick={handleCloseCamera} style={{ color: '#fff' }}>Batal</button>
           </div>
         </div>
       )}
 
-      {/* Hidden File Input - Gallery */}
-      <input
-        ref={fileInputRef}
-        type="file"
-        accept="image/jpeg,image/png,image/jpg"
-        style={{ display: 'none' }}
-        onChange={handleFileSelect}
-      />
-
-      {/* Photo Preview & Analysis */}
+      {/* Preview Card */}
       {photoPreview && (
-        <section className="card card-animate card-elevated u-mb-1">
-          <div className="card-header card-header-top">
-            <div>
-              <div className="card-title card-title-lg">Preview Foto</div>
-              <div className="card-subtitle card-subtitle-lg">Nama file: {selectedPhoto?.name}</div>
-            </div>
-          </div>
-          <div className="simple-card-list u-mt-05">
-            <div style={{ textAlign: 'center', marginBottom: '12px' }}>
-              <img 
-                src={photoPreview} 
-                alt="Preview" 
-                style={{ maxWidth: '100%', maxHeight: '300px', borderRadius: '8px' }}
-              />
-            </div>
-            <div style={{ display: 'flex', gap: '12px' }}>
-              <button
-                type="button"
-                className="btn-primary btn-pill-primary"
-                style={{ flex: 1 }}
-                onClick={handleAnalyzePhoto}
-                disabled={isAnalyzing}
-              >
-                {isAnalyzing ? '⏳ Menganalisis...' : '✓ Analisis Foto'}
+        <section className="card card-elevated u-mb-1 card-animate">
+          <div className="u-p-1 u-text-center">
+            <img src={photoPreview} alt="Preview" style={{ maxWidth: '100%', borderRadius: '12px', maxHeight: '300px' }} />
+            <div className="btn-row u-mt-1">
+              <button className="btn-primary btn-pill-primary" onClick={handleAnalyzePhoto} disabled={isAnalyzing}>
+                {isAnalyzing ? 'Menganalisis...' : 'Mulai Analisis AI'}
               </button>
-              <button
-                type="button"
-                className="btn-pill-outline"
-                style={{ flex: 1 }}
-                onClick={handleClearPhoto}
-                disabled={isAnalyzing}
-              >
-                ✕ Batal
-              </button>
+              <button className="btn-pill-outline" onClick={handleClearPhoto}>Batal</button>
             </div>
           </div>
         </section>
       )}
 
+      {/* Layout Grid */}
       <section className="card-grid-2 grid-2-wide u-mb-1">
-        {/* HASIL ANALISIS DINAMIS DENGAN GAMBAR */}
-        <div className="card card-animate card-elevated">
-          <div className="card-header card-header-top">
-            <div>
-              <div className="card-title card-title-lg">Hasil Analisis Terakhir</div>
-              <div className="card-subtitle card-subtitle-lg">
-                {latest ? new Date(latest.createdAt).toLocaleString('id-ID') : 'Tidak ada data'}
-              </div>
-            </div>
+        {/* Latest Result */}
+        <div className="card card-elevated">
+          <div className="card-header">
+            <div className="card-title">Diagnosis Terakhir</div>
+            <div className="card-subtitle">{latest ? new Date(latest.createdAt).toLocaleString() : '-'}</div>
           </div>
-          
-          {/* TAMPILAN GAMBAR UTAMA */}
           <div className="u-p-1 u-text-center">
-            {latest?.image_url ? (
-              <img 
-                src={`${BASE_URL}${latest.image_url}`} 
-                alt="Diagnosis Daun" 
-                className="u-img-fluid"
-                style={{ maxHeight: '250px', borderRadius: '12px', objectFit: 'cover', border: '1px solid #ddd' }}
-              />
-            ) : (
-              <div style={{ height: '200px', backgroundColor: '#f0f0f0', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <span className="small-text">Foto tidak tersedia</span>
-              </div>
-            )}
-          </div>
-
-          <div className="ai-diagnosis u-mt-05">
-            <div className={`ai-label ${latest?.hasil_diagnosis === 'Sehat' ? 'ai-label-pill-success' : 'ai-label-pill-critical'}`}>
-              {latest ? latest.hasil_diagnosis : 'Belum Ada Data'}
-            </div>
-            <div className="ai-tagline ai-tagline-body u-mt-05">
-              Confidence: <strong>{latest ? (latest.confidence_score * 100).toFixed(2) : 0}%</strong>
-            </div>
+            {latest ? (
+              <>
+                <img src={`${BASE_URL}${latest.image_url}`} className="u-img-fluid" style={{ borderRadius: '8px', maxHeight: '200px' }} />
+                <div className={`ai-label u-mt-1 ${latest.hasil_diagnosis === 'Sehat' ? 'ai-label-pill-success' : 'ai-label-pill-critical'}`}>
+                  {latest.hasil_diagnosis}
+                </div>
+                <div className="small-text u-mt-05">Akurasi: {(latest.confidence_score * 100).toFixed(1)}%</div>
+              </>
+            ) : <p>Belum ada riwayat.</p>}
           </div>
         </div>
 
-        {/* REKOMENDASI TINDAKAN */}
-        <div className="card card-animate card-elevated">
-          <div className="card-header card-header-top">
-            <div>
-              <div className="card-title card-title-lg">Rekomendasi Tindakan</div>
-              <div className="card-subtitle card-subtitle-lg">Berdasarkan hasil diagnosa AI</div>
-            </div>
-          </div>
-          <div className="small-text text-body" style={{ padding: '15px', lineHeight: '1.6' }}>
-            {latest ? latest.saran_tindakan : "Silakan ambil foto daun menggunakan ESP32-CAM untuk memulai analisis."}
+        {/* Saran */}
+        <div className="card card-elevated">
+          <div className="card-header"><div className="card-title">Rekomendasi</div></div>
+          <div className="u-p-1" style={{ fontSize: '0.9rem', lineHeight: '1.6' }}>
+            {latest ? latest.saran_tindakan : "Gunakan fitur kamera untuk mendapatkan saran perawatan."}
           </div>
         </div>
       </section>
 
-      {/* GALERI RIWAYAT DIAGNOSIS */}
-      <section className="card card-animate card-elevated">
-        <div className="card-header card-header-top u-mb-1">
-          <div>
-            <div className="card-title card-title-lg">Riwayat Diagnosa AI</div>
-            <div className="card-subtitle card-subtitle-lg">Daftar deteksi penyakit sebelumnya</div>
-          </div>
-        </div>
-        <div className="u-mt-1 u-overflow-x">
+      {/* History Table */}
+      <section className="card card-elevated">
+        <div className="card-header"><div className="card-title">Riwayat Deteksi</div></div>
+        <div className="u-overflow-x">
           <table style={{ width: '100%', borderCollapse: 'collapse' }}>
             <thead>
-              <tr style={{ borderBottom: '2px solid #eee', textAlign: 'left' }}>
+              <tr style={{ textAlign: 'left', borderBottom: '1px solid #eee' }}>
                 <th style={{ padding: '12px' }}>Foto</th>
+                <th style={{ padding: '12px' }}>Penyakit</th>
                 <th style={{ padding: '12px' }}>Waktu</th>
-                <th style={{ padding: '12px' }}>Hasil Diagnosis</th>
-                <th style={{ padding: '12px' }}>Confidence</th>
               </tr>
             </thead>
             <tbody>
-              {history.length > 0 ? history.map((log) => (
-                <tr key={log.id} style={{ borderBottom: '1px solid #f9f9f9' }}>
-                  <td style={{ padding: '12px' }}>
-                    <img 
-                      src={`${BASE_URL}${log.image_url}`} 
-                      alt="thumb" 
-                      style={{ width: '50px', height: '50px', borderRadius: '6px', objectFit: 'cover', border: '1px solid #eee' }}
-                      onError={(e) => { e.target.src = "https://via.placeholder.com/50?text=NA" }}
-                    />
+              {history.map(item => (
+                <tr key={item.id} style={{ borderBottom: '1px solid #f9f9f9' }}>
+                  <td style={{ padding: '8px' }}>
+                    <img src={`${BASE_URL}${item.image_url}`} style={{ width: '45px', height: '45px', borderRadius: '4px', objectFit: 'cover' }} />
                   </td>
-                  <td style={{ padding: '12px' }}>{new Date(log.createdAt).toLocaleString('id-ID')}</td>
-                  <td style={{ padding: '12px' }}>
-                    <span className={`u-text-bold ${log.hasil_diagnosis === 'Sehat' ? 'u-text-success' : 'u-text-danger'}`}>
-                      {log.hasil_diagnosis}
-                    </span>
-                  </td>
-                  <td style={{ padding: '12px' }}>{(log.confidence_score * 100).toFixed(1)}%</td>
+                  <td style={{ padding: '8px', fontWeight: 'bold' }}>{item.hasil_diagnosis}</td>
+                  <td style={{ padding: '8px', fontSize: '0.8rem' }}>{new Date(item.createdAt).toLocaleDateString()}</td>
                 </tr>
-              )) : (
-                <tr>
-                  <td colSpan="4" style={{ textAlign: 'center', padding: '20px' }}>Belum ada riwayat analisis.</td>
-                </tr>
-              )}
+              ))}
             </tbody>
           </table>
         </div>
       </section>
+
+      {/* Hidden Canvas */}
+      <canvas ref={canvasRef} style={{ display: 'none' }} />
     </div>
   );
 }

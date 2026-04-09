@@ -1,5 +1,5 @@
 // Direkomendasikan membuat variabel BASE_URL agar mudah diubah nanti saat di-hosting
-const BASE_URL = 'http://localhost:5000';
+const BASE_URL = 'https://d34f3d5l-5000.asse.devtunnels.ms';
 
 export async function loginRequest({ email, password }) {
   // Tambahkan BASE_URL di depan endpoint-nya

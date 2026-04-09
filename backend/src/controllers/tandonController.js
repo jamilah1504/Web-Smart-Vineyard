@@ -1,21 +1,54 @@
 const { LogTandon, PerangkatIoT, Notification } = require('../models');
+const sendTelegram = require('../utils/telegram');
 
 // 1. Fungsi untuk Mencatat Ketinggian Air & Proteksi Hardware
 exports.recordWaterLevel = async (req, res) => {
     try {
-        const { perangkat_id, ketinggian_air } = req.body;
-        
-        if (ketinggian_air < 10) {
-            // Trigger di model PerangkatIoT akan otomatis membuat notifikasi "Pompa MATI"
+        const { perangkat_id, ketinggian_air, jenis_tandon } = req.body;
+
+        // Validasi input sederhana
+        if (!perangkat_id || ketinggian_air === undefined) {
+            return res.status(400).json({ status: 'error', message: 'Data tidak lengkap.' });
+        }
+
+        // Simpan log tandon terlebih dahulu
+        await LogTandon.create({ perangkat_id, ketinggian_air, jenis_tandon });
+
+        // LOGIKA PROTEKSI KRITIS (< 10%)
+        if (ketinggian_air < 10 && jenis_tandon === 'air') {
+            // 1. Update Perangkat (Matikan Pompa)
+            // individualHooks: true digunakan jika Anda memiliki 'afterUpdate' hook di model
             await PerangkatIoT.update(
                 { status_pompa_air: false }, 
-                { where: { id: perangkat_id }, individualHooks: true } // PENTING: individualHooks: true agar trigger jalan
+                { where: { id: perangkat_id }, individualHooks: true }
             );
+
+            // 2. Kirim ke Telegram (Async, tidak perlu ditunggu jika ingin respon cepat)
+            const pesanTelegram = `🚨 *DARURAT TANDON*\n\nID Perangkat: *${perangkat_id}*\nAir di tandon kritis: *${ketinggian_air}%*.\nPompa telah dimatikan otomatis untuk keamanan.`;
+            sendTelegram(pesanTelegram).catch(err => console.error("❌ Gagal kirim Telegram:", err));
+
+            // 3. Simpan ke Notification DB (untuk dashboard web)
+            await Notification.create({
+                perangkat_id,
+                pesan: `Darurat! Air kritis (${ketinggian_air}%). Pompa dimatikan otomatis.`,
+                tipe: 'critical'
+            });
+
+            console.log(`⚠️ Safety Triggered untuk ${perangkat_id}: Air ${ketinggian_air}%`);
         }
-        res.status(201).json({ status: 'success' });
+
+        // Kirim respon HANYA SEKALI di akhir proses try
+        return res.status(201).json({ 
+            status: 'success', 
+            message: 'Data berhasil dicatat' 
+        });
+
     } catch (error) {
         console.error("❌ Error recordWaterLevel:", error);
-        res.status(500).json({ status: 'error', message: error.message });
+        // Pastikan tidak mengirim respon jika sudah terkirim (headers sent)
+        if (!res.headersSent) {
+            return res.status(500).json({ status: 'error', message: error.message });
+        }
     }
 };
 
@@ -26,7 +59,7 @@ exports.getLatestWaterLevel = async (req, res) => {
 
         const data = await LogTandon.findOne({
             where: { perangkat_id },
-            order: [['createdAt', 'DESC']] // Mengambil data terbaru berdasarkan waktu dibuat
+            order: [['createdAt', 'DESC']]
         });
 
         if (!data) {
@@ -36,13 +69,13 @@ exports.getLatestWaterLevel = async (req, res) => {
             });
         }
 
-        res.status(200).json({ 
+        return res.status(200).json({ 
             status: 'success', 
             data: data 
         });
 
     } catch (error) {
         console.error("❌ Error getLatestWaterLevel:", error);
-        res.status(500).json({ status: 'error', message: error.message });
+        return res.status(500).json({ status: 'error', message: error.message });
     }
 };

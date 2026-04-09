@@ -1,14 +1,24 @@
 const { PerangkatIoT, LogSensorTanah, VarietasAnggur, Notification } = require('../models');
 const { messaging } = require('../config/firebase');
+const sendTelegram = require('../utils/telegram');
 
 exports.receiveSensorData = async (req, res) => {
     try {
         // --- 1. LOG DATA MASUK (DEBUGGING) ---
         console.log("=========================================");
-        console.log("📩 DATA DARI ESP32:", JSON.stringify(req.body, null, 2));
+        console.log("📩 DATA SENSOR RS485 DARI ESP32:", JSON.stringify(req.body, null, 2));
         console.log("=========================================");
 
-        const { perangkat_id, n_val, p_val, k_val, ph_val, moisture_val } = req.body;
+        const { 
+            perangkat_id, 
+            moisture_val, 
+            suhu_val, 
+            ec_val, 
+            ph_val, 
+            n_val, 
+            p_val, 
+            k_val 
+        } = req.body;
 
         // --- 2. CARI PERANGKAT & VARIETAS ---
         const perangkat = await PerangkatIoT.findByPk(perangkat_id, {
@@ -19,18 +29,22 @@ exports.receiveSensorData = async (req, res) => {
             return res.status(404).json({ status: 'error', message: 'Perangkat tidak dikenali.' });
         }
 
-        // --- 3. SIMPAN LOG SENSOR KE DATABASE ---
+        // --- 3. SIMPAN KE DATABASE ---
+        // Kolom disesuaikan dengan model LogSensorTanah terbaru
         const newData = await LogSensorTanah.create({
             perangkat_id,
+            moisture_val: moisture_val || 0,
+            suhu_val: suhu_val || 0, // Pastikan kolom ini ada di model/migrasi
+            ec_val: ec_val || 0,
+            ph_val: ph_val || 0,
             n_val: n_val || 0,
             p_val: p_val || 0,
-            k_val: k_val || 0,
-            ph_val: ph_val || 0,
-            moisture_val: moisture_val || 0
+            k_val: k_val || 0
         });
 
-        // Update status perangkat jadi Online setiap kali kirim data
+        // Update status Online & Timestamp terakhir aktif
         perangkat.status_koneksi = 'Online';
+        perangkat.updatedAt = new Date(); 
 
         // --- 4. LOGIKA EVALUASI (OTAK PINTAR) ---
         let pesanPeringatan = [];
@@ -39,53 +53,72 @@ exports.receiveSensorData = async (req, res) => {
         if (perangkat.Varietas_Anggur) {
             const v = perangkat.Varietas_Anggur;
 
-            // Cek Kelembapan
+            // A. Evaluasi Kelembapan (Kontrol Pompa)
             if (moisture_val < v.min_moisture) {
                 statusKritis = true;
                 pesanPeringatan.push(`Tanah Kering (${moisture_val}%)`);
                 
-                // LOGIKA POMPA: Hanya berubah jika MODE AUTO
                 if (perangkat.mode_kerja === 'auto') {
                     perangkat.status_pompa_air = true;
                 }
             } else {
-                // Jika sudah cukup lembap dan mode auto, matikan pompa
                 if (perangkat.mode_kerja === 'auto') {
                     perangkat.status_pompa_air = false;
                 }
             }
 
-            // Cek pH (Hanya untuk peringatan, tidak kontrol pompa)
+            // B. Evaluasi pH
             if (ph_val < v.min_ph || ph_val > v.max_ph) {
                 statusKritis = true;
                 pesanPeringatan.push(`pH Tidak Ideal (${ph_val})`);
             }
-
-            // --- 5. KIRIM NOTIFIKASI JIKA ADA MASALAH ---
-            if (statusKritis) {
-                const judulNotif = `⚠️ Alert: ${perangkat.nama_node}`;
-                const isiNotif = `Masalah: ${pesanPeringatan.join(', ')}. [Mode: ${perangkat.mode_kerja.toUpperCase()}]`;
-
-                // A. Simpan ke Tabel Notification (Untuk Web)
-                await Notification.create({
-                    perangkat_id,
-                    pesan: isiNotif,
-                    tipe: 'warning'
-                });
-
-                // B. Kirim ke Firebase (Push Notification HP)
-                const payload = {
-                    notification: { title: judulNotif, body: isiNotif },
-                    topic: 'pemilik_kebun'
-                };
-                messaging.send(payload).catch(err => console.error("Firebase Error:", err));
+            
+            // C. Evaluasi Nutrisi NPK (Opsional - Contoh Peringatan)
+            if (n_val < v.min_n) {
+                pesanPeringatan.push(`Nitrogen Rendah (${n_val} mg/kg)`);
             }
         }
 
-        // Simpan semua perubahan status (pompa & koneksi) ke database
+        // --- 5. NOTIFIKASI MULTI-CHANNEL ---
+        if (statusKritis) {
+            const namaNode = perangkat.nama_node || `Node ${perangkat_id}`;
+            const rincian = pesanPeringatan.join(', ');
+            const isiNotif = `Masalah: ${rincian}. [Mode: ${perangkat.mode_kerja.toUpperCase()}]`;
+
+            // 1. Web Notification (MySQL)
+            await Notification.create({ 
+                perangkat_id, 
+                pesan: isiNotif, 
+                tipe: 'warning' 
+            });
+
+            // 2. Firebase Push (HP)
+            const fcmPayload = {
+                notification: { title: `⚠️ Alert Kebun: ${namaNode}`, body: isiNotif },
+                topic: 'pemilik_kebun'
+            };
+            messaging.send(fcmPayload).catch(e => console.error("Firebase Error:", e.message));
+
+            // 3. Telegram Bot
+            const pesanTele = 
+                `🚨 *NOTIFIKASI SISTEM AETERA*\n\n` +
+                `📍 *Node:* ${namaNode}\n` +
+                `❗ *Status:* KRITIS\n` +
+                `📝 *Detail:* ${rincian}\n` +
+                `💧 *Kelembapan:* ${moisture_val}%\n` +
+                `🧪 *pH Tanah:* ${ph_val}\n` +
+                `⚡ *EC:* ${ec_val} us/cm\n` +
+                `🌡️ *Suhu Tanah:* ${suhu_val} °C\n\n` +
+                `🛠️ *Pompa:* ${perangkat.status_pompa_air ? "AKTIF ✅" : "MATI ❌"}\n` +
+                `📊 _Data NPK: ${n_val}-${p_val}-${k_val}_`;
+            
+            sendTelegram(pesanTele).catch(e => console.error("Telegram Error:", e.message));
+        }
+
+        // Simpan semua perubahan status ke DB
         await perangkat.save();
 
-        // --- 6. BALAS KE ESP32 ---
+        // --- 6. RESPONSE BALIK KE ESP32 ---
         res.status(201).json({
             status: 'success',
             mode: perangkat.mode_kerja,
@@ -105,7 +138,7 @@ exports.getLatestSensorData = async (req, res) => {
         
         const latestData = await LogSensorTanah.findAll({
             where: { perangkat_id },
-            order: [['timestamp', 'DESC']], // Pastikan kolom namanya 'timestamp' sesuai modelmu
+            order: [['timestamp', 'DESC']], 
             limit: 10
         });
 

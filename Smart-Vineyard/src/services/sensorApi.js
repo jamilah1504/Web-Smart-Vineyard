@@ -1,6 +1,6 @@
 import { getAccessToken } from '../utils/authStorage';
 
-const BASE_URL = 'http://localhost:5000'; // Pastikan port sesuai backend Anda
+const BASE_URL = 'https://d34f3d5l-5000.asse.devtunnels.ms'; // Pastikan port sesuai backend Anda
 
 export async function getLatestSensorData(perangkatId) {
   const token = getAccessToken(); // Ambil token Satpam dari storage

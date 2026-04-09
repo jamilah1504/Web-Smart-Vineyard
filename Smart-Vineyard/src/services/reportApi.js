@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_URL = "http://localhost:5000/api/reports";
+const API_URL = "https://d34f3d5l-5000.asse.devtunnels.ms/api/reports";
 
 export const downloadReport = async (params, format = 'excel') => {
   // 1. Ambil token menggunakan key yang benar: 'sv_access_token'

@@ -10,12 +10,13 @@ const app = express();
 app.use(cors());
 
 // PINDAHKAN INI KE ATAS SEBELUM "IMPOR ROUTE"
-app.use(express.json({ limit: '10mb' }));
-app.use(express.urlencoded({ limit: '10mb', extended: true }));
+app.use(express.json({ limit: '20mb' }));
+app.use(express.urlencoded({ limit: '20mb', extended: true }));
 
 // Menyajikan file statis
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 app.use('/public/uploads', express.static(path.join(__dirname, 'public/uploads')));
+app.use('/public', express.static(path.join(__dirname, 'public')));
 
 // ==========================================================
 // 2. IMPOR ROUTE 

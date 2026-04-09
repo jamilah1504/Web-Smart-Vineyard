@@ -3,26 +3,30 @@ const fs = require("fs");
 const path = require("path");
 const { LogDiagnosisAI, Notification, PerangkatIoT } = require('../models');
 const { messaging } = require('../config/firebase');
+const sendTelegram = require('../utils/telegram');
 
-/**
- * @desc    Proses Deteksi via Roboflow + Simpan Gambar Fisik + Notifikasi Otomatis
- */
 exports.diagnoseLeaf = async (req, res) => {
     try {
         let { perangkat_id, image_base64 } = req.body;
 
-        // 1. Validasi Input
+        // 1. Validasi Input Dasar
         if (!perangkat_id || !image_base64) {
-            return res.status(400).json({ status: 'error', message: 'Data tidak lengkap.' });
+            return res.status(400).json({ status: 'error', message: 'Data/Gambar tidak lengkap.' });
         }
 
-        // 2. Pembersihan String Base64
+        // 2. Pembersihan String Base64 (Menangani prefix dari browser)
+        let base64Data = image_base64;
         if (image_base64.includes(",")) {
-            image_base64 = image_base64.split(",")[1];
+            base64Data = image_base64.split(",")[1];
         }
-        const cleanBase64 = image_base64.replace(/(\r\n|\n|\r)/gm, "").replace(/\s/g, '');
 
-        // 3. Simpan Gambar ke Folder Server
+        // 3. Validasi: Apakah ini benar-benar data gambar?
+        const buffer = Buffer.from(base64Data, 'base64');
+        if (buffer.length === 0) {
+            return res.status(400).json({ status: 'error', message: 'Format gambar rusak.' });
+        }
+
+        // 4. Simpan Gambar secara Fisik
         const fileName = `diag_${perangkat_id}_${Date.now()}.jpg`;
         const dirPath = path.join(__dirname, '../../public/uploads/diagnosis');
         const filePath = path.join(dirPath, fileName);
@@ -31,27 +35,35 @@ exports.diagnoseLeaf = async (req, res) => {
         if (!fs.existsSync(dirPath)) {
             fs.mkdirSync(dirPath, { recursive: true });
         }
-        fs.writeFileSync(filePath, cleanBase64, 'base64');
+        fs.writeFileSync(filePath, buffer);
 
-        // 4. Kirim ke Roboflow API
+        // 5. Integrasi ke Roboflow
+        // Kita gunakan format base64 yang sudah bersih untuk dikirim ke Roboflow
         const response = await axios({
             method: "POST",
             url: "https://serverless.roboflow.com/daun_anggur-8kryf/1",
             params: { api_key: "XLaeFaRtaO2lzuZIrgrY" },
-            data: cleanBase64, 
+            data: base64Data, 
             headers: { "Content-Type": "application/x-www-form-urlencoded" }
         });
 
         const predictions = response.data.predictions || [];
-        let labelPenyakit = "Sehat";
-        let confidenceScore = 0;
-
-        if (predictions && predictions.length > 0) {
-            labelPenyakit = predictions[0].class;
-            confidenceScore = predictions[0].confidence;
+        
+        // VALIDASI: Apakah Roboflow mengenali objek?
+        if (predictions.length === 0) {
+            return res.status(200).json({
+                status: 'success',
+                diagnosis: 'Tidak Terdeteksi',
+                confidence: "0%",
+                message: 'AI tidak menemukan objek daun anggur yang jelas.',
+                image_url: imageUrl
+            });
         }
 
-        // 5. Simpan ke Database MySQL
+        const labelPenyakit = predictions[0].class;
+        const confidenceScore = predictions[0].confidence;
+
+        // 6. Simpan Hasil ke Database
         const logAI = await LogDiagnosisAI.create({
             perangkat_id,
             image_url: imageUrl, 
@@ -60,63 +72,50 @@ exports.diagnoseLeaf = async (req, res) => {
             saran_tindakan: getSaran(labelPenyakit)
         });
 
-        // --- 6. LOGIKA NOTIFIKASI PENYAKIT SERIUS ---
-        const daftarPenyakitSerius = ["Isariopsis", "Black Rot", "Esca"];
-        
-        if (daftarPenyakitSerius.includes(labelPenyakit) && confidenceScore > 0.6) {
-            const perangkat = await PerangkatIoT.findByPk(perangkat_id);
-            const namaNode = perangkat ? perangkat.nama_node : `Node ${perangkat_id}`;
-            
-            const pesanNotif = `⚠️ BAHAYA: Terdeteksi ${labelPenyakit} pada ${namaNode}. Akurasi: ${(confidenceScore * 100).toFixed(1)}%. Segera lakukan tindakan!`;
-
-            // A. Simpan Notifikasi ke Database (Dashboard Web)
-            await Notification.create({
-                perangkat_id,
-                pesan: pesanNotif,
-                tipe: 'danger'
-            });
-
-            // B. Kirim Push Notification via Firebase (HP Owner)
-            const payload = {
-                notification: {
-                    title: `Penyakit Terdeteksi! (${labelPenyakit})`,
-                    body: pesanNotif
-                },
-                topic: 'pemilik_kebun' // Pastikan owner subscribe ke topic ini
-            };
-
-            messaging.send(payload)
-                .then(() => console.log("🔔 Notif AI terkirim ke Firebase"))
-                .catch(err => console.error("❌ Gagal kirim Firebase:", err));
+        // 7. Logika Notifikasi Multi-Channel
+        if (["Isariopsis", "Black Rot", "Esca"].includes(labelPenyakit) && confidenceScore > 0.6) {
+            await triggerAlerts(perangkat_id, labelPenyakit, confidenceScore);
         }
 
+        // 8. Kirim Response Balik ke Frontend
         res.status(200).json({ 
             status: 'success', 
             diagnosis: labelPenyakit, 
             confidence: (confidenceScore * 100).toFixed(2) + "%",
             image_url: imageUrl,
-            data: logAI 
+            data: logAI // Data ini akan digunakan Frontend untuk update state
         });
 
     } catch (error) {
         console.error("❌ AI Diagnosis Error:", error.message);
-        res.status(500).json({ status: 'error', message: "Gagal memproses AI" });
+        res.status(500).json({ status: 'error', message: "Gagal memproses AI: " + error.message });
     }
 };
 
-// --- Fungsi Pendukung ---
+// Fungsi pembantu agar kode lebih bersih
+async function triggerAlerts(perangkat_id, label, confidence) {
+    const perangkat = await PerangkatIoT.findByPk(perangkat_id);
+    const namaNode = perangkat ? perangkat.nama_node : perangkat_id;
+    const pesan = `⚠️ Deteksi ${label} di ${namaNode} (${(confidence * 100).toFixed(1)}%)`;
+
+    // Web Notification
+    await Notification.create({ perangkat_id, pesan, tipe: 'danger' });
+    
+    // Telegram
+    sendTelegram(`🌿 *AI ALERT*\n\nTerdeteksi: *${label}*\nLokasi: ${namaNode}`).catch(() => {});
+}
+
 function getSaran(label) {
     const daftarSaran = {
-        "Klorosis": "Penyebab: Kurang hara/pH tanah tidak stabil. Saran: Berikan pupuk mikro dan cek pH tanah.",
-        "Isariopsis": "Penyebab: Jamur. Saran: Segera semprotkan fungisida kontak dan kurangi kelembapan.",
-        "Sehat": "Tanaman dalam kondisi prima! Pertahankan perawatan rutin.",
-        "Black Rot": "Penyebab: Infeksi jamur. Saran: Buang daun terinfeksi dan gunakan fungisida sistemik.",
-        "Esca": "Penyebab: Jamur pada batang. Saran: Lakukan pemangkasan pada bagian yang sakit."
+        "Klorosis": "Kurang hara/pH tanah tidak stabil. Berikan pupuk mikro.",
+        "Isariopsis": "Jamur. Semprot fungisida kontak dan kurangi kelembapan.",
+        "Sehat": "Tanaman prima! Lanjutkan perawatan rutin.",
+        "Black Rot": "Infeksi jamur. Buang daun terinfeksi, gunakan fungisida sistemik.",
+        "Esca": "Jamur batang. Lakukan pemangkasan pada bagian sakit."
     };
     return daftarSaran[label] || "Lakukan observasi visual lebih lanjut.";
 }
 
-// 1. Ambil Hasil Diagnosis Terakhir
 exports.getLatestDiagnosis = async (req, res) => {
     try {
         const { perangkat_id } = req.params;
@@ -135,7 +134,6 @@ exports.getLatestDiagnosis = async (req, res) => {
     }
 };
 
-// 2. Ambil Semua Riwayat Diagnosis (Untuk Tabel/Grafik)
 exports.getDiagnosisHistory = async (req, res) => {
     try {
         const { perangkat_id } = req.params;

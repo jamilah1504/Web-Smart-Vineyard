@@ -1,4 +1,4 @@
-const BASE_URL = 'http://localhost:5000/api/diagnosis';
+const BASE_URL = 'https://d34f3d5l-5000.asse.devtunnels.ms/api/diagnosis';
 
 export async function getLatestDiagnosis(perangkat_id) {
   const res = await fetch(`${BASE_URL}/latest/${perangkat_id}`);
