@@ -1,20 +1,14 @@
-const { PerangkatIoT, LogSensorTanah, VarietasAnggur, Notification } = require('../models');
-const { messaging } = require('../config/firebase');
+const { PerangkatIoT, LogSensorTanah, LogTandon, VarietasAnggur, Notification } = require('../models');
 const sendTelegram = require('../utils/telegram');
 
-exports.receiveSensorData = async (req, res) => {
+exports.receiveAllData = async (req, res) => {
     try {
-        console.log("📩 DATA SENSOR RS485 DARI ESP32:", JSON.stringify(req.body, null, 2));
+        console.log("📩 DATA MASUK DARI ESP32:", JSON.stringify(req.body, null, 2));
 
         const { 
             perangkat_id, 
-            kelembapan_val, // <-- GANTI DARI moisture_val
-            suhu_val, 
-            ec_val, 
-            ph_val, 
-            n_val, 
-            p_val, 
-            k_val 
+            kelembapan_val, suhu_val, ec_val, ph_val, n_val, p_val, k_val, // Data Tanah
+            ketinggian_air, jenis_tandon // Data Tandon
         } = req.body;
 
         const perangkat = await PerangkatIoT.findByPk(perangkat_id, {
@@ -25,10 +19,10 @@ exports.receiveSensorData = async (req, res) => {
             return res.status(404).json({ status: 'error', message: 'Perangkat tidak dikenali.' });
         }
 
-        // --- SIMPAN KE DATABASE ---
-        const newData = await LogSensorTanah.create({
+        // --- 1. SIMPAN DATA SENSOR TANAH ---
+        await LogSensorTanah.create({
             perangkat_id,
-            kelembapan_val: kelembapan_val || 0, // <-- GANTI
+            kelembapan_val: kelembapan_val || 0,
             suhu_val: suhu_val || 0,
             ec_val: ec_val || 0,
             ph_val: ph_val || 0,
@@ -37,64 +31,61 @@ exports.receiveSensorData = async (req, res) => {
             k_val: k_val || 0
         });
 
-        perangkat.status_koneksi = 'Online';
-        perangkat.updatedAt = new Date(); 
+        // --- 2. SIMPAN DATA TANDON ---
+        if (ketinggian_air !== undefined && ketinggian_air !== null) {
+            try {
+                await LogTandon.create({ 
+                    perangkat_id, 
+                    ketinggian_air: parseFloat(ketinggian_air), 
+                    jenis_tandon: jenis_tandon || 'air' 
+                });
+                console.log("✅ Data Tandon Berhasil Disimpan");
+            } catch (dbError) {
+                console.error("❌ Gagal Simpan Tandon:", dbError.message);
+            }
+        } else {
+            console.log("⚠️ Data ketinggian_air tidak terdeteksi di request body");
+        }
 
+        // --- 3. LOGIKA EVALUASI & SAFETY ---
         let pesanPeringatan = [];
-        let statusKritis = true;
+        let statusKritis = false;
+        perangkat.status_koneksi = 'Online';
 
-        if (perangkat.Varietas_Anggur) {
+        // A. Safety Check: Air Tandon Kritis (< 10%)
+        if (ketinggian_air < 10) {
+            statusKritis = true;
+            perangkat.status_pompa_air = false; // Matikan paksa demi keamanan hardware
+            pesanPeringatan.push("Darurat! Air Tandon Kritis (<10%)");
+        } 
+        // B. Evaluasi Kelembapan Tanah (Hanya jika air tandon aman)
+        else if (perangkat.Varietas_Anggur) {
             const v = perangkat.Varietas_Anggur;
-
-            // A. Evaluasi Kelembapan (Kontrol Pompa)
-            // Menggunakan min_moisture dari DB Varietas (asumsi nama kolom di DB Varietas tetap min_moisture)
-            if (kelembapan_val < v.min_moisture) { 
+            if (kelembapan_val < v.min_moisture) {
                 statusKritis = true;
                 pesanPeringatan.push(`Tanah Kering (${kelembapan_val}%)`);
-                
-                if (perangkat.mode_kerja === 'auto') {
-                    perangkat.status_pompa_air = true;
-                }
+                if (perangkat.mode_kerja === 'auto') perangkat.status_pompa_air = true;
             } else {
-                if (perangkat.mode_kerja === 'auto') {
-                    perangkat.status_pompa_air = false;
-                }
-            }
-
-            if (ph_val < v.min_ph || ph_val > v.max_ph) {
-                statusKritis = true;
-                pesanPeringatan.push(`pH Tidak Ideal (${ph_val})`);
+                if (perangkat.mode_kerja === 'auto') perangkat.status_pompa_air = false;
             }
         }
 
-        // --- NOTIFIKASI ---
+        // --- 4. KIRIM NOTIFIKASI ---
         if (statusKritis) {
-            const namaNode = perangkat.nama_node || `Node ${perangkat_id}`;
-            const rincian = pesanPeringatan.join(', ');
-            const isiNotif = `Masalah: ${rincian}. [Mode: ${perangkat.mode_kerja.toUpperCase()}]`;
-
+            const isiNotif = pesanPeringatan.join(' & ');
             await Notification.create({ perangkat_id, pesan: isiNotif, tipe: 'warning' });
-
-            const pesanTele = 
-                `🚨 *NOTIFIKASI SISTEM AETERA*\n\n` +
-                `📍 *Node:* ${namaNode}\n` +
-                `💧 *Kelembapan:* ${kelembapan_val}%\n` + // <-- GANTI
-                `🧪 *pH Tanah:* ${ph_val}\n` +
-                `🛠️ *Pompa:* ${perangkat.status_pompa_air ? "AKTIF ✅" : "MATI ❌"}`;
-            
-            sendTelegram(pesanTele).catch(e => console.error("Telegram Error:", e.message));
+            sendTelegram(`🚨 *AETERA ALERT*\n\n📍 Node: ${perangkat_id}\n⚠️ Masalah: ${isiNotif}`).catch(e => {});
         }
 
         await perangkat.save();
 
         res.status(201).json({
             status: 'success',
-            mode: perangkat.mode_kerja,
             perintah_pompa: perangkat.status_pompa_air ? "NYALA" : "MATI"
         });
 
     } catch (error) {
-        console.error("❌ Error receiveSensorData:", error);
+        console.error("❌ Error receiveAllData:", error);
         res.status(500).json({ status: 'error', message: error.message });
     }
 };
