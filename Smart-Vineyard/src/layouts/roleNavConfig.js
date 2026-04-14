@@ -8,6 +8,7 @@ export const roleNavConfig = {
       { to: OwnerPaths.dashboard, label: '📊 Dashboard' },
       { to: OwnerPaths.sensors, label: '💧 Monitoring Lahan' },
       { to: OwnerPaths.tanks, label: '🏗️ Monitoring Tandon' },
+      { to: OwnerPaths.analysis, label: '🔍 Diagnosis Penyakit' },
       { to: OwnerPaths.manualControl, label: '⚙️ Kontrol Manual' },
       { to: OwnerPaths.thresholds, label: '⚙️ Konfigurasi Threshold' },
       { to: OwnerPaths.reports, label: '📄 Ekspor Laporan' },
