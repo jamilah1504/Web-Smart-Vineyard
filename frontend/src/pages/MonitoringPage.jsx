@@ -308,6 +308,7 @@ function MonitoringPage() {
                 <th style={{ padding: '12px 16px', textAlign: 'left', color: '#2c3e50', fontWeight: '600' }}>Lokasi</th>
                 <th style={{ padding: '12px 16px', textAlign: 'left', color: '#2c3e50', fontWeight: '600' }}>Kelembapan</th>
                 <th style={{ padding: '12px 16px', textAlign: 'left', color: '#2c3e50', fontWeight: '600' }}>Suhu</th>
+                <th style={{ padding: '12px 16px', textAlign: 'left', color: '#2c3e50', fontWeight: '600' }}>EC</th>
                 <th style={{ padding: '12px 16px', textAlign: 'left', color: '#2c3e50', fontWeight: '600' }}>pH</th>
                 <th style={{ padding: '12px 16px', textAlign: 'left', color: '#2c3e50', fontWeight: '600' }}>N</th>
                 <th style={{ padding: '12px 16px', textAlign: 'left', color: '#2c3e50', fontWeight: '600' }}>P</th>
@@ -349,6 +350,7 @@ function MonitoringPage() {
                     </td>
                     <td style={{ padding: '12px 16px', fontWeight: '500', color: '#3498db' }}>{row.kelembapan_val}%</td>
                     <td style={{ padding: '12px 16px', fontWeight: '500', color: '#e67e22' }}>{row.suhu_val}°C</td>
+                    <td style={{ padding: '12px 16px', fontWeight: '500', color: '#9b59b6' }}>{row.ec_val}</td>
                     <td style={{ padding: '12px 16px', fontWeight: '500' }}>{row.ph_val}</td>
                     <td style={{ padding: '12px 16px' }}>{row.n_val}</td>
                     <td style={{ padding: '12px 16px' }}>{row.p_val}</td>

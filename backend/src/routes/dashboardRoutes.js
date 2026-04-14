@@ -1,9 +1,8 @@
 const express = require('express');
 const router = express.Router();
-const { getDashboardStats, getLaporanVisualization } = require('../controllers/dashboardController');
-const { protect, authorize } = require('../middleware/authMiddleware');
+const dashboardController = require('../controllers/dashboardController');
 
-router.get('/stats', protect, authorize('Admin', 'Petugas'), getDashboardStats);
-router.get('/visualization', protect, authorize('Admin', 'Petugas'), getLaporanVisualization);
+// Endpoint: GET /api/dashboard/summary/:perangkat_id
+router.get('/summary/:perangkat_id', dashboardController.getDashboardSummary);
 
 module.exports = router;
