@@ -19,12 +19,22 @@ function TankMonitoringPage() {
       // Transform data dari API ke format yang sesuai
       // Asumsi API mengembalikan: { data: [ { timestamp, ketinggian_air, status } ] }
       if (response.data && Array.isArray(response.data)) {
-        setTankData(response.data.map(item => ({
-          time: new Date(item.timestamp).toLocaleString('id-ID'),
-          tank: 'Tandon Air Baku',
-          level: Math.round(parseFloat(item.ketinggian_air) || 0),
-          status: item.status || determinateStatus(parseFloat(item.ketinggian_air) || 0)
-        })))
+        const transformed = response.data.map(item => {
+          const tinggiReal = parseFloat(item.ketinggian_air) || 0;
+          const tinggiMax = 42; // Tinggi tandon kamu
+          
+          // RUMUS: (Tinggi Air / Tinggi Max) * 100
+          const persentase = Math.round((tinggiReal / tinggiMax) * 100);
+
+          return {
+            // Gunakan createdAt karena Sequelize secara default pakai itu
+            time: new Date(item.createdAt || item.timestamp).toLocaleString('id-ID'),
+            tank: 'Tandon Air Baku',
+            level: persentase, 
+            status: determinateStatus(persentase)
+          };
+        });
+        setTankData(transformed);
       }
       setError('')
       setLoading(false)
@@ -43,11 +53,11 @@ function TankMonitoringPage() {
   }, [fetchTankData])
 
   // Helper function untuk tentukan status
-  const determinateStatus = (level) => {
-    if (level >= 60) return 'normal'
-    if (level >= 30) return 'warning'
-    return 'critical'
-  }
+const determinateStatus = (level) => {
+  if (level >= 60) return 'normal';    // Di atas 60% Aman
+  if (level >= 25) return 'warning';   // 25% - 59% Siaga
+  return 'critical';                   // Di bawah 25% Kritis
+}
 
   const filtered = useMemo(() => {
     return tankData.filter((row) => {
@@ -59,7 +69,7 @@ function TankMonitoringPage() {
     })
   }, [dateFrom, dateTo, tank, tankData])
 
-  const latest = filtered.length > 0 ? filtered[filtered.length - 1] : null
+const latest = filtered.length > 0 ? filtered[0] : null
 
   return (
     <div className="page page-with-padding page-shell" style={{ backgroundColor: '#f8f9fa' }}>
