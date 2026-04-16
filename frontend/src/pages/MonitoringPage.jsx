@@ -9,10 +9,12 @@ function MonitoringPage() {
   const [error, setError] = useState('');
   const [retryCount, setRetryCount] = useState(0);
   
-  // State untuk form filter (bisa dikembangkan nanti)
+  // State untuk form filter
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
   const [selectedParam, setSelectedParam] = useState('Semua Parameter');
+  const [filteredData, setFilteredData] = useState([]);
+  const [useFilter, setUseFilter] = useState(false);
   
   const DEVICE_ID = "ESP32-MAC-A001"; // ID Perangkat
 
@@ -46,18 +48,52 @@ function MonitoringPage() {
 
   const latestData = sensorData.length > 0 ? sensorData[0] : null;
 
+  // Logika filter data berdasarkan tanggal dan parameter
+  const handleApplyFilter = () => {
+    let filtered = [...sensorData];
+    
+    // Filter by date range
+    if (startDate) {
+      filtered = filtered.filter(item => {
+        const itemDate = new Date(item.timestamp).toISOString().split('T')[0];
+        return itemDate >= startDate;
+      });
+    }
+    
+    if (endDate) {
+      filtered = filtered.filter(item => {
+        const itemDate = new Date(item.timestamp).toISOString().split('T')[0];
+        return itemDate <= endDate;
+      });
+    }
+    
+    setFilteredData(filtered);
+    setUseFilter(true);
+  };
+
+  const handleResetFilter = () => {
+    setStartDate('');
+    setEndDate('');
+    setSelectedParam('Semua Parameter');
+    setFilteredData([]);
+    setUseFilter(false);
+  };
+
+  // Data yang ditampilkan (filtered atau semua)
+  const displayData = useFilter ? filteredData : sensorData;
+
   // Transform real sensor data untuk chart
   const chartData = useMemo(() => {
-    if (sensorData.length === 0) return [];
+    if (displayData.length === 0) return [];
     
-    return sensorData.map(item => ({
+    return displayData.map(item => ({
       time: new Date(item.timestamp).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }),
       soilMoisture: parseFloat(item.kelembapan_val) || 0,
       pH: parseFloat(item.ph_val) || 0,
       N: parseFloat(item.n_val) || 0,
       suhu: parseFloat(item.suhu_val) || 0
     }));
-  }, [sensorData]);
+  }, [displayData]);
 
   return (
     <div className="page page-with-padding page-shell" style={{ backgroundColor: '#f8f9fa' }}>
@@ -413,14 +449,14 @@ function MonitoringPage() {
               </tr>
             </thead>
             <tbody>
-              {loading && sensorData.length === 0 ? (
+              {loading && displayData.length === 0 ? (
                 <tr>
-                  <td colSpan="8" style={{ padding: '20px', textAlign: 'center', color: '#95a5a6' }}>
+                  <td colSpan="9" style={{ padding: '20px', textAlign: 'center', color: '#95a5a6' }}>
                     ⏳ Memuat data sensor...
                   </td>
                 </tr>
-              ) : sensorData.length > 0 ? (
-                sensorData.slice(0, 20).map((row, idx) => (
+              ) : displayData.length > 0 ? (
+                displayData.slice(0, 20).map((row, idx) => (
                   <tr key={row.id} style={{
                     borderBottom: '1px solid #ecf0f1',
                     backgroundColor: idx % 2 === 0 ? '#ffffff' : '#f8f9fa',
@@ -456,7 +492,7 @@ function MonitoringPage() {
                 ))
               ) : (
                 <tr>
-                  <td colSpan="8" style={{ padding: '20px', textAlign: 'center', color: '#95a5a6' }}>
+                  <td colSpan="9" style={{ padding: '20px', textAlign: 'center', color: '#95a5a6' }}>
                     📭 Tidak ada data tersedia
                   </td>
                 </tr>
@@ -480,7 +516,7 @@ function MonitoringPage() {
           <div style={{ fontSize: '13px', color: '#7f8c8d' }}>Visualisasi parameter sensor IoT</div>
         </div>
 
-        {loading && sensorData.length === 0 ? (
+        {loading && displayData.length === 0 ? (
           <div style={{
             height: '360px',
             backgroundColor: '#f5f7fa',

@@ -9,7 +9,6 @@ export const roleNavConfig = {
       { to: OwnerPaths.analysis, label: '📈 Analisis AI' },
       { to: OwnerPaths.sensors, label: '💧 Monitoring Lahan' },
       { to: OwnerPaths.tanks, label: '🏗️ Monitoring Tandon' },
-      { to: OwnerPaths.analysis, label: '🔍 Diagnosis Penyakit' },
       { to: OwnerPaths.manualControl, label: '⚙️ Kontrol Manual' },
       { to: OwnerPaths.thresholds, label: '⚙️ Konfigurasi Threshold' },
       { to: OwnerPaths.reports, label: '📄 Ekspor Laporan' },
@@ -24,7 +23,6 @@ export const roleNavConfig = {
     links: [
       { to: AgronomisPaths.dashboard, label: '📊 Dashboard' },
       { to: AgronomisPaths.monitoring, label: '💧 Monitoring Lahan' },
-      { to: AgronomisPaths.analysis, label: '🔍 Diagnosis Penyakit' },
       { to: AgronomisPaths.recommendation, label: '💡 Rekomendasi' },
       { to: AgronomisPaths.sensors, label: '📋 Data Sensor' },
       { to: AgronomisPaths.history, label: '📈 Prediksi Tren' },
@@ -37,7 +35,6 @@ export const roleNavConfig = {
     links: [
       { to: StaffPaths.dashboard, label: '📊 Dashboard' },
       { to: StaffPaths.sensors, label: '💧 Monitoring Lahan' },
-      { to: StaffPaths.uploadImage, label: '🔍 Diagnosis Penyakit' },
     ],
   },
 }
