@@ -1,59 +1,91 @@
 const axios = require('axios');
-const { LogSensorTanah, PerangkatIoT } = require('../models');
+const { LogSensorTanah } = require('../models');
 
-/**
- * @desc    Mendapatkan tren cuaca & prediksi kelembapan tanah 7 hari ke depan
- * @route   GET /api/sensor/trends/:perangkat_id
- */
+// Helper menerjemahkan arah mata angin BMKG
+const terjemahkanArahAngin = (wd) => {
+    const arah = { "N": "Utara", "NE": "Timur Laut", "E": "Timur", "SE": "Tenggara", "S": "Selatan", "SW": "Barat Daya", "W": "Barat", "NW": "Barat Laut" };
+    return arah[wd] || wd || "Bervariasi";
+};
+
 exports.getSevenDayTrends = async (req, res) => {
     try {
         const { perangkat_id } = req.params;
 
-        // 1. Ambil data terakhir dari database sebagai titik awal (baseline)
-        // Kita sesuaikan dengan model LogSensorTanah dan kolom moisture_val
+        // 1. Baseline DB
         const latestSensor = await LogSensorTanah.findOne({ 
             where: { perangkat_id },
-            order: [['createdAt', 'DESC']] 
+            order: [['timestamp', 'DESC']] 
         });
 
-        // Default kelembapan 55% jika database masih kosong
-        let currentSM = latestSensor ? latestSensor.moisture_val : 55;
+        let currentSM = (latestSensor && latestSensor.kelembapan_val) ? parseFloat(latestSensor.kelembapan_val) : 55;
+        if (isNaN(currentSM)) currentSM = 55;
 
-        // 2. Tentukan Koordinat (Default: Bandung, bisa dikembangkan ambil dari tabel PerangkatIoT)
-        const lat = -6.9175;
-        const lon = 107.6191;
-
-        // 3. Ambil data dari Open-Meteo (Forecast 7 Hari)
-        const weatherUrl = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&daily=weathercode,temperature_2m_max,precipitation_sum&timezone=Asia%2FBangkok`;
+        // 2. Tarik data BMKG Palasari
+        const bmkgUrl = 'https://api.bmkg.go.id/publik/prakiraan-cuaca?adm4=32.13.29.2006';
+        const response = await axios.get(bmkgUrl);
+        const cuacaData = response.data.data[0].cuaca.flat(); 
         
-        const response = await axios.get(weatherUrl);
-        const dailyData = response.data.daily;
+        // --- 🌟 TAMBAHAN BARU: AMBIL DATA "SAAT INI" ---
+        const sekarang = new Date();
+        let cuacaSaatIni = cuacaData[0]; // Default ambil yang pertama
 
-        // 4. Olah data menjadi format Tren & Prediksi
-        const trends = dailyData.time.map((dateStr, index) => {
-            const rain = dailyData.precipitation_sum[index];
-            const maxTemp = dailyData.temperature_2m_max[index];
-            const weatherCode = dailyData.weathercode[index];
+        // Cari data yang jam-nya paling mendekati waktu saat ini
+        for (let i = 0; i < cuacaData.length; i++) {
+            const waktuItem = new Date(cuacaData[i].local_datetime);
+            if (waktuItem >= sekarang) {
+                // Ambil blok waktu sebelumnya jika sudah lewat, atau waktu ini jika pas
+                cuacaSaatIni = i > 0 ? cuacaData[i - 1] : cuacaData[i];
+                break;
+            }
+        }
 
-            /**
-             * LOGIKA PREDIKSI SEDERHANA (EVP - Evapotranspiration)
-             * - Setiap 1mm hujan meningkatkan kelembapan tanah sekitar 0.8%
-             * - Setiap 1°C suhu maksimal menurunkan kelembapan tanah sekitar 0.25%
-             */
+        const peringatanDini = cuacaSaatIni.weather_desc.toLowerCase().includes('petir') 
+            ? `Berpotensi terjadi hujan lebat yang dapat disertai kilat/petir dan angin kencang di area ${response.data.lokasi.desa}.`
+            : null; // Kosong jika tidak ada petir
+
+        const currentWeatherData = {
+            waktu_pemutakhiran: sekarang.toLocaleString('id-ID', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }) + ' WIB',
+            suhu: cuacaSaatIni.t,
+            cuaca: cuacaSaatIni.weather_desc,
+            kelembapan_udara: cuacaSaatIni.hu,
+            kecepatan_angin: cuacaSaatIni.ws,
+            arah_angin: terjemahkanArahAngin(cuacaSaatIni.wd),
+            peringatan: peringatanDini,
+            jarak_pandang: cuacaSaatIni.vs_text || "> 10 km" 
+        };
+        // ------------------------------------------------
+
+        // 3. Olah data Agregasi (Sisa kode lama tetap sama)
+        const dailyData = {};
+        cuacaData.forEach(item => {
+            const dateStr = new Date(item.local_datetime).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' });
+            if (!dailyData[dateStr]) dailyData[dateStr] = { date: dateStr, temps: [], weathers: [], rainEstimate: 0 };
+            dailyData[dateStr].temps.push(item.t);
+            dailyData[dateStr].weathers.push(item.weather_desc);
+
+            const desc = (item.weather_desc || "").toLowerCase();
+            if (desc.includes("petir") || desc.includes("lebat")) dailyData[dateStr].rainEstimate += 10; 
+            else if (desc.includes("sedang")) dailyData[dateStr].rainEstimate += 5; 
+            else if (desc.includes("ringan")) dailyData[dateStr].rainEstimate += 2; 
+        });
+
+        const trends = Object.values(dailyData).map(day => {
+            const maxTemp = Math.max(...day.temps);
+            const rain = day.rainEstimate;
+            
+            let dominantWeather = "⛅ Berawan";
+            if (day.weathers.some(w => w.includes("Petir"))) dominantWeather = "⛈️ Hujan Petir";
+            else if (day.weathers.some(w => w.includes("Sedang") || w.includes("Lebat"))) dominantWeather = "🌧️ Hujan Sedang";
+            else if (day.weathers.some(w => w.includes("Ringan"))) dominantWeather = "🌦️ Hujan Ringan";
+            else if (day.weathers.some(w => w.includes("Cerah"))) dominantWeather = "☀️ Cerah";
+
             let predictionSM = currentSM + (rain * 0.8) - (maxTemp * 0.25);
-            
-            // Batasi rentang logika kelembapan tanah (Min 15%, Max 95%)
             predictionSM = Math.round(Math.max(Math.min(predictionSM, 95), 15));
-            
-            // Update currentSM untuk perhitungan hari berikutnya (akumulatif)
             currentSM = predictionSM; 
 
             return {
-                date: new Date(dateStr).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' }),
-                weather: getWeatherDesc(weatherCode),
-                temp: maxTemp,
-                soilMoisture: predictionSM, // Prediksi kelembapan
-                rainfall: rain,
+                date: day.date, weather: dominantWeather, temp: maxTemp,
+                soilMoisture: predictionSM, rainfall: rain,
                 action: predictionSM < 40 ? "Irigasi Intensif" : (predictionSM > 75 ? "Tunda Irigasi" : "Irigasi Normal")
             };
         });
@@ -61,30 +93,12 @@ exports.getSevenDayTrends = async (req, res) => {
         res.status(200).json({ 
             status: 'success', 
             perangkat_id,
-            location: "Bandung",
+            location: response.data.lokasi.desa,
+            currentWeather: currentWeatherData, // 🌟 KIRIM DATA SAAT INI KE REACT
             data: trends 
         });
 
     } catch (error) {
-        console.error("❌ Trend API Error:", error.message);
-        res.status(500).json({ 
-            status: 'error', 
-            message: "Gagal mengambil data tren cuaca",
-            detail: error.message 
-        });
+        res.status(500).json({ status: 'error', message: error.message });
     }
 };
-
-/**
- * Helper untuk menerjemahkan kode cuaca WMO (World Meteorological Organization)
- */
-function getWeatherDesc(code) {
-    if (code === 0) return "☀️ Cerah";
-    if (code >= 1 && code <= 3) return "⛅ Berawan";
-    if (code >= 45 && code <= 48) return "🌫️ Kabut";
-    if (code >= 51 && code <= 67) return "🌧️ Hujan Ringan/Sedang";
-    if (code >= 71 && code <= 77) return "❄️ Salju/Dingin";
-    if (code >= 80 && code <= 82) return "🌦️ Hujan Deras";
-    if (code >= 95) return "⛈️ Badai Petir";
-    return "☁️ Mendung";
-}
