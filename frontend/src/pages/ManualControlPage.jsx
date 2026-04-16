@@ -1,16 +1,69 @@
-
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+// Pastikan path import ini sesuai dengan lokasi file services kamu
+import { getAllDevices, controlPump } from '../services/controlApi';
 
 function OwnerManualControlPage() {
-  const [pump, setPump] = useState(true);
-  const [solenoid, setSolenoid] = useState(true);
+  const [deviceId, setDeviceId] = useState(null);
+  const [pump, setPump] = useState(false);
+  const [solenoid, setSolenoid] = useState(false);
+  const [loading, setLoading] = useState(false);
 
-  const togglePump = () => {
-    setPump(!pump);
+  // 1. Mengambil status awal perangkat saat halaman pertama kali dibuka
+  useEffect(() => {
+    const fetchInitialStatus = async () => {
+      try {
+        const response = await getAllDevices();
+        if (response.data && response.data.length > 0) {
+          // Ambil perangkat pertama (misal: ESP32-MAC-A001)
+          const device = response.data[0];
+          setDeviceId(device.id);
+          
+          // Set status toggle sesuai dengan data di database
+          setPump(device.status_pompa_air || false);
+          setSolenoid(device.status_pompa_pupuk || false);
+        }
+      } catch (error) {
+        console.error("🔴 Gagal mengambil data perangkat:", error);
+      }
+    };
+
+    fetchInitialStatus();
+  }, []);
+
+  // 2. Fungsi Menyalakan/Mematikan Pompa Irigasi (Air)
+  const togglePump = async () => {
+    if (!deviceId) return alert("Sistem masih memuat data perangkat...");
+    
+    const targetStatus = !pump; // Kebalikan dari status saat ini
+    setLoading(true);
+
+    try {
+      // Panggil API Backend (perangkat_id, pompa_type, status)
+      await controlPump(deviceId, 'air', targetStatus);
+      setPump(targetStatus); // Update UI jika sukses
+    } catch (error) {
+      alert("❌ Gagal mengontrol pompa irigasi: " + error.message);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const toggleSolenoid = () => {
-    setSolenoid(!solenoid);
+  // 3. Fungsi Menyalakan/Mematikan Solenoid Valve (Nutrisi)
+  const toggleSolenoid = async () => {
+    if (!deviceId) return alert("Sistem masih memuat data perangkat...");
+    
+    const targetStatus = !solenoid;
+    setLoading(true);
+
+    try {
+      // Panggil API Backend
+      await controlPump(deviceId, 'nutrisi', targetStatus);
+      setSolenoid(targetStatus); // Update UI jika sukses
+    } catch (error) {
+      alert("❌ Gagal mengontrol solenoid valve: " + error.message);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -75,39 +128,15 @@ function OwnerManualControlPage() {
           letter-spacing: 0.5px;
           box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
         }
+        .toggle-switch:disabled {
+          opacity: 0.6;
+          cursor: not-allowed;
+        }
         .toggle-switch.active {
           background: linear-gradient(135deg, #27ae60 0%, #1e8449 100%);
         }
         .toggle-switch.inactive {
           background: linear-gradient(135deg, #95a5a6 0%, #7f8c8d 100%);
-        }
-        .pump-card {
-          background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
-          border-radius: 15px;
-          padding: '24px';
-          box-shadow: '0 4px 15px rgba(0, 0, 0, 0.08)';
-          border: '1px solid rgba(39, 174, 96, 0.1)';
-          animation: slideIn 0.5s ease-out;
-          transition: all 0.3s ease;
-        }
-        .solenoid-card {
-          background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
-          border-radius: 15px;
-          padding: '24px';
-          box-shadow: '0 4px 15px rgba(0, 0, 0, 0.08)';
-          border: '1px solid rgba(52, 152, 219, 0.1)';
-          animation: slideIn 0.5s ease-out;
-          transition: all 0.3s ease;
-        }
-        .header-badge {
-          display: inline-block;
-          padding: 8px 16px;
-          background: rgba(255, 255, 255, 0.2);
-          border-radius: 10px;
-          font-weight: 600;
-          font-size: 0.95rem;
-          color: white;
-          backdrop-filter: blur(10px);
         }
       `}</style>
 
@@ -141,11 +170,7 @@ function OwnerManualControlPage() {
             overflow: 'hidden'
           }}>
             <div style={{
-              position: 'absolute',
-              top: 0,
-              left: 0,
-              right: 0,
-              height: '4px',
+              position: 'absolute', top: 0, left: 0, right: 0, height: '4px',
               background: 'linear-gradient(90deg, #27ae60 0%, #1e8449 100%)'
             }} />
             
@@ -173,35 +198,29 @@ function OwnerManualControlPage() {
               boxShadow: '0 4px 15px rgba(39, 174, 96, 0.3)'
             }}>
               <p style={{ fontSize: '0.85rem', opacity: 0.9, margin: 0, marginBottom: '8px', fontWeight: '600' }}>
-                Waktu Operasi
+                Status Koneksi
               </p>
-              <p style={{ fontSize: '2.2rem', fontWeight: '800', margin: 0 }}>
-                {pump ? '45' : '0'} menit
+              <p style={{ fontSize: '1.8rem', fontWeight: '800', margin: 0 }}>
+                {deviceId ? deviceId : 'Menghubungkan...'}
               </p>
               <p style={{ fontSize: '0.8rem', opacity: 0.85, margin: '8px 0 0 0' }}>
-                {pump ? '▶ Sedang berjalan' : '• Terakhir: 2 jam lalu'}
+                {pump ? '▶ Arus daya mengalir' : '• Standby'}
               </p>
             </div>
 
             <button
               onClick={() => togglePump()}
+              disabled={loading || !deviceId}
               className={`toggle-switch ${pump ? 'active' : 'inactive'}`}
               style={{ marginBottom: '10px' }}
             >
-              {pump ? '⏹️ Matikan' : '▶️ Nyalakan'}
+              {loading ? '⏱️ Memproses...' : (pump ? '⏹️ Matikan Pompa' : '▶️ Nyalakan Pompa')}
             </button>
             <button style={{
-              width: '100%',
-              padding: '12px 16px',
-              backgroundColor: '#3498db',
-              color: 'white',
-              border: 'none',
-              borderRadius: '10px',
-              fontWeight: '700',
-              cursor: 'pointer',
-              transition: 'all 0.3s ease',
-              fontSize: '0.95rem',
-              boxShadow: '0 4px 12px rgba(52, 152, 219, 0.3)'
+              width: '100%', padding: '12px 16px', backgroundColor: '#3498db',
+              color: 'white', border: 'none', borderRadius: '10px',
+              fontWeight: '700', cursor: 'pointer', transition: 'all 0.3s ease',
+              fontSize: '0.95rem', boxShadow: '0 4px 12px rgba(52, 152, 219, 0.3)'
             }}
             onMouseOver={e => {
               e.target.style.backgroundColor = '#2980b9';
@@ -241,11 +260,7 @@ function OwnerManualControlPage() {
             overflow: 'hidden'
           }}>
             <div style={{
-              position: 'absolute',
-              top: 0,
-              left: 0,
-              right: 0,
-              height: '4px',
+              position: 'absolute', top: 0, left: 0, right: 0, height: '4px',
               background: 'linear-gradient(90deg, #3498db 0%, #2980b9 100%)'
             }} />
 
@@ -285,9 +300,10 @@ function OwnerManualControlPage() {
 
             <button
               onClick={() => toggleSolenoid()}
+              disabled={loading || !deviceId}
               className={`toggle-switch ${solenoid ? 'active' : 'inactive'}`}
             >
-              {solenoid ? '🔐 Tutup Valve' : '🔓 Buka Valve'}
+              {loading ? '⏱️ Memproses...' : (solenoid ? '🔐 Tutup Valve' : '🔓 Buka Valve')}
             </button>
           </div>
         </section>
@@ -311,13 +327,9 @@ function OwnerManualControlPage() {
             gap: '20px'
           }}>
             <div className="card-responsive" style={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              padding: '20px',
-              background: 'linear-gradient(135deg, #ebf5fb 0%, #d6eaf8 100%)',
-              borderRadius: '12px',
-              borderLeft: '5px solid #3498db'
+              display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+              padding: '20px', background: 'linear-gradient(135deg, #ebf5fb 0%, #d6eaf8 100%)',
+              borderRadius: '12px', borderLeft: '5px solid #3498db'
             }}>
               <div>
                 <p style={{ fontSize: '1rem', fontWeight: '700', color: '#2c3e50', margin: 0 }}>
@@ -328,17 +340,9 @@ function OwnerManualControlPage() {
                 </p>
               </div>
               <button style={{
-                padding: '10px 18px',
-                backgroundColor: '#3498db',
-                color: 'white',
-                border: 'none',
-                borderRadius: '8px',
-                fontWeight: '700',
-                cursor: 'pointer',
-                transition: 'all 0.3s ease',
-                fontSize: '0.9rem',
-                boxShadow: '0 4px 12px rgba(52, 152, 219, 0.3)',
-                whiteSpace: 'nowrap'
+                padding: '10px 18px', backgroundColor: '#3498db', color: 'white', border: 'none',
+                borderRadius: '8px', fontWeight: '700', cursor: 'pointer', transition: 'all 0.3s ease',
+                fontSize: '0.9rem', boxShadow: '0 4px 12px rgba(52, 152, 219, 0.3)', whiteSpace: 'nowrap'
               }}
               onMouseOver={e => {
                 e.target.style.backgroundColor = '#2980b9';
@@ -356,13 +360,9 @@ function OwnerManualControlPage() {
             </div>
 
             <div className="card-responsive" style={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              padding: '20px',
-              background: 'linear-gradient(135deg, #ebf5fb 0%, #d6eaf8 100%)',
-              borderRadius: '12px',
-              borderLeft: '5px solid #3498db'
+              display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+              padding: '20px', background: 'linear-gradient(135deg, #ebf5fb 0%, #d6eaf8 100%)',
+              borderRadius: '12px', borderLeft: '5px solid #3498db'
             }}>
               <div>
                 <p style={{ fontSize: '1rem', fontWeight: '700', color: '#2c3e50', margin: 0 }}>
@@ -373,17 +373,9 @@ function OwnerManualControlPage() {
                 </p>
               </div>
               <button style={{
-                padding: '10px 18px',
-                backgroundColor: '#3498db',
-                color: 'white',
-                border: 'none',
-                borderRadius: '8px',
-                fontWeight: '700',
-                cursor: 'pointer',
-                transition: 'all 0.3s ease',
-                fontSize: '0.9rem',
-                boxShadow: '0 4px 12px rgba(52, 152, 219, 0.3)',
-                whiteSpace: 'nowrap'
+                padding: '10px 18px', backgroundColor: '#3498db', color: 'white', border: 'none',
+                borderRadius: '8px', fontWeight: '700', cursor: 'pointer', transition: 'all 0.3s ease',
+                fontSize: '0.9rem', boxShadow: '0 4px 12px rgba(52, 152, 219, 0.3)', whiteSpace: 'nowrap'
               }}
               onMouseOver={e => {
                 e.target.style.backgroundColor = '#2980b9';
@@ -401,13 +393,9 @@ function OwnerManualControlPage() {
             </div>
 
             <div className="card-responsive" style={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              padding: '20px',
-              background: 'linear-gradient(135deg, #fef3c7 0%, #fde68a 100%)',
-              borderRadius: '12px',
-              borderLeft: '5px solid #e74c3c'
+              display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+              padding: '20px', background: 'linear-gradient(135deg, #fef3c7 0%, #fde68a 100%)',
+              borderRadius: '12px', borderLeft: '5px solid #e74c3c'
             }}>
               <div>
                 <p style={{ fontSize: '1rem', fontWeight: '700', color: '#2c3e50', margin: 0 }}>
@@ -418,17 +406,9 @@ function OwnerManualControlPage() {
                 </p>
               </div>
               <button style={{
-                padding: '10px 18px',
-                backgroundColor: '#e74c3c',
-                color: 'white',
-                border: 'none',
-                borderRadius: '8px',
-                fontWeight: '700',
-                cursor: 'pointer',
-                transition: 'all 0.3s ease',
-                fontSize: '0.9rem',
-                boxShadow: '0 4px 12px rgba(231, 76, 60, 0.3)',
-                whiteSpace: 'nowrap'
+                padding: '10px 18px', backgroundColor: '#e74c3c', color: 'white', border: 'none',
+                borderRadius: '8px', fontWeight: '700', cursor: 'pointer', transition: 'all 0.3s ease',
+                fontSize: '0.9rem', boxShadow: '0 4px 12px rgba(231, 76, 60, 0.3)', whiteSpace: 'nowrap'
               }}
               onMouseOver={e => {
                 e.target.style.backgroundColor = '#c0392b';

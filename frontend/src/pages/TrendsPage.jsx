@@ -147,73 +147,95 @@ function TrendsPage() {
         </section>
       )}
 
-      {/* RINGKASAN TREN 3 HARI */}
-      <section className="card-grid-3 u-mb-1" style={{ marginBottom: '30px', gap: '15px' }}>
+{/* RINGKASAN TREN 3 HARI */}
+      <section style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '20px', marginBottom: '30px' }}>
         
         {/* KARTU 1: PRAKIRAAN CUACA */}
-        <div className="card card-animate card-elevated card-stretch">
-          <div className="card-header card-header-top-md">
-            <div>
-              <div className="card-title card-title-lg">Prakiraan BMKG</div>
-              <div className="card-subtitle card-subtitle-lg">3 Hari ke depan</div>
+        <div className="card-responsive" style={{ backgroundColor: '#fff', borderRadius: '15px', padding: '24px', border: '1px solid #ecf0f1', boxShadow: '0 4px 15px rgba(0,0,0,0.03)' }}>
+          <div style={{ marginBottom: '20px' }}>
+            <div style={{ fontSize: '16px', fontWeight: '700', color: '#2c3e50', display: 'flex', alignItems: 'center', gap: '8px' }}>
+              ⛅ Prakiraan BMKG
             </div>
+            <div style={{ fontSize: '12px', color: '#7f8c8d' }}>Cuaca 3 hari ke depan</div>
           </div>
+
           {loading ? (
-            <div className="simple-card-list u-mt-05">
-              <div style={{ textAlign: 'center', color: '#95a5a6', padding: '20px 0' }}>⏳ Memuat BMKG...</div>
+            <div style={{ textAlign: 'center', color: '#95a5a6', padding: '30px 0', backgroundColor: '#f8f9fa', borderRadius: '10px' }}>
+              <div style={{ animation: 'pulse 1.5s infinite' }}>⏳ Memuat BMKG...</div>
             </div>
           ) : forecastData.length > 0 ? (
-            <div className="simple-card-list u-mt-05">
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
               {forecastData.map((day, idx) => (
-                <div key={idx} className="small-stat" style={{ display: 'flex', justifyContent: 'space-between' }}>
+                <div key={idx} style={{ 
+                  display: 'flex', justifyContent: 'space-between', alignItems: 'center', 
+                  padding: '12px 15px', backgroundColor: '#f8f9fa', borderRadius: '10px', border: '1px solid #f0f0f0' 
+                }}>
                   <div>
-                    <div className="small-text text-sm-muted">{day.date}</div>
-                    <div style={{ fontSize: '0.95rem', fontWeight: '500' }}>{day.weather}</div>
+                    <div style={{ fontSize: '11px', color: '#95a5a6', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.5px' }}>{day.date}</div>
+                    <div style={{ fontSize: '14px', fontWeight: '600', color: '#2c3e50', marginTop: '2px' }}>{day.weather}</div>
                   </div>
                   <div style={{ textAlign: 'right' }}>
-                    <div className="small-text text-sm-muted">Suhu Maks</div>
-                    <div style={{ fontWeight: 'bold' }}>{day.temp}°C</div>
+                    <div style={{ fontSize: '10px', color: '#95a5a6' }}>Suhu Maks</div>
+                    <div style={{ fontSize: '18px', fontWeight: '800', color: '#e67e22' }}>{day.temp}°C</div>
                   </div>
                 </div>
               ))}
             </div>
           ) : (
-            <div className="simple-card-list u-mt-05">
-               <div style={{ textAlign: 'center', color: '#95a5a6' }}>Data tidak tersedia</div>
+            <div style={{ textAlign: 'center', color: '#95a5a6', padding: '20px', backgroundColor: '#f8f9fa', borderRadius: '10px' }}>
+              Data tidak tersedia
             </div>
           )}
         </div>
 
         {/* KARTU 2: PREDIKSI SOIL MOISTURE */}
-        <div className="card card-animate card-elevated">
-          <div className="card-header card-header-top">
-            <div>
-              <div className="card-title card-title-lg">Prediksi Kelembapan</div>
-              <div className="card-subtitle card-subtitle-lg">Evolusi Tanah Node A</div>
+        <div className="card-responsive" style={{ backgroundColor: '#fff', borderRadius: '15px', padding: '24px', border: '1px solid #ecf0f1', boxShadow: '0 4px 15px rgba(0,0,0,0.03)' }}>
+          <div style={{ marginBottom: '20px' }}>
+            <div style={{ fontSize: '16px', fontWeight: '700', color: '#2c3e50', display: 'flex', alignItems: 'center', gap: '8px' }}>
+              📈 Prediksi Kelembapan
             </div>
+            <div style={{ fontSize: '12px', color: '#7f8c8d' }}>Evolusi tanah Node Utama</div>
           </div>
+
           {loading ? (
-            <div className="simple-card-list u-mt-05">
-              <div style={{ textAlign: 'center', color: '#95a5a6', padding: '20px 0' }}>⏳ Mengalkulasi...</div>
+            <div style={{ textAlign: 'center', color: '#95a5a6', padding: '30px 0', backgroundColor: '#f8f9fa', borderRadius: '10px' }}>
+               <div style={{ animation: 'pulse 1.5s infinite' }}>⏳ Mengalkulasi model...</div>
             </div>
           ) : forecastData.length > 0 ? (
-            <div className="simple-card-list u-mt-05">
-              <div className="small-stat">
-                <div className="small-text text-sm-muted">Estimasi Besok ({forecastData[1]?.date})</div>
-                <div className="big-number" style={{ color: forecastData[1]?.soilMoisture < 40 ? '#e74c3c' : '#27ae60' }}>
-                    {forecastData[1]?.soilMoisture || '--'}%
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              {/* Box Besok */}
+              <div style={{ 
+                padding: '16px', borderRadius: '12px', 
+                backgroundColor: forecastData[1]?.soilMoisture < 40 ? '#fff5f5' : '#f0fdf4', 
+                border: `1px solid ${forecastData[1]?.soilMoisture < 40 ? '#ffe3e3' : '#dcfce7'}` 
+              }}>
+                <div style={{ fontSize: '12px', color: '#7f8c8d', fontWeight: '600', marginBottom: '4px' }}>Besok ({forecastData[1]?.date})</div>
+                <div style={{ display: 'flex', alignItems: 'baseline', gap: '4px' }}>
+                  <span style={{ fontSize: '28px', fontWeight: '800', color: forecastData[1]?.soilMoisture < 40 ? '#e74c3c' : '#27ae60' }}>
+                    {forecastData[1]?.soilMoisture || '--'}
+                  </span>
+                  <span style={{ fontSize: '14px', fontWeight: '600', color: '#7f8c8d' }}>%</span>
                 </div>
-                <div className="small-text text-sm-muted">
-                  {forecastData[1]?.action}
+                <div style={{ fontSize: '11px', fontWeight: '700', color: forecastData[1]?.soilMoisture < 40 ? '#c0392b' : '#1e8449', marginTop: '6px' }}>
+                  {forecastData[1]?.action || 'Butuh Perhatian'}
                 </div>
               </div>
-              <div className="small-stat">
-                <div className="small-text text-sm-muted">Prediksi Hari ke-3 ({forecastData[2]?.date})</div>
-                <div className="big-number" style={{ color: forecastData[2]?.soilMoisture < 40 ? '#e74c3c' : '#27ae60' }}>
-                  {forecastData[2]?.soilMoisture || '--'}%
+
+              {/* Box Lusa (Hari ke-3) */}
+              <div style={{ 
+                padding: '16px', borderRadius: '12px', 
+                backgroundColor: forecastData[2]?.soilMoisture < 40 ? '#fff5f5' : '#f0fdf4', 
+                border: `1px solid ${forecastData[2]?.soilMoisture < 40 ? '#ffe3e3' : '#dcfce7'}` 
+              }}>
+                <div style={{ fontSize: '12px', color: '#7f8c8d', fontWeight: '600', marginBottom: '4px' }}>Hari ke-3 ({forecastData[2]?.date})</div>
+                <div style={{ display: 'flex', alignItems: 'baseline', gap: '4px' }}>
+                  <span style={{ fontSize: '28px', fontWeight: '800', color: forecastData[2]?.soilMoisture < 40 ? '#e74c3c' : '#27ae60' }}>
+                    {forecastData[2]?.soilMoisture || '--'}
+                  </span>
+                  <span style={{ fontSize: '14px', fontWeight: '600', color: '#7f8c8d' }}>%</span>
                 </div>
-                <div className="small-text text-sm-muted">
-                  {forecastData[2]?.action}
+                <div style={{ fontSize: '11px', fontWeight: '700', color: forecastData[2]?.soilMoisture < 40 ? '#c0392b' : '#1e8449', marginTop: '6px' }}>
+                  {forecastData[2]?.action || 'Pantau Berkala'}
                 </div>
               </div>
             </div>
@@ -221,31 +243,46 @@ function TrendsPage() {
         </div>
 
         {/* KARTU 3: REKOMENDASI AI/SISTEM */}
-        <div className="card card-animate card-elevated">
-          <div className="card-header card-header-top">
-            <div>
-              <div className="card-title card-title-lg">Rekomendasi Aksi</div>
-              <div className="card-subtitle card-subtitle-lg">Analisis Sistem AI</div>
+        <div className="card-responsive" style={{ backgroundColor: '#fff', borderRadius: '15px', padding: '24px', border: '1px solid #ecf0f1', boxShadow: '0 4px 15px rgba(0,0,0,0.03)' }}>
+          <div style={{ marginBottom: '20px' }}>
+            <div style={{ fontSize: '16px', fontWeight: '700', color: '#2c3e50', display: 'flex', alignItems: 'center', gap: '8px' }}>
+              💡 Rekomendasi Aksi
             </div>
+            <div style={{ fontSize: '12px', color: '#7f8c8d' }}>Analisis gabungan sistem AI</div>
           </div>
-          <div className="simple-list u-mt-05">
+          
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
             {loading ? (
-                 <div style={{ textAlign: 'center', color: '#95a5a6', padding: '20px 0' }}>⏳ Memproses insight...</div>
+               <div style={{ textAlign: 'center', color: '#95a5a6', padding: '30px 0', backgroundColor: '#f8f9fa', borderRadius: '10px' }}>
+                 <div style={{ animation: 'pulse 1.5s infinite' }}>⏳ Memproses insight...</div>
+               </div>
             ) : (
                 generateRecommendations().map((rec, idx) => (
-                    <div key={idx} className="small-text" style={{ paddingBottom: '12px', lineHeight: '1.4' }}>
-                        ✓ {rec}
+                    <div key={idx} style={{ 
+                      backgroundColor: '#f4f6f8', 
+                      padding: '12px 15px', 
+                      borderRadius: '8px', 
+                      borderLeft: '4px solid #3498db',
+                      fontSize: '13px',
+                      lineHeight: '1.5',
+                      color: '#34495e',
+                      fontWeight: '500'
+                    }}>
+                        {rec}
                     </div>
                 ))
             )}
+            
             {!loading && forecastData.length === 0 && (
-                <div className="small-text" style={{ color: '#95a5a6' }}>Tidak ada rekomendasi saat ini.</div>
+                <div style={{ textAlign: 'center', padding: '20px', color: '#95a5a6', backgroundColor: '#f8f9fa', borderRadius: '10px' }}>
+                  Tidak ada rekomendasi kritis saat ini.
+                </div>
             )}
           </div>
         </div>
-      </section>
 
-      {/* TABEL RINCIAN 3 HARI */}
+      </section>
+            {/* TABEL RINCIAN 3 HARI */}
       <section className="card card-animate card-elevated">
         <div className="card-header card-header-top">
           <div>

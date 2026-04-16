@@ -1,162 +1,293 @@
-import React, { useState, useEffect } from 'react';
-import { getLatestSensorData } from '../services/sensorApi';
+import { useMemo, useState, useEffect, useCallback } from 'react';
+import { getLatestWaterLevel } from '../services/controlApi';
 
-function TanksPage() {
-  const [tankData, setTankData] = useState(null);
-  const [history, setHistory] = useState([]);
+const DEVICE_ID = "ESP32-MAC-A001"; // ID Perangkat
+
+function TankMonitoringPage() {
+  const [dateFrom, setDateFrom] = useState('');
+  const [dateTo, setDateTo] = useState('');
+  const [tank, setTank] = useState('all');
+  const [tankData, setTankData] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  
-  const perangkatId = "ESP32-MAC-A001";
-  const MAX_TINGGI_TANDON = 42; // Tinggi maksimal tandon kamu dalam cm
+  const [error, setError] = useState('');
 
-  const fetchData = async () => {
+  // Helper function untuk tentukan status peringatan
+  const determinateStatus = (level) => {
+    if (level >= 60) return 'normal';    // Di atas 60% Aman
+    if (level >= 25) return 'warning';   // 25% - 59% Siaga
+    return 'critical';                   // Di bawah 25% Kritis
+  };
+
+  // === FUNGSI TARIK DATA ===
+  const fetchTankData = useCallback(async () => {
     try {
-      const result = await getLatestSensorData(perangkatId);
-      console.log("Data diterima dari API:", result.data); // Untuk debug di Console F12
+      const response = await getLatestWaterLevel(DEVICE_ID);
+      
+      console.log("Cek Data Tandon Asli:", response.data);
 
-      if (result.status === 'success' && result.data && result.data.length > 0) {
-        // Kita ambil data pertama (paling baru)
-        setTankData(result.data[0]);
-        // Ambil 10 data terbaru untuk riwayat
-        setHistory(result.data.slice(0, 10));
-        setError(null);
+      if (response.data && Array.isArray(response.data) && response.data.length > 0) {
+        const transformed = response.data.map(item => {
+          // Ambil jarak sensor ke air
+          const jarakSensor = parseFloat(item.ketinggian_air) || 0;
+          const TINGGI_MAKSIMAL_TANDON = 42; 
+
+          // Rumus: Sisa Air = Tinggi Tandon - Jarak Bacaan Sensor
+          const tinggiAirAsli = TINGGI_MAKSIMAL_TANDON - jarakSensor;
+          let persentase = Math.round((tinggiAirAsli / TINGGI_MAKSIMAL_TANDON) * 100);
+          
+          // Safety guard agar tidak lewat batas 0-100
+          persentase = Math.max(0, Math.min(100, persentase));
+
+          // Penamaan tandon dinamis berdasarkan database
+          const namaTandon = item.jenis_tandon === 'pupuk' ? 'Tandon Nutrisi' : 'Tandon Air Baku';
+
+          return {
+            time: new Date(item.timestamp).toLocaleString('id-ID'),
+            tank: namaTandon,
+            level: persentase,
+            ketinggian_cm: tinggiAirAsli.toFixed(1), // Ketinggian riil dalam cm
+            jarak_sensor: jarakSensor.toFixed(1), // Jarak yang dibaca ultrasonik
+            status: determinateStatus(persentase)
+          };
+        });
+
+        setTankData(transformed);
+        setError('');
+      } else {
+        setTankData([]);
       }
     } catch (err) {
-      console.error("Fetch Error:", err);
-      setError("Gagal menyambung ke server. Pastikan Backend & Tunnel aktif.");
+      console.error("Error Fetch:", err);
+      setError("Gagal koneksi ke server tandon.");
     } finally {
       setLoading(false);
     }
-  };
-
-  useEffect(() => {
-    fetchData();
-    const interval = setInterval(fetchData, 15000);
-    return () => clearInterval(interval);
   }, []);
 
-  // Fungsi hitung persentase desimal (Float Safe)
-  const calculatePercentage = (height) => {
-    const val = parseFloat(height);
-    if (isNaN(val)) return 0;
-    let percentage = (val / MAX_TINGGI_TANDON) * 100;
-    return Math.min(100, Math.max(0, Math.round(percentage)));
-  };
+  // === TRIGGER: PENGAMBILAN DATA AWAL & AUTO REFRESH ===
+  useEffect(() => {
+    setLoading(true);
+    fetchTankData();
+    
+    const intervalId = setInterval(fetchTankData, 15000);
+    return () => clearInterval(intervalId);
+  }, [fetchTankData]);
 
-  if (loading && history.length === 0) {
-    return <div className="page-shell u-p-20">🔄 Sedang sinkronisasi data tandon...</div>;
-  }
+  // === LOGIKA FILTER TANGGAL & JENIS TANDON ===
+  const filtered = useMemo(() => {
+    return tankData.filter((row) => {
+      const d = row.time.split(',')[0].split('/').reverse().join('-');
+      const matchesFrom = !dateFrom || d >= dateFrom;
+      const matchesTo = !dateTo || d <= dateTo;
+      const matchesTank = tank === 'all' || row.tank === tank;
+      return matchesFrom && matchesTo && matchesTank;
+    });
+  }, [dateFrom, dateTo, tank, tankData]);
+
+  const latest = filtered.length > 0 ? filtered[0] : null;
 
   return (
     <div className="page page-with-padding page-shell" style={{ backgroundColor: '#f8f9fa' }}>
+      
+      {/* 🔴 ALERT ERROR */}
+      {error && (
+        <div className="alert alert-danger u-mb-15" style={{ backgroundColor: '#fadbd8', color: '#c0392b', padding: '15px', borderRadius: '8px', borderLeft: '5px solid #e74c3c' }}>
+          <strong>⚠️ Peringatan:</strong> {error}
+        </div>
+      )}
+      
+      {/* HEADER HALAMAN */}
       <div className="page-header u-mb-15">
         <div>
-          <div className="page-title page-title-lg">🏗️ Manajemen Tandon Air</div>
-          <div className="page-caption">Node: <strong>{perangkatId}</strong></div>
+          <div className="page-title page-title-lg">💧 Monitoring Tandon</div>
+          <div className="page-caption page-caption-lg">
+            Pantau persentase stok air dan nutrisi di tandon utama secara real-time.
+          </div>
         </div>
       </div>
 
-      {error && <div className="alert alert-danger u-mb-1">{error}</div>}
-
-      <section className="card-grid-3 u-mb-1">
-        {/* CARD TANDON UTAMA */}
-        <div className="card card-animate card-elevated">
-          <div className="card-header">
-            <div className="card-title">Tandon Utama</div>
+      {/* KOTAK-KOTAK ATAS (DASHBOARD) */}
+      <section style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '20px', marginBottom: '30px' }}>
+        
+        {/* KARTU 1: FILTER */}
+        <div className="card-responsive" style={{ backgroundColor: '#fff', borderRadius: '15px', padding: '24px', border: '1px solid #ecf0f1', boxShadow: '0 4px 15px rgba(0,0,0,0.03)', display: 'flex', flexDirection: 'column' }}>
+          <div style={{ marginBottom: '20px' }}>
+            <div style={{ fontSize: '16px', fontWeight: '700', color: '#2c3e50', display: 'flex', alignItems: 'center', gap: '8px' }}>
+              🔍 Filter Data
+            </div>
+            <div style={{ fontSize: '12px', color: '#7f8c8d' }}>Pilih rentang waktu & tandon</div>
           </div>
-          <div className="simple-card-list">
-            <div className="small-stat">
-              <div className="small-text text-sm-muted">Level Air</div>
-              <div className="big-number">
-                {calculatePercentage(tankData?.ketinggian_air)}%
-              </div>
-              <div className="small-text text-sm-muted">
-                {/* Gunakan toFixed(2) untuk menampilkan 2 angka desimal dari Float */}
-                {tankData?.ketinggian_air !== undefined ? parseFloat(tankData.ketinggian_air).toFixed(2) : '0.00'} / {MAX_TINGGI_TANDON}.0 cm
-              </div>
+          
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', flex: 1 }}>
+            <div>
+              <label style={{ fontSize: '11px', fontWeight: '600', color: '#7f8c8d', marginBottom: '4px', display: 'block' }}>Tanggal Mulai</label>
+              <input type="date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} style={{ width: '100%', padding: '8px 12px', borderRadius: '8px', border: '1px solid #ddd', outline: 'none', fontSize: '13px', color: '#2c3e50' }} />
             </div>
-            <div className="small-stat">
-              <div className="small-text text-sm-muted">Status</div>
-              <div style={{ 
-                color: parseFloat(tankData?.ketinggian_air) < 10 ? '#e74c3c' : '#27ae60', 
-                fontWeight: 'bold' 
-              }}>
-                {parseFloat(tankData?.ketinggian_air) < 10 ? '⚠ KRITIS' : '✓ NORMAL'}
-              </div>
+            <div>
+              <label style={{ fontSize: '11px', fontWeight: '600', color: '#7f8c8d', marginBottom: '4px', display: 'block' }}>Tanggal Akhir</label>
+              <input type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)} style={{ width: '100%', padding: '8px 12px', borderRadius: '8px', border: '1px solid #ddd', outline: 'none', fontSize: '13px', color: '#2c3e50' }} />
+            </div>
+            <div style={{ gridColumn: 'span 2' }}>
+              <label style={{ fontSize: '11px', fontWeight: '600', color: '#7f8c8d', marginBottom: '4px', display: 'block' }}>Pilih Tandon</label>
+              <select value={tank} onChange={(e) => setTank(e.target.value)} style={{ width: '100%', padding: '10px 12px', borderRadius: '8px', border: '1px solid #ddd', outline: 'none', fontSize: '13px', color: '#2c3e50', backgroundColor: '#f9f9f9', cursor: 'pointer' }}>
+                <option value="all">💧 Semua Tandon</option>
+                <option value="Tandon Air Baku">Tandon Air Baku</option>
+                <option value="Tandon Nutrisi">Tandon Nutrisi</option>
+              </select>
             </div>
           </div>
-        </div>
-
-        {/* CARD NUTRISI (Data ini biasanya dari log_sensor_tanah) */}
-        <div className="card card-animate card-elevated">
-          <div className="card-header"><div className="card-title">Nutrisi Terkini</div></div>
-          <div className="simple-card-list">
-            <div className="small-stat">
-              <div className="small-text text-sm-muted">pH Tanah</div>
-              <div className="big-number" style={{ fontSize: '1.8rem' }}>{tankData?.ph_val || '-'}</div>
-            </div>
-            <div className="small-stat">
-              <div className="small-text text-sm-muted">Kelembapan</div>
-              <div className="big-number" style={{ fontSize: '1.8rem' }}>{tankData?.kelembapan_val ? `${tankData.kelembapan_val}%` : '-'}</div>
-            </div>
+          
+          <div style={{ marginTop: '15px' }}>
+            <button type="button" onClick={() => { setDateFrom(''); setDateTo(''); setTank('all'); }} style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid #bdc3c7', backgroundColor: '#fff', color: '#7f8c8d', fontWeight: '600', cursor: 'pointer', transition: 'all 0.3s' }}>
+              🔄 Reset Filter
+            </button>
           </div>
         </div>
 
-        {/* CARD STATUS POMPA */}
-        <div className="card card-animate card-elevated">
-          <div className="card-header"><div className="card-title">Kontrol Pompa</div></div>
-          <div className="u-p-15" style={{ textAlign: 'center' }}>
-             {/* Logika: Pompa nyala jika kelembapan rendah */}
-             <div className={`badge ${parseFloat(tankData?.kelembapan_val) < 50 ? 'badge-primary' : 'badge-secondary'}`} style={{ fontSize: '1.1rem', padding: '10px' }}>
-                {parseFloat(tankData?.kelembapan_val) < 50 ? 'POMPA AKTIF 🟢' : 'POMPA MATI 🔴'}
-             </div>
-             <div className="small-text u-mt-10">Sistem Proteksi Otomatis</div>
+        {/* KARTU 2: SNAPSHOT TANDON TERBARU */}
+        <div className="card-responsive" style={{ backgroundColor: '#fff', borderRadius: '15px', padding: '24px', border: '1px solid #ecf0f1', boxShadow: '0 4px 15px rgba(0,0,0,0.03)' }}>
+          <div style={{ marginBottom: '20px' }}>
+            <div style={{ fontSize: '16px', fontWeight: '700', color: '#2c3e50', display: 'flex', alignItems: 'center', gap: '8px' }}>
+              📊 Snapshot Terbaru
+            </div>
+            <div style={{ fontSize: '12px', color: '#7f8c8d' }}>Pembacaan sensor JSN-SR04T</div>
+          </div>
+          
+          {loading ? (
+            <div style={{ textAlign: 'center', color: '#95a5a6', padding: '30px 0', backgroundColor: '#f8f9fa', borderRadius: '10px' }}>
+              <div style={{ animation: 'pulse 1.5s infinite' }}>⏳ Memuat data tandon...</div>
+            </div>
+          ) : latest ? (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              <div style={{ padding: '12px 15px', backgroundColor: '#f4f6f8', borderRadius: '10px', borderLeft: '4px solid #3498db' }}>
+                <div style={{ fontSize: '11px', color: '#7f8c8d', fontWeight: '600', marginBottom: '2px' }}>Tandon Aktif</div>
+                <div style={{ fontSize: '14px', fontWeight: '700', color: '#2c3e50' }}>{latest.tank}</div>
+              </div>
+              
+              <div style={{ padding: '15px', borderRadius: '10px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: latest.status === 'critical' ? '#fff5f5' : latest.status === 'warning' ? '#fffbeb' : '#f0fdf4', border: `1px solid ${latest.status === 'critical' ? '#ffe3e3' : latest.status === 'warning' ? '#fef3c7' : '#dcfce7'}` }}>
+                <div>
+                  <div style={{ fontSize: '11px', color: '#7f8c8d', fontWeight: '600' }}>Sisa Volume</div>
+                  <div style={{ display: 'flex', alignItems: 'baseline', gap: '5px' }}>
+                    <div style={{ fontSize: '32px', fontWeight: '800', lineHeight: '1.2', color: latest.status === 'critical' ? '#e74c3c' : latest.status === 'warning' ? '#f39c12' : '#27ae60' }}>
+                      {latest.level}%
+                    </div>
+                    <div style={{ fontSize: '14px', fontWeight: '600', color: '#7f8c8d' }}>({latest.ketinggian_cm} cm)</div>
+                  </div>
+                </div>
+                <div style={{ textAlign: 'right' }}>
+                  <div style={{ fontSize: '24px' }}>
+                     {latest.status === 'critical' ? '⚠️' : latest.status === 'warning' ? '🔔' : '✅'}
+                  </div>
+                </div>
+              </div>
+              <div style={{ fontSize: '10px', color: '#95a5a6', textAlign: 'right', marginTop: '4px' }}>
+                Diperbarui: {latest.time.split(', ')[1]} WIB
+              </div>
+            </div>
+          ) : (
+            <div style={{ textAlign: 'center', color: '#95a5a6', padding: '30px 0', backgroundColor: '#f8f9fa', borderRadius: '10px' }}>
+              Tidak ada data tandon.
+            </div>
+          )}
+        </div>
+
+        {/* KARTU 3: STATUS KEAMANAN */}
+        <div className="card-responsive" style={{ backgroundColor: '#fff', borderRadius: '15px', padding: '24px', border: '1px solid #ecf0f1', boxShadow: '0 4px 15px rgba(0,0,0,0.03)', display: 'flex', flexDirection: 'column' }}>
+          <div style={{ marginBottom: '20px' }}>
+            <div style={{ fontSize: '16px', fontWeight: '700', color: '#2c3e50', display: 'flex', alignItems: 'center', gap: '8px' }}>
+              🛡️ Status Keamanan
+            </div>
+            <div style={{ fontSize: '12px', color: '#7f8c8d' }}>Sistem proteksi dry-run pompa</div>
+          </div>
+          
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '15px', flex: 1, justifyContent: 'center' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingBottom: '15px', borderBottom: '1px solid #f0f0f0' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <div style={{ width: '32px', height: '32px', borderRadius: '8px', backgroundColor: '#e8f5e9', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '14px' }}>⚙️</div>
+                <span style={{ fontWeight: '600', color: '#34495e', fontSize: '13px' }}>Auto-Cutoff</span>
+              </div>
+              <span style={{ backgroundColor: '#e8f5e9', color: '#2e7d32', padding: '4px 12px', borderRadius: '20px', fontSize: '11px', fontWeight: '700' }}>
+                ✓ AKTIF
+              </span>
+            </div>
+            
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <div style={{ width: '32px', height: '32px', borderRadius: '8px', backgroundColor: '#ffebee', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '14px' }}>📉</div>
+                <span style={{ fontWeight: '600', color: '#34495e', fontSize: '13px' }}>Ambang Kritis</span>
+              </div>
+              <span style={{ backgroundColor: '#ffebee', color: '#c62828', padding: '4px 12px', borderRadius: '20px', fontSize: '11px', fontWeight: '800' }}>
+                &lt; 10%
+              </span>
+            </div>
+          </div>
+
+          <div style={{ marginTop: '20px', padding: '12px', backgroundColor: '#f8f9fa', borderRadius: '8px', fontSize: '11px', color: '#7f8c8d', textAlign: 'center', border: '1px dashed #bdc3c7' }}>
+             💡 Pompa akan dimatikan otomatis oleh sistem jika volume air menyentuh batas kritis (10%).
           </div>
         </div>
       </section>
 
-      {/* TABEL HISTORI - PENYEBAB UTAMA UNDEFINED FIXED HERE */}
-      <section className="card card-elevated">
-        <div className="card-header">
-          <div className="card-title">10 Riwayat Pengukuran Terakhir</div>
+      {/* TABEL RIWAYAT DI BAWAH */}
+      <section className="card card-animate card-animate-delay-4 card-elevated">
+        <div className="card-header card-header-top">
+          <div>
+            <div className="card-title card-title-lg">Riwayat Level Tandon</div>
+            <div className="card-subtitle card-subtitle-lg">
+              Data riwayat fluktuasi air berdasarkan waktu (Terbaru di atas)
+            </div>
+          </div>
         </div>
-        <div className="table-wrapper">
-          <table className="table table-compact">
-            <thead>
-              <tr style={{ borderBottom: '2px solid #27ae60', textAlign: 'left' }}>
-                <th style={{ padding: '12px' }}>Waktu</th>
-                <th style={{ padding: '12px' }}>Ketinggian Air</th>
-              </tr>
-            </thead>
-            <tbody>
-              {history.length > 0 ? history.map((item, index) => (
-                <tr key={item.id || index} style={{ borderBottom: '1px solid #eee' }}>
-                  {/* Gunakan 'timestamp' sesuai DB */}
-                  <td style={{ padding: '12px' }}>
-                    {item.timestamp ? new Date(item.timestamp).toLocaleString('id-ID') : '-'}
-                  </td>
-                  
-                  {/* Menangani Float 'ketinggian_air' */}
-                  <td style={{ padding: '12px', fontWeight: 'bold' }}>
-                    {item.ketinggian_air !== undefined && item.ketinggian_air !== null 
-                      ? `${parseFloat(item.ketinggian_air).toFixed(2)} cm` 
-                      : '0.00 cm'}
-                  </td>
+        <div className="table-wrapper u-mt-05">
+          {loading ? (
+            <div className="text-center text-muted" style={{ padding: '3rem' }}>
+              <p>⏳ Sedang menyinkronkan data...</p>
+            </div>
+          ) : filtered.length > 0 ? (
+            <table className="table table-compact">
+              <thead>
+                <tr style={{ borderBottom: '2px solid #3498db' }}>
+                  <th style={{ color: '#2c3e50', padding: '12px' }}>Waktu Catat</th>
+                  <th style={{ color: '#2c3e50', padding: '12px' }}>Nama Tandon</th>
+                  <th style={{ color: '#2c3e50', padding: '12px' }}>Ketinggian Air (%)</th>
+                  <th style={{ color: '#2c3e50', padding: '12px' }}>Status Indikator</th>
                 </tr>
-              )) : (
-                <tr>
-                  <td colSpan="4" style={{ textAlign: 'center', padding: '20px' }}>
-                    Belum ada data tandon untuk perangkat ini.
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {filtered.map((row, index) => (
+                  <tr key={`${row.time}-${row.tank}-${index}`} style={{ borderBottom: '1px solid #f9f9f9' }}>
+                    <td style={{ fontWeight: '500', padding: '10px 12px' }}>{row.time}</td>
+                    <td style={{ padding: '10px 12px' }}>{row.tank}</td>
+                    <td style={{ padding: '10px 12px' }}>
+                      <div style={{ fontWeight: 'bold', fontSize: '1rem', color: '#2c3e50' }}>
+                        {row.level}%
+                        <span style={{ fontSize: '0.8rem', fontWeight: '500', color: '#7f8c8d', marginLeft: '6px' }}>
+                          ({row.ketinggian_cm} cm)
+                        </span>
+                      </div>
+                    </td>
+                    <td style={{ padding: '10px 12px' }}>
+                      <span style={{
+                          padding: '4px 10px', borderRadius: '6px', fontSize: '0.8rem', fontWeight: '600',
+                          backgroundColor: row.status === 'critical' ? '#fadbd8' : row.status === 'warning' ? '#fcf3cf' : '#d5f5e3',
+                          color: row.status === 'critical' ? '#c0392b' : row.status === 'warning' ? '#b7950b' : '#1e8449'
+                      }}>
+                        {row.status === 'critical' ? 'Kritis (Segera Isi)' : row.status === 'warning' ? 'Siaga (Menipis)' : 'Normal (Aman)'}
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          ) : (
+            <div className="text-center text-muted" style={{ padding: '3rem' }}>
+              <p>📭 Tidak ada data riwayat yang cocok dengan filter.</p>
+            </div>
+          )}
         </div>
       </section>
     </div>
   );
 }
 
-export default TanksPage;
+export default TankMonitoringPage;

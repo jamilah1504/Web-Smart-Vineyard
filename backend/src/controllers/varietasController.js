@@ -1,8 +1,10 @@
 const VarietasAnggur = require('../models/VarietasAnggur');
+const PerangkatIoT = require('../models/PerangkatIoT'); // 🌟 WAJIB IMPORT INI
 
 exports.createVarietas = async (req, res) => {
     try {
-        const { nama_varietas, min_moisture, min_ph, max_ph } = req.body;
+        // Tangkap perangkat_id dari Frontend
+        const { nama_varietas, min_moisture, min_ph, max_ph, perangkat_id } = req.body;
 
         // Validasi Sederhana
         if (min_moisture < 0 || min_moisture > 100) {
@@ -12,7 +14,17 @@ exports.createVarietas = async (req, res) => {
             return res.status(400).json({ status: 'error', message: 'Rentang pH tidak valid (0-14)' });
         }
 
+        // 1. Buat Varietas Baru terlebih dahulu
         const varietas = await VarietasAnggur.create(req.body);
+
+        // 2. 🌟 BINDING PERANGKAT: Jika user memilih perangkat, update tabel PerangkatIoT
+        if (perangkat_id) {
+            await PerangkatIoT.update(
+                { varietas_id: varietas.id },
+                { where: { id: perangkat_id } }
+            );
+        }
+
         res.status(201).json({ status: 'success', data: varietas });
     } catch (error) {
         res.status(500).json({ status: 'error', message: error.message });
