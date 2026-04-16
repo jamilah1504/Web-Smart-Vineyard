@@ -8,6 +8,12 @@ const LogTandon = sequelize.define('Log_Tandon', {
   ketinggian_air: { type: DataTypes.FLOAT }, 
   volume_liter: { type: DataTypes.FLOAT },
   timestamp: { type: DataTypes.DATE, defaultValue: DataTypes.NOW }
-}, { tableName: 'Log_Tandon', timestamps: false });
+}, { 
+  tableName: 'Log_Tandon', 
+  timestamps: true,
+  createdAt: 'timestamp',
+  updatedAt: false 
+});
 
+// PASTIKAN BARIS INI ADA!
 module.exports = LogTandon;

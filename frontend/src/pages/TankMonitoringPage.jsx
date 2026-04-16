@@ -13,37 +13,42 @@ function TankMonitoringPage() {
 
   // === FUNGSI TARIK DATA ===
   const fetchTankData = useCallback(async () => {
-    try {
-      const response = await getLatestWaterLevel(DEVICE_ID)
-      
-      // Transform data dari API ke format yang sesuai
-      // Asumsi API mengembalikan: { data: [ { timestamp, ketinggian_air, status } ] }
-      if (response.data && Array.isArray(response.data)) {
-        const transformed = response.data.map(item => {
-          const tinggiReal = parseFloat(item.ketinggian_air) || 0;
-          const tinggiMax = 42; // Tinggi tandon kamu
-          
-          // RUMUS: (Tinggi Air / Tinggi Max) * 100
-          const persentase = Math.round((tinggiReal / tinggiMax) * 100);
+  try {
+    setLoading(true);
+    const response = await getLatestWaterLevel(DEVICE_ID);
+    
+    console.log("Cek Data Tandon Asli:", response.data);
 
-          return {
-            // Gunakan createdAt karena Sequelize secara default pakai itu
-            time: new Date(item.createdAt || item.timestamp).toLocaleString('id-ID'),
-            tank: 'Tandon Air Baku',
-            level: persentase, 
-            status: determinateStatus(persentase)
-          };
-        });
-        setTankData(transformed);
-      }
-      setError('')
-      setLoading(false)
-    } catch (err) {
-      console.error("🔴 Gagal menarik data tandon:", err)
-      setError(err.message || 'Gagal mengambil data tandon')
-      setLoading(false)
+    if (response.data && Array.isArray(response.data) && response.data.length > 0) {
+      const transformed = response.data.map(item => {
+        // Ambil jarak sensor ke air (misal sensor baca 10cm, berarti air sisa 32cm)
+        const jarakSensor = parseFloat(item.ketinggian_air) || 0;
+        const TINGGI_MAKSIMAL_TANDON = 42; 
+
+        // Rumus: Sisa Air = Tinggi Tandon - Jarak Bacaan Sensor
+        const tinggiAirAsli = TINGGI_MAKSIMAL_TANDON - jarakSensor;
+        let persentase = Math.round((tinggiAirAsli / TINGGI_MAKSIMAL_TANDON) * 100);
+        
+        // Safety guard agar tidak lewat batas 0-100
+        persentase = Math.max(0, Math.min(100, persentase));
+
+        return {
+          time: new Date(item.timestamp).toLocaleString('id-ID'),
+          tank: 'Tandon Air Baku',
+          level: persentase,
+          status: determinateStatus(persentase)
+        };
+      });
+
+      setTankData(transformed);
+      setError('');
     }
-  }, [])
+  } catch (err) {
+    setError("Gagal koneksi ke server tandon.");
+  } finally {
+    setLoading(false);
+  }
+}, []);
 
   // === TRIGGER: AUTO REFRESH ===
   useEffect(() => {

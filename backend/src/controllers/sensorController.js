@@ -105,3 +105,18 @@ exports.getLatestSensorData = async (req, res) => {
         res.status(500).json({ status: 'error', message: error.message });
     }
 };
+
+exports.getLatestWaterLevel = async (req, res) => {
+    try {
+        const { perangkat_id } = req.params;
+        const data = await log_tandon.findAll({ // PASTIKAN LogTandon
+            where: { perangkat_id },
+            order: [['createdAt', 'DESC']], 
+            limit: 20 
+        });
+
+        res.status(200).json({ status: 'success', data: data });
+    } catch (error) {
+        res.status(500).json({ status: 'error', message: error.message });
+    }
+};
