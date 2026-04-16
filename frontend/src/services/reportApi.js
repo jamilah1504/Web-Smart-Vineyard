@@ -1,61 +1,45 @@
-import axios from 'axios';
+import { getAccessToken } from '../utils/authStorage';
 
-const API_URL = "https://d34f3d5l-5000.asse.devtunnels.ms/api/reports";
+const BASE_URL = "https://d34f3d5l-5000.asse.devtunnels.ms/api"; 
 
-export const downloadReport = async (params, format = 'excel') => {
-  // 1. Ambil token menggunakan key yang benar: 'sv_access_token'
-  const token = localStorage.getItem('sv_access_token'); 
+export const downloadReport = async (filter, format) => {
+  const token = getAccessToken();
   
-  // Debugging log untuk memastikan di console browser token terbaca
-  console.log("Menarik token dari Local Storage:", token ? "Token ditemukan" : "Token TIDAK ditemukan");
+  // Masukkan tipe, tanggal, dan format ke dalam URL Query
+  const queryParams = new URLSearchParams({
+    startDate: filter.startDate,
+    endDate: filter.endDate,
+    type: filter.type,
+    format: format // 'excel' atau 'pdf'
+  }).toString();
 
-  if (!token) {
-    // Pesan ini akan muncul jika sv_access_token kosong/null
-    throw new Error("Sesi habis, silakan login kembali.");
-  }
-
-  const endpoint = format === 'excel' ? '/export-excel' : '/export-pdf';
+  const url = `${BASE_URL}/reports/export?${queryParams}`;
 
   try {
-    const response = await axios.get(`${API_URL}${endpoint}`, {
-      params: params,
-      headers: { 
-        // 2. Sertakan token ke Header Authorization
-        'Authorization': `Bearer ${token}` 
-      },
-      responseType: 'blob' // Wajib untuk file biner (Excel/PDF)
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: { 'Authorization': `Bearer ${token}` }
     });
 
-    // 3. Logika Proses Download File
-    const blob = new Blob([response.data], { 
-      type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' 
-    });
+    if (!response.ok) throw new Error('Gagal mengunduh laporan');
+
+    // Karena file berupa binary (bukan JSON), kita tangkap sebagai Blob
+    const blob = await response.blob();
+    const downloadUrl = window.URL.createObjectURL(blob);
     
-    const fileURL = window.URL.createObjectURL(blob);
-    const fileLink = document.createElement('a');
+    // Trik membuat link download otomatis di browser
+    const link = document.createElement('a');
+    link.href = downloadUrl;
     
-    fileLink.href = fileURL;
+    // Sesuaikan ekstensi file saat didownload
+    const ext = format === 'excel' ? 'xlsx' : 'pdf';
+    link.setAttribute('download', `Laporan_${filter.type.replace(/\s+/g, '_')}.${ext}`);
     
-    // Penamaan file yang lebih rapi
-    const timestamp = new Date().toISOString().split('T')[0];
-    const cleanTypeName = params.type.replace(/\s+/g, '_');
-    fileLink.setAttribute('download', `Laporan_${cleanTypeName}_${timestamp}.xlsx`);
-    
-    document.body.appendChild(fileLink);
-    fileLink.click();
-    
-    // Cleanup memory
-    fileLink.remove();
-    window.URL.revokeObjectURL(fileURL);
-    
-    return { status: 'success' };
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
   } catch (error) {
-    // Tangani error jika Unauthorized (401) dari Backend
-    if (error.response && error.response.status === 401) {
-      throw new Error("Token tidak valid atau kadaluarsa. Silakan login ulang.");
-    }
-    
-    console.error("Detail Error Download:", error);
-    throw new Error("Gagal mengunduh laporan. Pastikan koneksi server stabil.");
+    console.error("Export error:", error);
+    throw error;
   }
 };

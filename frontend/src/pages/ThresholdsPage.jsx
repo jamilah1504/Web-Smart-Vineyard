@@ -1,33 +1,44 @@
 import { useState, useEffect } from 'react'
 import { getAllVarietas, updateVarietas, createVarietas } from '../services/varietasApi'
+// 🌟 PASTIKAN KAMU MENGIMPORT FUNGSI API UNTUK MENGAMBIL DATA PERANGKAT
+// Jika path atau nama fungsinya beda, silakan sesuaikan
+import { getAllDevices } from '../services/controlApi' 
 
 function ThresholdsPage() {
   const [varietasList, setVarietasList] = useState([])
+  const [perangkatList, setPerangkatList] = useState([]) // 🌟 STATE BARU UNTUK LIST PERANGKAT
   const [selectedVarietas, setSelectedVarietas] = useState(null)
   const [loading, setLoading] = useState(true)
   const [showAddModal, setShowAddModal] = useState(false)
   const [newVarietasName, setNewVarietasName] = useState('')
+  const [newPerangkatId, setNewPerangkatId] = useState('') // 🌟 STATE BARU UNTUK PILIHAN PERANGKAT
   const [searchTerm, setSearchTerm] = useState('')
   const [filteredList, setFilteredList] = useState([])
 
-  // Load data varietas dari database saat halaman dibuka
+  // Load data varietas dan perangkat dari database saat halaman dibuka
   useEffect(() => {
-    const fetchVarietas = async () => {
+    const fetchData = async () => {
       try {
-        const response = await getAllVarietas()
-        if (response.status === 'success') {
-          setVarietasList(response.data)
-          setFilteredList(response.data)
-          // Set varietas pertama sebagai default jika ada
-          if (response.data.length > 0) setSelectedVarietas(response.data[0])
+        // Ambil Varietas
+        const resVarietas = await getAllVarietas()
+        if (resVarietas.status === 'success') {
+          setVarietasList(resVarietas.data)
+          setFilteredList(resVarietas.data)
+          if (resVarietas.data.length > 0) setSelectedVarietas(resVarietas.data[0])
+        }
+
+        // 🌟 Ambil Perangkat (Bisa disesuaikan dengan response API kamu)
+        const resPerangkat = await getAllDevices()
+        if (resPerangkat && resPerangkat.data) {
+          setPerangkatList(resPerangkat.data)
         }
       } catch (error) {
-        console.error("Gagal load varietas:", error)
+        console.error("Gagal meload data:", error)
       } finally {
         setLoading(false)
       }
     }
-    fetchVarietas()
+    fetchData()
   }, [])
 
   // Filter varietas berdasarkan search term
@@ -70,16 +81,16 @@ function ThresholdsPage() {
         min_k: 10,
         min_ph: 5.5,
         max_ph: 7.0,
-        min_moisture: 40
+        min_moisture: 40,
+        perangkat_id: newPerangkatId // 🌟 KIRIM ID PERANGKAT KE BACKEND
       }
       
       const response = await createVarietas(newVarietasData)
       
       if (response.status === 'success') {
-        // Tambahkan varietas baru ke state
         setVarietasList([...varietasList, response.data])
         setSelectedVarietas(response.data)
-        alert(`Varietas "${newVarietasName}" berhasil ditambahkan!`)
+        alert(`Varietas "${newVarietasName}" berhasil ditambahkan dan diikat ke perangkat!`)
       } else {
         alert(`Gagal menambahkan varietas: ${response.message || 'Terjadi kesalahan'}`)
       }
@@ -88,21 +99,16 @@ function ThresholdsPage() {
       alert("Gagal menambahkan varietas: " + error.message)
     } finally {
       setNewVarietasName('')
+      setNewPerangkatId('') // Reset dropdown perangkat
       setShowAddModal(false)
     }
   }
 
   if (loading) return (
-    <div className="page page-with-padding" style={{
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      minHeight: '400px',
-      color: '#95a5a6'
-    }}>
+    <div className="page page-with-padding" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '400px', color: '#95a5a6' }}>
       <div style={{ textAlign: 'center' }}>
         <div style={{ fontSize: '32px', marginBottom: '12px' }}>⚙️</div>
-        <div>Memuat konfigurasi varietas...</div>
+        <div>Memuat konfigurasi sistem...</div>
       </div>
     </div>
   )
@@ -134,23 +140,13 @@ function ThresholdsPage() {
       </div>
 
       {/* Selector Varietas */}
-      <section className="card-responsive" style={{
-        backgroundColor: '#ffffff',
-        padding: '24px',
-        marginBottom: '30px',
-        border: '1px solid #ecf0f1'
-      }}>
+      <section className="card-responsive" style={{ backgroundColor: '#ffffff', padding: '24px', marginBottom: '30px', border: '1px solid #ecf0f1' }}>
         <div style={{ marginBottom: '20px' }}>
           <div style={{ fontSize: '16px', fontWeight: '600', color: '#2c3e50', marginBottom: '4px' }}>🌾 Pilih Varietas</div>
           <div style={{ fontSize: '12px', color: '#7f8c8d' }}>Kelola ambang batas untuk setiap jenis</div>
         </div>
 
-        <div style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
-          gap: '16px',
-          alignItems: 'flex-end'
-        }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '16px', alignItems: 'flex-end' }}>
           <div>
             <label style={{ fontSize: '12px', fontWeight: '500', color: '#7f8c8d', display: 'block', marginBottom: '8px' }}>Cari Varietas</label>
             <input
@@ -159,13 +155,7 @@ function ThresholdsPage() {
               placeholder="Ketik nama varietas..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              style={{
-                width: '100%',
-                padding: '10px 12px',
-                borderRadius: '8px',
-                border: '1px solid #ecf0f1',
-                fontSize: '14px'
-              }}
+              style={{ width: '100%', padding: '10px 12px', borderRadius: '8px', border: '1px solid #ecf0f1', fontSize: '14px' }}
             />
           </div>
 
@@ -179,13 +169,7 @@ function ThresholdsPage() {
                 setSelectedVarietas(selected)
                 setSearchTerm('')
               }}
-              style={{
-                width: '100%',
-                padding: '10px 12px',
-                borderRadius: '8px',
-                border: '1px solid #ecf0f1',
-                fontSize: '14px'
-              }}
+              style={{ width: '100%', padding: '10px 12px', borderRadius: '8px', border: '1px solid #ecf0f1', fontSize: '14px' }}
             >
               <option value="">-- Pilih Varietas --</option>
               {filteredList.map(v => (
@@ -199,15 +183,7 @@ function ThresholdsPage() {
             className="btn-primary btn-pill-primary"
             onClick={() => setShowAddModal(true)}
             style={{
-              backgroundColor: '#27ae60',
-              color: 'white',
-              border: 'none',
-              padding: '10px 20px',
-              borderRadius: '8px',
-              fontWeight: '500',
-              cursor: 'pointer',
-              transition: 'all 0.3s',
-              whiteSpace: 'nowrap'
+              backgroundColor: '#27ae60', color: 'white', border: 'none', padding: '10px 20px', borderRadius: '8px', fontWeight: '500', cursor: 'pointer', transition: 'all 0.3s', whiteSpace: 'nowrap'
             }}
             onMouseOver={(e) => e.target.style.backgroundColor = '#229954'}
             onMouseOut={(e) => e.target.style.backgroundColor = '#27ae60'}
@@ -217,15 +193,7 @@ function ThresholdsPage() {
         </div>
 
         {searchTerm && filteredList.length === 0 && (
-          <div style={{
-            marginTop: '16px',
-            padding: '12px',
-            backgroundColor: '#fff3cd',
-            borderRadius: '8px',
-            border: '1px solid #ffc107',
-            fontSize: '13px',
-            color: '#856404'
-          }}>
+          <div style={{ marginTop: '16px', padding: '12px', backgroundColor: '#fff3cd', borderRadius: '8px', border: '1px solid #ffc107', fontSize: '13px', color: '#856404' }}>
             📭 Tidak ada varietas yang cocok. Klik "➕ Tambah Varietas" untuk membuat baru.
           </div>
         )}
@@ -234,91 +202,59 @@ function ThresholdsPage() {
       {/* Modal Tambah Varietas */}
       {showAddModal && (
         <div style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          backgroundColor: 'rgba(0, 0, 0, 0.6)',
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'center',
-          zIndex: 1000,
-          backdropFilter: 'blur(4px)'
+          position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0, 0, 0, 0.6)',
+          display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1000, backdropFilter: 'blur(4px)'
         }}>
           <div style={{
-            backgroundColor: '#ffffff',
-            borderRadius: '15px',
-            padding: '28px',
-            maxWidth: '420px',
-            width: '90%',
-            boxShadow: '0 10px 40px rgba(0,0,0,0.2)',
-            animation: 'slideIn 0.3s ease-out'
+            backgroundColor: '#ffffff', borderRadius: '15px', padding: '28px', maxWidth: '420px', width: '90%',
+            boxShadow: '0 10px 40px rgba(0,0,0,0.2)', animation: 'slideIn 0.3s ease-out'
           }}>
             <div style={{ marginBottom: '20px' }}>
               <div style={{ fontSize: '20px', fontWeight: '700', color: '#2c3e50', marginBottom: '4px' }}>🌱 Tambah Varietas Baru</div>
-              <div style={{ fontSize: '13px', color: '#7f8c8d' }}>Masukkan nama varietas anggur baru</div>
+              <div style={{ fontSize: '13px', color: '#7f8c8d' }}>Masukkan varietas dan tugaskan perangkat pemantaunya</div>
             </div>
 
-            <div style={{ marginBottom: '20px' }}>
+            <div style={{ marginBottom: '16px' }}>
               <label style={{ fontSize: '12px', fontWeight: '500', color: '#7f8c8d', display: 'block', marginBottom: '8px' }}>Nama Varietas</label>
               <input
                 type="text"
                 placeholder="Contoh: Probolinggo Black"
                 value={newVarietasName}
                 onChange={(e) => setNewVarietasName(e.target.value)}
-                onKeyPress={(e) => {
-                  if (e.key === 'Enter') handleAddVarietas()
-                }}
-                style={{
-                  width: '100%',
-                  padding: '12px',
-                  borderRadius: '8px',
-                  border: '1px solid #ecf0f1',
-                  fontSize: '14px',
-                  boxSizing: 'border-box'
-                }}
+                style={{ width: '100%', padding: '12px', borderRadius: '8px', border: '1px solid #ecf0f1', fontSize: '14px', boxSizing: 'border-box' }}
                 autoFocus
               />
+            </div>
+
+            {/* 🌟 FORM DROPDOWN PILIH PERANGKAT */}
+            <div style={{ marginBottom: '24px' }}>
+              <label style={{ fontSize: '12px', fontWeight: '500', color: '#7f8c8d', display: 'block', marginBottom: '8px' }}>Tugaskan ke Perangkat (Opsional)</label>
+              <select
+                value={newPerangkatId}
+                onChange={(e) => setNewPerangkatId(e.target.value)}
+                style={{ width: '100%', padding: '12px', borderRadius: '8px', border: '1px solid #ecf0f1', fontSize: '14px', boxSizing: 'border-box' }}
+              >
+                <option value="">-- Jangan hubungkan perangkat dulu --</option>
+                {perangkatList.map(p => (
+                  <option key={p.id} value={p.id}>{p.nama_node || p.id} ({p.lokasi_blok})</option>
+                ))}
+              </select>
             </div>
 
             <div style={{ display: 'flex', gap: '12px' }}>
               <button
                 type="button"
                 onClick={handleAddVarietas}
-                style={{
-                  flex: 1,
-                  backgroundColor: '#27ae60',
-                  color: 'white',
-                  border: 'none',
-                  padding: '11px 16px',
-                  borderRadius: '8px',
-                  fontWeight: '500',
-                  cursor: 'pointer',
-                  transition: 'all 0.3s'
-                }}
+                style={{ flex: 1, backgroundColor: '#27ae60', color: 'white', border: 'none', padding: '11px 16px', borderRadius: '8px', fontWeight: '500', cursor: 'pointer', transition: 'all 0.3s' }}
                 onMouseOver={(e) => e.target.style.backgroundColor = '#229954'}
                 onMouseOut={(e) => e.target.style.backgroundColor = '#27ae60'}
               >
-                ✓ Tambah
+                ✓ Simpan
               </button>
               <button
                 type="button"
-                onClick={() => {
-                  setShowAddModal(false)
-                  setNewVarietasName('')
-                }}
-                style={{
-                  flex: 1,
-                  backgroundColor: '#ecf0f1',
-                  color: '#2c3e50',
-                  border: 'none',
-                  padding: '11px 16px',
-                  borderRadius: '8px',
-                  fontWeight: '500',
-                  cursor: 'pointer',
-                  transition: 'all 0.3s'
-                }}
+                onClick={() => { setShowAddModal(false); setNewVarietasName(''); setNewPerangkatId(''); }}
+                style={{ flex: 1, backgroundColor: '#ecf0f1', color: '#2c3e50', border: 'none', padding: '11px 16px', borderRadius: '8px', fontWeight: '500', cursor: 'pointer', transition: 'all 0.3s' }}
                 onMouseOver={(e) => e.target.style.backgroundColor = '#bdc3c7'}
                 onMouseOut={(e) => e.target.style.backgroundColor = '#ecf0f1'}
               >
@@ -331,11 +267,7 @@ function ThresholdsPage() {
 
       {/* Threshold Settings */}
       {selectedVarietas && (
-        <section style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
-          gap: '20px'
-        }}>
+        <section style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '20px' }}>
           {/* Card Moisture & pH */}
           <div className="card card-animate card-elevated">
             <div className="card-header card-header-top">
