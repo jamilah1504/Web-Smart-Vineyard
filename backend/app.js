@@ -25,7 +25,6 @@ const authRoutes = require("./src/routes/authRoutes");
 const dashboardRoutes = require('./src/routes/dashboardRoutes');
 const varietasRoutes = require("./src/routes/varietasRoutes");
 const perangkatRoutes = require("./src/routes/perangkatRoutes");
-const sensorRoutes = require("./src/routes/sensorRoutes");
 const aiRoutes = require("./src/routes/aiRoutes");
 const diagnosisRoutes = require('./src/routes/diagnosisRoutes');
 const userRoutes = require("./src/routes/userRoutes");
@@ -33,6 +32,8 @@ const trendRoutes = require('./src/routes/trendRoutes');
 const controlRoutes = require('./src/routes/controlRoutes');
 const notificationRoutes = require('./src/routes/notificationRoutes');
 const reportRoutes = require('./src/routes/reportRoutes');
+const tandonRoutes = require('./src/routes/tandonRoutes');
+const sensorRoutes = require('./src/routes/sensorRoutes');
 
 // ==========================================================
 // 3. GUNAKAN ROUTE
@@ -42,13 +43,14 @@ app.use("/api/dashboard", dashboardRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/varietas", varietasRoutes);
 app.use("/api/perangkat", perangkatRoutes);
-app.use("/api/sensor", sensorRoutes);
 app.use("/api/ai", aiRoutes);
 app.use('/api/diagnosis', diagnosisRoutes);
 app.use('/api/trends', trendRoutes);
 app.use('/api/controls', controlRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/reports', reportRoutes);
+app.use('/api/tandon-system', tandonRoutes); 
+app.use('/api/sensor', sensorRoutes);
 
 // Route sederhana untuk tes
 app.get("/", (req, res) => {

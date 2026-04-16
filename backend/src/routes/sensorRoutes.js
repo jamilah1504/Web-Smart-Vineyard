@@ -1,7 +1,8 @@
 const express = require('express');
 const { 
   receiveAllData, // Ganti receiveSensorData menjadi receiveAllData
-  getLatestSensorData 
+  getLatestSensorData,
+  getLatestWaterLevel
 } = require('../controllers/sensorController');
 const { protect } = require('../middleware/authMiddleware');
 const sendTelegram = require('../utils/telegram');
@@ -22,16 +23,10 @@ router.get('/test-tele', async (req, res) => {
     }
 });
 
-/**
- * 2. RUTE UNTUK ESP32
- * Menggunakan fungsi receiveAllData (Tanah + Tandon)
- */
-router.post('/data', receiveAllData);
+router.get('/tandon/monitoring/:perangkat_id', getLatestWaterLevel); 
 
-/**
- * 3. RUTE UNTUK DASHBOARD REACT
- * Mengambil data log terbaru
- */
 router.get('/data/:perangkat_id', protect, getLatestSensorData);
+
+router.post('/data', receiveAllData);
 
 module.exports = router;

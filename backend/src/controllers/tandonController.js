@@ -59,24 +59,16 @@ exports.getLatestWaterLevel = async (req, res) => {
 
         const data = await LogTandon.findAll({
             where: { perangkat_id },
-            order: [['createdAt', 'DESC']],
+            order: [['timestamp', 'DESC']], // Sesuai kolom di PHPMyAdmin kamu
             limit: 10
         });
 
         if (!data || data.length === 0) {
-            return res.status(404).json({ 
-                status: 'error', 
-                message: 'Data tidak ditemukan untuk perangkat ini.' 
-            });
+            return res.status(404).json({ status: 'error', message: 'Data tidak ditemukan.' });
         }
 
-        return res.status(200).json({ 
-            status: 'success', 
-            data: data 
-        });
-
+        return res.status(200).json({ status: 'success', data });
     } catch (error) {
-        console.error("❌ Error getLatestWaterLevel:", error);
         return res.status(500).json({ status: 'error', message: error.message });
     }
 };
