@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../core/auth/AuthContext.jsx'
 import { getDefaultRoleHomePath } from '../../utils/rolePaths.js'
+import { PublicPaths } from '../../routes/routePaths.js'
 
 function LoginPage() {
   const { login } = useAuth()
@@ -18,6 +19,41 @@ function LoginPage() {
 
   return (
     <div className="login-page">
+      {/* TOMBOL BACK KE LANDING PAGE */}
+      <button
+        type="button"
+        onClick={() => navigate(PublicPaths.landing)}
+        style={{
+          position: 'absolute',
+          top: '20px',
+          left: '20px',
+          background: 'rgba(255,255,255,0.9)',
+          border: '1px solid #ddd',
+          borderRadius: '8px',
+          padding: '8px 12px',
+          cursor: 'pointer',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '6px',
+          fontSize: '14px',
+          fontWeight: '500',
+          color: '#333',
+          boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
+          transition: 'all 0.2s',
+          zIndex: 100
+        }}
+        onMouseOver={(e) => {
+          e.currentTarget.style.background = 'rgba(255,255,255,1)';
+          e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.12)';
+        }}
+        onMouseOut={(e) => {
+          e.currentTarget.style.background = 'rgba(255,255,255,0.9)';
+          e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.08)';
+        }}
+      >
+        ← Kembali
+      </button>
+
       <div className="card login-card-enter login-card">
         <div className="login-header">
           <div className="login-logo-circle">S</div>

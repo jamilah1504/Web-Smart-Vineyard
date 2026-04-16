@@ -1,16 +1,21 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { getMyNotifications } from '../services/notificationApi.js'
 
 function NotificationsPage() {
   const [notifications, setNotifications] = useState([])
   const [loading, setLoading] = useState(true)
+  
+  // Filter state
+  const [dateFrom, setDateFrom] = useState('')
+  const [dateTo, setDateTo] = useState('')
+  const [filterType, setFilterType] = useState('semua')
 
   // Pastikan kunci (key) di sini sesuai dengan isi kolom 'tipe' di database
   const typeColor = {
     info: '#2b8aef',
     warning: '#f39c12',
     critical: '#e74c3c',
-    danger: '#e74c3c', // Tambahan jika di DB pake tipe 'danger'
+    danger: '#e74c3c',
     success: '#27ae60',
   }
 
@@ -22,13 +27,20 @@ function NotificationsPage() {
     success: '✓',
   }
 
+  // Tipe notifikasi options (sesuai dengan yang mungkin di-send dari backend)
+  const notificationTypes = [
+    { value: 'semua', label: 'Semua Notifikasi' },
+    { value: 'critical', label: '🔴 Critical (Bahaya)' },
+    { value: 'warning', label: '⚠️ Warning (Peringatan)' },
+    { value: 'info', label: '📢 Informasi' },
+    { value: 'success', label: '✓ Sukses' },
+  ]
+
   // Integrasi API
   useEffect(() => {
     const fetchNotif = async () => {
       try {
         const response = await getMyNotifications();
-        // Sesuai controller backend: res.status(200).json({ status: 'success', data });
-        // Kita cek apakah response.data ada, jika tidak default ke array kosong
         if (response && response.data) {
           setNotifications(response.data);
         }
@@ -40,10 +52,44 @@ function NotificationsPage() {
     };
     fetchNotif();
     
-    // Opsional: Refresh otomatis setiap 30 detik agar notifikasi baru dari ESP-CAM muncul
-    const interval = setInterval(fetchNotif, 30000);
+    // Opsional: Refresh otomatis setiap 15 detik
+    const interval = setInterval(fetchNotif, 15000);
     return () => clearInterval(interval);
   }, []);
+
+  // Logika Filter untuk Data
+  const filteredNotifications = useMemo(() => {
+    return notifications.filter(notif => {
+      // Filter by type
+      if (filterType !== 'semua' && notif.tipe !== filterType) {
+        return false;
+      }
+
+      // Filter by date range
+      if (dateFrom) {
+        const notifDate = new Date(notif.createdAt).toISOString().split('T')[0];
+        if (notifDate < dateFrom) {
+          return false;
+        }
+      }
+
+      if (dateTo) {
+        const notifDate = new Date(notif.createdAt).toISOString().split('T')[0];
+        if (notifDate > dateTo) {
+          return false;
+        }
+      }
+
+      return true;
+    });
+  }, [notifications, filterType, dateFrom, dateTo]);
+
+  // Reset filter handler
+  const handleResetFilter = () => {
+    setDateFrom('');
+    setDateTo('');
+    setFilterType('semua');
+  };
 
   return (
     <div className="page page-with-padding page-shell" style={{ backgroundColor: '#f8f9fa' }}>
@@ -63,29 +109,72 @@ function NotificationsPage() {
           <div>
             <div className="card-title card-title-lg">Filter Riwayat</div>
             <div className="card-subtitle card-subtitle-lg">
-              Pilih rentang tanggal & tipe alert
+              Pilih rentang tanggal &amp; tipe notifikasi untuk melihat alert spesifik
             </div>
           </div>
         </div>
         <div className="simple-card-list form-grid-3">
           <div>
             <div className="small-text text-sm-muted">Tanggal Mulai</div>
-            <input type="date" className="form-control" />
+            <input 
+              type="date" 
+              className="form-control"
+              value={dateFrom}
+              onChange={(e) => setDateFrom(e.target.value)}
+            />
           </div>
           <div>
             <div className="small-text text-sm-muted">Tanggal Akhir</div>
-            <input type="date" className="form-control" />
+            <input 
+              type="date" 
+              className="form-control"
+              value={dateTo}
+              onChange={(e) => setDateTo(e.target.value)}
+            />
           </div>
           <div>
-            <div className="small-text text-sm-muted">Tipe Alert</div>
-            <select className="form-control">
-              <option>Semua</option>
-              <option>Tandon air kosong</option>
-              <option>Kelembapan tanah rendah</option>
-              <option>Sensor offline</option>
+            <div className="small-text text-sm-muted">Tipe Notifikasi</div>
+            <select 
+              className="form-control"
+              value={filterType}
+              onChange={(e) => setFilterType(e.target.value)}
+            >
+              {notificationTypes.map(type => (
+                <option key={type.value} value={type.value}>
+                  {type.label}
+                </option>
+              ))}
             </select>
           </div>
         </div>
+        <div className="btn-row u-mt-075">
+          <button 
+            type="button" 
+            className="btn-primary btn-pill-primary"
+            onClick={() => window.location.reload()}
+          >
+            🔄 Refresh
+          </button>
+          <button
+            type="button"
+            className="btn-pill-outline"
+            onClick={handleResetFilter}
+          >
+            Reset Filter
+          </button>
+        </div>
+        {filteredNotifications.length > 0 && (
+          <div style={{
+            padding: '12px 15px',
+            backgroundColor: '#f0f7ff',
+            borderRadius: '8px',
+            fontSize: '12px',
+            marginTop: '12px',
+            color: '#0066cc'
+          }}>
+            📊 Ditemukan {filteredNotifications.length} notifikasi dari {notifications.length} total
+          </div>
+        )}
       </section>
 
       {/* Daftar Notifikasi */}
@@ -94,47 +183,80 @@ function NotificationsPage() {
           <div>
             <div className="card-title card-title-lg">Riwayat Notifikasi</div>
             <div className="card-subtitle card-subtitle-lg">
-              Daftar alert dengan severity & status penanganan.
+              Daftar semua alert dengan severity &amp; waktu kejadian.
             </div>
           </div>
         </div>
         
         <div className="u-p-1">
           {loading ? (
-            <div className="small-text">Memuat notifikasi...</div>
-          ) : notifications && notifications.length > 0 ? (
-            <div className="simple-card-list">
-              {notifications.map((notif) => (
-                <div 
-                  key={notif.id} 
-                  style={{ 
-                    padding: '15px', 
-                    borderLeft: `5px solid ${typeColor[notif.tipe] || '#ccc'}`,
-                    backgroundColor: '#fff',
-                    marginBottom: '10px',
-                    borderRadius: '4px',
-                    boxShadow: '0 2px 4px rgba(0,0,0,0.05)'
-                  }}
-                >
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <div style={{ fontWeight: 'bold', color: typeColor[notif.tipe] || '#333' }}>
-                      {/* PERBAIKAN: Gunakan notif.tipe dan notif.perangkat_id */}
-                      {typeLabel[notif.tipe] || '•'} {notif.perangkat_id}
-                    </div>
-                    <div className="small-text text-sm-muted" style={{ fontSize: '0.8rem' }}>
-                      {new Date(notif.createdAt).toLocaleString('id-ID')}
-                    </div>
-                  </div>
-                  <div className="small-text u-mt-05" style={{ color: '#555' }}>
-                    {/* PERBAIKAN: Gunakan notif.pesan sesuai nama kolom di database */}
-                    {notif.pesan}
-                  </div>
-                </div>
-              ))}
+            <div className="small-text" style={{ textAlign: 'center', padding: '40px 20px' }}>
+              ⏳ Memuat notifikasi...
+            </div>
+          ) : filteredNotifications && filteredNotifications.length > 0 ? (
+            <div style={{ overflowX: 'auto', borderRadius: '8px', border: '1px solid #ecf0f1' }}>
+              <table style={{
+                width: '100%',
+                borderCollapse: 'collapse',
+                fontSize: '14px'
+              }}>
+                <thead>
+                  <tr style={{
+                    backgroundColor: '#f8f9fa',
+                    borderBottom: '2px solid #ecf0f1'
+                  }}>
+                    <th style={{ padding: '12px 16px', textAlign: 'left', color: '#2c3e50', fontWeight: '600' }}>Waktu</th>
+                    <th style={{ padding: '12px 16px', textAlign: 'left', color: '#2c3e50', fontWeight: '600' }}>Tipe</th>
+                    <th style={{ padding: '12px 16px', textAlign: 'left', color: '#2c3e50', fontWeight: '600' }}>Perangkat</th>
+                    <th style={{ padding: '12px 16px', textAlign: 'left', color: '#2c3e50', fontWeight: '600' }}>Pesan</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredNotifications.map((notif, idx) => (
+                    <tr key={notif.id} style={{
+                      borderBottom: '1px solid #ecf0f1',
+                      backgroundColor: idx % 2 === 0 ? '#ffffff' : '#f8f9fa',
+                      borderLeft: `4px solid ${typeColor[notif.tipe] || '#ccc'}`,
+                      transition: 'background-color 0.3s'
+                    }}>
+                      <td style={{ padding: '12px 16px', fontSize: '13px', color: '#555' }}>
+                        {new Date(notif.createdAt).toLocaleString('id-ID', {
+                          day: '2-digit',
+                          month: '2-digit',
+                          year: 'numeric',
+                          hour: '2-digit',
+                          minute: '2-digit',
+                          second: '2-digit'
+                        })}
+                      </td>
+                      <td style={{ padding: '12px 16px' }}>
+                        <span style={{
+                          backgroundColor: typeColor[notif.tipe] || '#ccc',
+                          color: 'white',
+                          padding: '4px 12px',
+                          borderRadius: '6px',
+                          fontSize: '11px',
+                          fontWeight: '600',
+                          textTransform: 'uppercase',
+                          display: 'inline-block'
+                        }}>
+                          {typeLabel[notif.tipe] || '•'} {notif.tipe}
+                        </span>
+                      </td>
+                      <td style={{ padding: '12px 16px', fontSize: '13px', fontWeight: '500', color: '#2c3e50' }}>
+                        {notif.perangkat_id}
+                      </td>
+                      <td style={{ padding: '12px 16px', fontSize: '13px', color: '#555', maxWidth: '400px' }}>
+                        {notif.pesan}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
           ) : (
-            <div className="small-text text-body">
-              Belum ada notifikasi yang tersedia.
+            <div className="small-text text-body" style={{ textAlign: 'center', padding: '40px 20px' }}>
+              {notifications.length === 0 ? '📭 Belum ada notifikasi.' : '🔍 Tidak ada notifikasi yang sesuai dengan filter.'}
             </div>
           )}
         </div>

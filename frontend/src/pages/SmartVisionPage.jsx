@@ -11,6 +11,10 @@ function SmartVisionPage() {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [showCamera, setShowCamera] = useState(false);
   
+  // State untuk modal detail
+  const [showDetailModal, setShowDetailModal] = useState(false);
+  const [selectedAnalysis, setSelectedAnalysis] = useState(null);
+  
   // Fitur Filter dari Kode 2
   const DEVICES = ["SEMUA", "ESP32-MAC-A001", "ESPCAM-001"]; 
   const [filterDevice, setFilterDevice] = useState("SEMUA");
@@ -124,6 +128,17 @@ function SmartVisionPage() {
     }
   };
 
+  // Modal detail handler
+  const openDetailModal = (analysis) => {
+    setSelectedAnalysis(analysis);
+    setShowDetailModal(true);
+  };
+
+  const closeDetailModal = () => {
+    setShowDetailModal(false);
+    setSelectedAnalysis(null);
+  };
+
   return (
     <div className="page page-with-padding page-shell" style={{ backgroundColor: '#f8f9fa' }}>
       <div className="page-header u-mb-15">
@@ -213,8 +228,18 @@ function SmartVisionPage() {
             </thead>
             <tbody>
               {filteredHistory.map(item => (
-                <tr key={item.id} style={{ borderBottom: '1px solid #f9f9f9' }}>
-                  <td style={{ padding: '10px' }}><img src={`${BASE_URL}${item.image_url}`} style={{ width: '40px', height: '40px', borderRadius: '5px', objectFit: 'cover' }} /></td>
+                <tr 
+                  key={item.id} 
+                  style={{ 
+                    borderBottom: '1px solid #f9f9f9',
+                    cursor: 'pointer',
+                    transition: 'background-color 0.2s'
+                  }}
+                  onClick={() => openDetailModal(item)}
+                  onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#f5f5f5'}
+                  onMouseOut={(e) => e.currentTarget.style.backgroundColor = 'white'}
+                >
+                  <td style={{ padding: '10px' }}><img src={`${BASE_URL}${item.image_url}`} style={{ width: '40px', height: '40px', borderRadius: '5px', objectFit: 'cover', cursor: 'pointer' }} /></td>
                   <td style={{ padding: '10px', fontWeight: 'bold' }}>{item.hasil_diagnosis}</td>
                   <td style={{ padding: '10px' }}>{(item.confidence_score * 100).toFixed(1)}%</td>
                   <td style={{ padding: '10px', fontSize: '12px' }}>{new Date(item.createdAt).toLocaleDateString()}</td>
@@ -225,6 +250,184 @@ function SmartVisionPage() {
         </div>
       </section>
       <canvas ref={canvasRef} style={{ display: 'none' }} />
+
+      {/* MODAL DETAIL ANALYSIS */}
+      {showDetailModal && selectedAnalysis && (
+        <div style={{
+          position: 'fixed',
+          inset: 0,
+          backgroundColor: 'rgba(0,0,0,0.5)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 5000
+        }}>
+          <div style={{
+            backgroundColor: 'white',
+            borderRadius: '16px',
+            width: '90%',
+            maxWidth: '600px',
+            maxHeight: '90vh',
+            overflow: 'auto',
+            boxShadow: '0 10px 40px rgba(0,0,0,0.2)'
+          }}>
+            {/* Modal Header */}
+            <div style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              padding: '20px',
+              borderBottom: '1px solid #eee',
+              position: 'sticky',
+              top: 0,
+              backgroundColor: '#f9f9f9'
+            }}>
+              <h2 style={{ margin: 0, fontSize: '18px', fontWeight: 'bold' }}>
+                📊 Detail Analisis {selectedAnalysis.hasil_diagnosis}
+              </h2>
+              <button
+                onClick={closeDetailModal}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  fontSize: '24px',
+                  cursor: 'pointer',
+                  color: '#666'
+                }}
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* Modal Body */}
+            <div style={{ padding: '20px' }}>
+              {/* Foto */}
+              <div style={{ marginBottom: '20px' }}>
+                <img 
+                  src={`${BASE_URL}${selectedAnalysis.image_url}`} 
+                  style={{
+                    width: '100%',
+                    height: 'auto',
+                    maxHeight: '300px',
+                    borderRadius: '12px',
+                    objectFit: 'cover'
+                  }}
+                  alt="Analysis"
+                />
+              </div>
+
+              {/* Info Box */}
+              <div style={{
+                backgroundColor: selectedAnalysis.hasil_diagnosis === 'Healthy' || selectedAnalysis.hasil_diagnosis === 'Sehat' ? '#e8f5e9' : '#fff3e0',
+                padding: '15px',
+                borderRadius: '12px',
+                marginBottom: '20px',
+                border: `2px solid ${selectedAnalysis.hasil_diagnosis === 'Healthy' || selectedAnalysis.hasil_diagnosis === 'Sehat' ? '#2e7d32' : '#f57c00'}`
+              }}>
+                <div style={{
+                  fontSize: '32px',
+                  fontWeight: 'bold',
+                  color: selectedAnalysis.hasil_diagnosis === 'Healthy' || selectedAnalysis.hasil_diagnosis === 'Sehat' ? '#2e7d32' : '#d32f2f',
+                  marginBottom: '8px'
+                }}>
+                  {selectedAnalysis.hasil_diagnosis.toUpperCase()}
+                </div>
+                <div style={{ fontSize: '16px', fontWeight: 'bold' }}>
+                  Akurasi: {(selectedAnalysis.confidence_score * 100).toFixed(1)}%
+                </div>
+              </div>
+
+              {/* Metadata */}
+              <div style={{
+                display: 'grid',
+                gridTemplateColumns: '1fr 1fr',
+                gap: '12px',
+                marginBottom: '20px'
+              }}>
+                <div style={{
+                  backgroundColor: '#f5f5f5',
+                  padding: '12px',
+                  borderRadius: '8px'
+                }}>
+                  <div style={{ fontSize: '12px', color: '#666', marginBottom: '4px' }}>Perangkat</div>
+                  <div style={{ fontWeight: 'bold' }}>{selectedAnalysis.perangkat_id}</div>
+                </div>
+                <div style={{
+                  backgroundColor: '#f5f5f5',
+                  padding: '12px',
+                  borderRadius: '8px'
+                }}>
+                  <div style={{ fontSize: '12px', color: '#666', marginBottom: '4px' }}>Waktu Analisis</div>
+                  <div style={{ fontWeight: 'bold' }}>
+                    {new Date(selectedAnalysis.createdAt).toLocaleString('id-ID')}
+                  </div>
+                </div>
+              </div>
+
+              {/* Rekomendasi */}
+              <div style={{
+                background: 'linear-gradient(135deg, #667eea, #764ba2)',
+                color: '#fff',
+                padding: '15px',
+                borderRadius: '12px',
+                marginBottom: '20px'
+              }}>
+                <div style={{ fontWeight: 'bold', marginBottom: '8px', fontSize: '14px' }}>
+                  💡 REKOMENDASI TINDAKAN:
+                </div>
+                <div style={{ lineHeight: '1.6', fontSize: '14px' }}>
+                  {selectedAnalysis.saran_tindakan}
+                </div>
+              </div>
+
+              {/* Detail Confidence */}
+              <div style={{
+                backgroundColor: '#f9f9f9',
+                padding: '15px',
+                borderRadius: '12px',
+                marginBottom: '20px'
+              }}>
+                <div style={{ fontWeight: 'bold', marginBottom: '12px' }}>📈 Detail Akurasi:</div>
+                <div style={{
+                  width: '100%',
+                  height: '8px',
+                  backgroundColor: '#ddd',
+                  borderRadius: '4px',
+                  overflow: 'hidden'
+                }}>
+                  <div style={{
+                    height: '100%',
+                    width: `${selectedAnalysis.confidence_score * 100}%`,
+                    backgroundColor: selectedAnalysis.confidence_score > 0.8 ? '#4caf50' : selectedAnalysis.confidence_score > 0.6 ? '#ff9800' : '#f44336',
+                    transition: 'width 0.3s'
+                  }}></div>
+                </div>
+                <div style={{ marginTop: '8px', fontSize: '12px', color: '#666' }}>
+                  {(selectedAnalysis.confidence_score * 100).toFixed(1)}% kepercayaan
+                </div>
+              </div>
+
+              {/* Close Button */}
+              <button
+                onClick={closeDetailModal}
+                style={{
+                  width: '100%',
+                  padding: '12px',
+                  backgroundColor: '#667eea',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '8px',
+                  fontWeight: 'bold',
+                  cursor: 'pointer',
+                  fontSize: '14px'
+                }}
+              >
+                Tutup Detail
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

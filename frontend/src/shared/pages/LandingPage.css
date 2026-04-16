@@ -111,10 +111,73 @@
 
 .lp-testimonials, .lp-news{ padding: 12px }
 
-.lp-footer{ margin-top:30px; padding:20px; background: linear-gradient(180deg, rgba(6,36,20,0.02), rgba(6,36,20,0.00)); }
-.lp-footer-main{ max-width:1100px; margin:0 auto; display:flex; justify-content:space-between; gap:20px; padding-bottom:14px }
-.sidebar-logo{ font-weight:800; color:#0a502f }
-.lp-footer-bottom{ color:var(--muted); text-align:center; padding-top:10px }
+.lp-footer{ 
+  margin-top: 30px; 
+  padding: 40px 20px; 
+  background: linear-gradient(180deg, #0a3d2a 0%, #083520 100%);
+  border-top: 3px solid #1fbf73;
+  color: #fff;
+  box-shadow: 0 -4px 20px rgba(6, 36, 20, 0.15);
+}
+
+.lp-footer-main{ 
+  max-width: 1100px; 
+  margin: 0 auto; 
+  display: flex; 
+  justify-content: space-between; 
+  gap: 20px; 
+  padding-bottom: 20px;
+  border-bottom: 1px solid rgba(31, 191, 115, 0.2);
+}
+
+.sidebar-logo{ 
+  font-weight: 800; 
+  color: #1fbf73;
+  font-size: 18px;
+}
+
+.sidebar-subtitle {
+  color: #a0d5c0;
+  font-size: 14px;
+  margin-top: 6px;
+}
+
+.lp-footer-links {
+  display: flex;
+  gap: 40px;
+  flex: 1;
+}
+
+.lp-footer-links h4 {
+  color: #1fbf73;
+  font-weight: 700;
+  font-size: 14px;
+  margin-bottom: 12px;
+}
+
+.lp-footer-links ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.lp-footer-links li {
+  color: #a0d5c0;
+  font-size: 13px;
+  margin-bottom: 8px;
+  transition: color 0.2s;
+}
+
+.lp-footer-links li:hover {
+  color: #1fbf73;
+}
+
+.lp-footer-bottom{ 
+  color: #7cbd9e; 
+  text-align: center; 
+  padding-top: 20px;
+  font-size: 13px;
+}
 
 /* Orbit & small micro-animations */
 .lp-grape-orbit{ animation: orbit 14s linear infinite }
@@ -126,4 +189,40 @@
   .lp-hero-right{ order:-1 }
   .lp-hero-visual{ width:100%; height:260px }
   .lp-hero-title{ font-size:32px }
+}
+
+/* Saung Tinanggur Section */
+.lp-vineyard-grid{
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 18px;
+  margin-top: 24px;
+}
+
+.lp-vineyard-card{
+  background: linear-gradient(135deg, rgba(255,255,255,0.65), rgba(255,255,255,0.85));
+  padding: 20px;
+  border-radius: 14px;
+  box-shadow: 0 8px 28px rgba(8,24,16,0.06);
+  border: 1px solid rgba(31,191,115,0.1);
+  transition: all 0.3s ease;
+}
+
+.lp-vineyard-card:hover{
+  transform: translateY(-4px);
+  box-shadow: 0 16px 40px rgba(19,138,92,0.12);
+  border-color: rgba(31,191,115,0.2);
+}
+
+.lp-vineyard-card h3{
+  color: #083520;
+  font-weight: 700;
+  margin-bottom: 10px;
+  font-size: 16px;
+}
+
+.lp-vineyard-card p{
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.6;
 }

@@ -243,34 +243,131 @@ function MonitoringPage() {
           </div>
         </div>
 
-        {/* Moisture Card */}
+        {/* All Parameters in One Card */}
         <div className="card-responsive" style={{
           background: 'linear-gradient(135deg, #3498db 0%, #2980b9 100%)',
           color: 'white',
           padding: '24px',
           boxShadow: '0 4px 15px rgba(52, 152, 219, 0.3)',
-          display: 'flex',
-          flexDirection: 'column',
-          justifyContent: 'space-between'
+          gridColumn: 'span 2'
         }}>
-          <div>
-            <div style={{ fontSize: '14px', fontWeight: '500', opacity: 0.9, marginBottom: '16px' }}>💧 Kelembapan Tanah</div>
-            {loading && sensorData.length === 0 ? (
+          <div style={{ marginBottom: '20px' }}>
+            <div style={{ fontSize: '14px', fontWeight: '500', opacity: 0.9 }}>📊 Semua Parameter</div>
+            <div style={{ fontSize: '11px', opacity: 0.7 }}>Data sensor real-time</div>
+          </div>
+          
+          {loading && sensorData.length === 0 ? (
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(2, 1fr)',
+              gap: '16px'
+            }}>
+              {[1,2,3,4,5,6].map(i => (
+                <div key={i} style={{
+                  height: '70px',
+                  backgroundColor: 'rgba(255,255,255,0.1)',
+                  borderRadius: '8px',
+                  animation: 'pulse 2s infinite'
+                }} />
+              ))}
+            </div>
+          ) : (
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))',
+              gap: '16px'
+            }}>
+              {/* Moisture */}
               <div style={{
-                height: '60px',
                 backgroundColor: 'rgba(255,255,255,0.1)',
-                borderRadius: '8px',
-                animation: 'pulse 2s infinite'
-              }} />
-            ) : (
-              <div style={{ display: 'flex', alignItems: 'flex-end', gap: '12px' }}>
-                <div style={{ fontSize: '48px', fontWeight: '700', lineHeight: '1' }}>
+                borderRadius: '12px',
+                padding: '16px',
+                textAlign: 'center',
+                backdropFilter: 'blur(10px)'
+              }}>
+                <div style={{ fontSize: '12px', opacity: 0.8, marginBottom: '8px' }}>💧 Kelembapan</div>
+                <div style={{ fontSize: '32px', fontWeight: '700', marginBottom: '4px' }}>
                   {latestData?.kelembapan_val || '--'}
                 </div>
-                <div style={{ fontSize: '18px', marginBottom: '6px', opacity: 0.9 }}>%</div>
+                <div style={{ fontSize: '11px', opacity: 0.7 }}>%</div>
               </div>
-            )}
-          </div>
+
+              {/* Temperature */}
+              <div style={{
+                backgroundColor: 'rgba(255,255,255,0.1)',
+                borderRadius: '12px',
+                padding: '16px',
+                textAlign: 'center',
+                backdropFilter: 'blur(10px)'
+              }}>
+                <div style={{ fontSize: '12px', opacity: 0.8, marginBottom: '8px' }}>🌡️ Suhu</div>
+                <div style={{ fontSize: '32px', fontWeight: '700', marginBottom: '4px' }}>
+                  {latestData?.suhu_val || '--'}
+                </div>
+                <div style={{ fontSize: '11px', opacity: 0.7 }}>°C</div>
+              </div>
+
+              {/* pH */}
+              <div style={{
+                backgroundColor: 'rgba(255,255,255,0.1)',
+                borderRadius: '12px',
+                padding: '16px',
+                textAlign: 'center',
+                backdropFilter: 'blur(10px)'
+              }}>
+                <div style={{ fontSize: '12px', opacity: 0.8, marginBottom: '8px' }}>⚗️ pH</div>
+                <div style={{ fontSize: '32px', fontWeight: '700', marginBottom: '4px' }}>
+                  {latestData?.ph_val || '--'}
+                </div>
+                <div style={{ fontSize: '11px', opacity: 0.7 }}>pH</div>
+              </div>
+
+              {/* Nitrogen */}
+              <div style={{
+                backgroundColor: 'rgba(255,255,255,0.1)',
+                borderRadius: '12px',
+                padding: '16px',
+                textAlign: 'center',
+                backdropFilter: 'blur(10px)'
+              }}>
+                <div style={{ fontSize: '12px', opacity: 0.8, marginBottom: '8px' }}>🌱 N</div>
+                <div style={{ fontSize: '32px', fontWeight: '700', marginBottom: '4px' }}>
+                  {latestData?.n_val || '--'}
+                </div>
+                <div style={{ fontSize: '11px', opacity: 0.7 }}>ppm</div>
+              </div>
+
+              {/* Phosphorus */}
+              <div style={{
+                backgroundColor: 'rgba(255,255,255,0.1)',
+                borderRadius: '12px',
+                padding: '16px',
+                textAlign: 'center',
+                backdropFilter: 'blur(10px)'
+              }}>
+                <div style={{ fontSize: '12px', opacity: 0.8, marginBottom: '8px' }}>🔴 P</div>
+                <div style={{ fontSize: '32px', fontWeight: '700', marginBottom: '4px' }}>
+                  {latestData?.p_val || '--'}
+                </div>
+                <div style={{ fontSize: '11px', opacity: 0.7 }}>ppm</div>
+              </div>
+
+              {/* Potassium */}
+              <div style={{
+                backgroundColor: 'rgba(255,255,255,0.1)',
+                borderRadius: '12px',
+                padding: '16px',
+                textAlign: 'center',
+                backdropFilter: 'blur(10px)'
+              }}>
+                <div style={{ fontSize: '12px', opacity: 0.8, marginBottom: '8px' }}>🟡 K</div>
+                <div style={{ fontSize: '32px', fontWeight: '700', marginBottom: '4px' }}>
+                  {latestData?.k_val || '--'}
+                </div>
+                <div style={{ fontSize: '11px', opacity: 0.7 }}>ppm</div>
+              </div>
+            </div>
+          )}
         </div>
       </section>
 

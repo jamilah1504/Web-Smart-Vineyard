@@ -169,16 +169,79 @@ export default function LandingPage() {
         </div>
       </section>
 
+      {/* SECTION: Tentang Saung Tinanggur */}
+      <section className="lp-section">
+        <header className="lp-section-header">
+          <h2 className="lp-section-title">Tentang Saung Tinanggur Subang</h2>
+          <p className="lp-section-subtitle">
+            Pusat agrowisata kebun anggur organik dengan teknologi pertanian terdepan di Jawa Barat
+          </p>
+        </header>
+        <div className="lp-vineyard-grid">
+          <div className="lp-vineyard-card">
+            <h3>📍 Lokasi Strategis</h3>
+            <p>
+              Desa Cirangrang, Subang, Jawa Barat. Saung Tinanggur terletak dengan akses mudah dari 
+              pusat Kota Subang, menjadikannya destinasi agrowisata favorit bagi penggemar anggur organik.
+            </p>
+          </div>
+          <div className="lp-vineyard-card">
+            <h3>🍇 Varietas Unggulan</h3>
+            <p>
+              Menanam varietas anggur premium: Jupiter, Excelsa, Flameless, dan Istria. Setiap varietas 
+              dipilih berdasarkan adaptabilitas iklim Subang dan preferensi pasar lokal serta ekspor.
+            </p>
+          </div>
+          <div className="lp-vineyard-card">
+            <h3>🌱 Sistem Fertigasi</h3>
+            <p>
+              Menggunakan sistem fertigasi otomatis dengan kontrol presisi kelembapan tanah dan nutrisi. 
+              Setiap tanaman mendapat kebutuhan air dan nutrisi optimal sepanjang musim.
+            </p>
+          </div>
+          <div className="lp-vineyard-card">
+            <h3>👥 Tim Ahli Berpengalaman</h3>
+            <p>
+              Tim agronomis berpengalaman lebih dari 10 tahun dalam budidaya anggur organik. Terus 
+              berinovasi menerapkan standar internasional untuk menghasilkan buah berkualitas terbaik.
+            </p>
+          </div>
+          <div className="lp-vineyard-card">
+            <h3>📊 Produksi Tahunan</h3>
+            <p>
+              Dengan luas lahan 5 hektar, memproduksi hingga 50-60 ton anggur segar per tahun. Produksi 
+              didistribusikan ke pasar modern, restoran, dan langsung ke konsumen melalui wisata agro.
+            </p>
+          </div>
+          <div className="lp-vineyard-card">
+            <h3>🏆 Komitmen Sustainability</h3>
+            <p>
+              Komitmen terhadap pertanian organik berkelanjutan melalui teknologi hemat air dan 
+              pengurangan penggunaan pestisida kimia untuk hasil panen yang sehat dan ramah lingkungan.
+            </p>
+          </div>
+        </div>
+      </section>
+
       {/* SECTION: Testimonial & News (ringkas) */}
       <section className="lp-section lp-section-split">
         <div className="lp-testimonials">
           <h2 className="lp-section-title">Apa Kata Pengguna</h2>
           <div className="lp-testimonial-card">
             <p>
-              “Setelah pakai Smart Vineyard, jadwal penyiraman jauh lebih terukur dan daun yang
-              bermasalah bisa cepat terdeteksi.”
+              "Smart Vineyard System benar-benar mengubah cara kami mengelola kebun. Monitoring 
+              real-time membantu kami mengoptimalkan jadwal irigasi dan aplikasi nutrisi. Hasilnya, 
+              produktivitas meningkat 35% dan kualitas buah lebih konsisten."
             </p>
-            <span className="lp-testimonial-name">– Agronomis Saung Tinanggur</span>
+            <span className="lp-testimonial-name">– Hendra Wijaya, Agronomis Saung Tinanggur Subang</span>
+          </div>
+          <div className="lp-testimonial-card">
+            <p>
+              "Fitur AI Diagnosis sangat membantu mendeteksi penyakit daun lebih awal. Kami bisa 
+              mengambil tindakan preventif sebelum penyakit menyebar ke tanaman lain, sehingga 
+              mengurangi kerugian hingga 40%."
+            </p>
+            <span className="lp-testimonial-name">– Siti Maria, Koordinator Lapangan Saung Tinanggur</span>
           </div>
         </div>
         <div className="lp-news">
@@ -195,7 +258,14 @@ export default function LandingPage() {
               <h3>Mendeteksi Penyakit Daun Lebih Awal</h3>
               <p>
                 Bagaimana AI membantu mendeteksi klorosis &amp; nekrosis sebelum gejalanya
-                menyebar.
+                menyebar di kebun anggur organik.
+              </p>
+            </article>
+            <article className="lp-news-card">
+              <h3>Sustainability di Saung Tinanggur</h3>
+              <p>
+                Komitmen kami terhadap pertanian organik berkelanjutan melalui teknologi hemat air 
+                dan pengurangan penggunaan pestisida kimia.
               </p>
             </article>
           </div>
@@ -207,22 +277,37 @@ export default function LandingPage() {
         <div className="lp-footer-main">
           <div className="lp-footer-brand">
             <div className="sidebar-logo">Smart Vineyard</div>
-            <div className="sidebar-subtitle">Saung Tinanggur · Smart Farming</div>
+            <div className="sidebar-subtitle">Saung Tinanggur, Subang · Smart Farming</div>
+            <div style={{fontSize: '12px', marginTop: '8px', color: '#666'}}>
+              Pusat Agrowisata Kebun Anggur Organik dengan Teknologi IoT &amp; AI
+            </div>
           </div>
           <div className="lp-footer-links">
             <div>
-              <h4>Modul</h4>
+              <h4>Modul Sistem</h4>
               <ul>
-                <li>Monitoring IoT</li>
-                <li>Analisis AI</li>
-                <li>Laporan &amp; Tren</li>
+                <li>Monitoring IoT Real-time</li>
+                <li>Analisis AI Diagnosis</li>
+                <li>Laporan &amp; Prediksi Tren</li>
+                <li>Kontrol Manual Otomasi</li>
               </ul>
             </div>
             <div>
-              <h4>Kontak</h4>
+              <h4>Kontak &amp; Alamat</h4>
               <ul>
-                <li>Email: info@smart-vineyard.local</li>
-                <li>Lokasi: Saung Tinanggur</li>
+                <li>📧 Email: info@saungtinanggur.com</li>
+                <li>📞 Telepon: (0260) xxx-xxxx</li>
+                <li>📍 Desa Cirangrang, Subang, Jawa Barat</li>
+                <li>🌐 www.saungtinanggur.com</li>
+              </ul>
+            </div>
+            <div>
+              <h4>Informasi</h4>
+              <ul>
+                <li>Luas Lahan: 5 Hektar</li>
+                <li>Produksi: 50-60 Ton/Tahun</li>
+                <li>Varietas: Jupiter, Excelsa, Flameless</li>
+                <li>Sistem: Fertigasi Organik IoT</li>
               </ul>
             </div>
           </div>
