@@ -12,6 +12,6 @@ const LogSensorTanah = sequelize.define('Log_Sensor_Tanah', {
   ec_val: { type: DataTypes.FLOAT },
   kelembapan_val: { type: DataTypes.FLOAT }, // <-- SUDAH DIGANTI
   timestamp: { type: DataTypes.DATE, defaultValue: DataTypes.NOW }
-}, { tableName: 'Log_Sensor_Tanah', timestamps: false });
+}, { tableName: 'log_sensor_tanah', timestamps: false });
 
 module.exports = LogSensorTanah;

@@ -1,38 +1,46 @@
-const PerangkatIoT = require('../models/PerangkatIoT');
+const { PerangkatIoT } = require('../models');
 
+// 1. Update Status Pompa & Mode Kerja
 exports.updatePumpStatus = async (req, res) => {
-    try {
-        const { id } = req.params;
-        const { status_pompa_air, status_pompa_pupuk, mode_kerja } = req.body;
+  const { id } = req.params; // MAC Address
+  const { status_pompa_air, status_pompa_pupuk, mode_kerja } = req.body;
 
-        const updateData = {};
-        if (status_pompa_air !== undefined) updateData.status_pompa_air = status_pompa_air;
-        if (status_pompa_pupuk !== undefined) updateData.status_pompa_pupuk = status_pompa_pupuk;
-        if (mode_kerja) updateData.mode_kerja = mode_kerja;
+  try {
+    const [updated] = await PerangkatIoT.update(
+      { status_pompa_air, status_pompa_pupuk, mode_kerja },
+      { where: { id: id } }
+    );
 
-        await PerangkatIoT.update(updateData, { where: { id } });
-
-        res.json({ 
-            status: 'success', 
-            message: 'Kendali pompa (Air/Pupuk) berhasil diperbarui',
-            updated: updateData 
-        });
-    } catch (error) {
-        res.status(500).json({ status: 'error', message: error.message });
+    if (updated) {
+      res.json({ status: 'success', message: 'Kontrol berhasil diperbarui' });
+    } else {
+      res.status(404).json({ status: 'error', message: 'Perangkat tidak ditemukan' });
     }
+  } catch (err) {
+    console.error("❌ Error updatePumpStatus:", err.message);
+    res.status(500).json({ status: 'error', error: err.message });
+  }
 };
 
+// 2. Ambil Status Pompa Terkini
 exports.getPumpStatus = async (req, res) => {
     try {
         const { id } = req.params;
         const device = await PerangkatIoT.findByPk(id);
         
+        if (!device) {
+            return res.status(404).json({ status: 'error', message: 'Device tidak ditemukan' });
+        }
+
         res.json({ 
-            status_pompa_air: device.status_pompa_air,
-            status_pompa_pupuk: device.status_pompa_pupuk,
-            mode_kerja: device.mode_kerja 
+            status: 'success',
+            data: {
+                status_pompa_air: device.status_pompa_air,
+                status_pompa_pupuk: device.status_pompa_pupuk,
+                mode_kerja: device.mode_kerja 
+            }
         });
     } catch (error) {
-        res.status(500).json({ error: error.message });
+        res.status(500).json({ status: 'error', error: error.message });
     }
 };

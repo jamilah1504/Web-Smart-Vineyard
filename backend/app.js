@@ -22,6 +22,7 @@ app.use('/public', express.static(path.join(__dirname, 'public')));
 // 2. IMPOR ROUTE 
 // ==========================================================
 const authRoutes = require("./src/routes/authRoutes");
+const dashboardRoutes = require('./src/routes/dashboardRoutes');
 const varietasRoutes = require("./src/routes/varietasRoutes");
 const perangkatRoutes = require("./src/routes/perangkatRoutes");
 const sensorRoutes = require("./src/routes/sensorRoutes");
@@ -37,6 +38,7 @@ const reportRoutes = require('./src/routes/reportRoutes');
 // 3. GUNAKAN ROUTE
 // ==========================================================
 app.use("/api/auth", authRoutes);
+app.use("/api/dashboard", dashboardRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/varietas", varietasRoutes);
 app.use("/api/perangkat", perangkatRoutes);
