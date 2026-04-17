@@ -46,6 +46,259 @@ export default function LandingPage() {
 
   return (
     <div className="page page-with-padding page-shell lp-page js-lp-page">
+      {/* PREMIUM HEADER */}
+      <header style={{
+        background: 'linear-gradient(135deg, #1e5a3a 0%, #2c5f2d 50%, #1a472e 100%)',
+        padding: '0',
+        position: 'sticky',
+        top: 0,
+        zIndex: 1000,
+        boxShadow: '0 4px 20px rgba(0, 0, 0, 0.15)',
+        marginBottom: '0'
+      }}>
+        {/* Top Bar */}
+        <div style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          padding: '10px 40px',
+          borderBottom: '1px solid rgba(255, 255, 255, 0.12)',
+          backgroundColor: 'rgba(0, 0, 0, 0.15)',
+          fontSize: '11px',
+          color: '#e8e8e8',
+          fontWeight: '500',
+          letterSpacing: '0.5px'
+        }}>
+          <div style={{ display: 'flex', gap: '25px' }}>
+            <a href="#" style={{ color: '#e8e8e8', textDecoration: 'none', transition: 'all 0.3s', cursor: 'pointer' }} onMouseEnter={(e) => e.target.style.color = '#FFD700'} onMouseLeave={(e) => e.target.style.color = '#e8e8e8'}>FAQ</a>
+            <a href="#" style={{ color: '#e8e8e8', textDecoration: 'none', transition: 'all 0.3s', cursor: 'pointer' }} onMouseEnter={(e) => e.target.style.color = '#FFD700'} onMouseLeave={(e) => e.target.style.color = '#e8e8e8'}>WEBMAIL</a>
+            <a href="#" style={{ color: '#e8e8e8', textDecoration: 'none', transition: 'all 0.3s', cursor: 'pointer' }} onMouseEnter={(e) => e.target.style.color = '#FFD700'} onMouseLeave={(e) => e.target.style.color = '#e8e8e8'}>PETA SITUS</a>
+          </div>
+          <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+            <button style={{ background: 'none', border: 'none', color: '#e8e8e8', cursor: 'pointer', fontSize: '11px', padding: '2px 6px', borderRadius: '4px', transition: 'all 0.3s' }} onMouseEnter={(e) => { e.target.style.background = 'rgba(255,255,255,0.1)'; e.target.style.color = '#FFD700'; }} onMouseLeave={(e) => { e.target.style.background = 'none'; e.target.style.color = '#e8e8e8'; }}>🇮🇩 ID</button>
+            <span style={{ opacity: '0.5' }}>|</span>
+            <button style={{ background: 'none', border: 'none', color: '#e8e8e8', cursor: 'pointer', fontSize: '11px', padding: '2px 6px', borderRadius: '4px', transition: 'all 0.3s' }} onMouseEnter={(e) => { e.target.style.background = 'rgba(255,255,255,0.1)'; e.target.style.color = '#FFD700'; }} onMouseLeave={(e) => { e.target.style.background = 'none'; e.target.style.color = '#e8e8e8'; }}>🇬🇧 EN</button>
+          </div>
+        </div>
+
+        {/* Main Header */}
+        <div style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          padding: '12px 40px',
+          gap: '20px'
+        }}>
+          {/* Logo & Brand + Search (Kiri) */}
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '15px'
+          }}>
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '12px',
+              minWidth: 'fit-content',
+              cursor: 'pointer',
+              transition: 'all 0.3s'
+            }}
+            onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+            >
+              <div style={{
+                fontSize: '28px',
+                fontWeight: '800',
+                background: 'linear-gradient(135deg, #FFD700, #FFA500)',
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+                backgroundClip: 'text',
+                filter: 'drop-shadow(0 2px 4px rgba(255,215,0,0.3))'
+              }}>
+                🌱
+              </div>
+              <div style={{ color: '#fff' }}>
+                <div style={{ fontSize: '13px', fontWeight: '700', letterSpacing: '0.3px' }}>Smart Vineyard</div>
+                <div style={{ fontSize: '10px', opacity: 0.75, marginTop: '1px' }}>Saung Tinanggur</div>
+              </div>
+            </div>
+
+            {/* Search Bar */}
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              background: '#fff',
+              borderRadius: '28px',
+              padding: '8px 16px',
+              gap: '10px',
+              boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
+              transition: 'all 0.3s'
+            }}
+            onMouseEnter={(e) => e.currentTarget.style.boxShadow = '0 4px 16px rgba(0, 0, 0, 0.15)'}
+            onMouseLeave={(e) => e.currentTarget.style.boxShadow = '0 2px 8px rgba(0, 0, 0, 0.1)'}
+            >
+              <span style={{ fontSize: '16px', opacity: 0.6 }}>🔍</span>
+              <input 
+                type="text" 
+                placeholder="Cari fitur..."
+                style={{
+                  border: 'none',
+                  outline: 'none',
+                  fontSize: '12px',
+                  fontFamily: 'inherit',
+                  backgroundColor: 'transparent',
+                  width: '120px'
+                }}
+              />
+            </div>
+          </div>
+
+          {/* Navigation Menu + Login (Kanan) */}
+          <nav style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '20px',
+            fontSize: '12px',
+            fontWeight: '700',
+            color: '#fff',
+            letterSpacing: '0.5px'
+          }}>
+            <a href="javascript:void(0)" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })} style={{ 
+              color: '#FFD700', 
+              textDecoration: 'none',
+              display: 'inline-block',
+              transition: 'all 0.3s',
+              cursor: 'pointer',
+              whiteSpace: 'nowrap'
+            }}>
+              BERANDA
+            </a>
+            <a href="#features" style={{ 
+              color: '#fff', 
+              textDecoration: 'none',
+              display: 'inline-block',
+              transition: 'all 0.3s',
+              cursor: 'pointer',
+              whiteSpace: 'nowrap'
+            }}
+            onClick={(e) => {
+              e.preventDefault();
+              document.getElementById('features')?.scrollIntoView({ behavior: 'smooth' });
+            }}
+            onMouseEnter={(e) => {
+              e.target.style.color = '#FFD700';
+            }}
+            onMouseLeave={(e) => {
+              e.target.style.color = '#fff';
+            }}
+            >
+              FITUR
+            </a>
+            <a href="#sma-video-section" style={{ 
+              color: '#fff', 
+              textDecoration: 'none',
+              display: 'inline-block',
+              transition: 'all 0.3s',
+              cursor: 'pointer',
+              whiteSpace: 'nowrap'
+            }}
+            onClick={(e) => {
+              e.preventDefault();
+              const videoSection = document.getElementById('sma-video-section');
+              if (videoSection) {
+                videoSection.scrollIntoView({ behavior: 'smooth' });
+              }
+            }}
+            onMouseEnter={(e) => {
+              e.target.style.color = '#FFD700';
+            }}
+            onMouseLeave={(e) => {
+              e.target.style.color = '#fff';
+            }}
+            >
+              VIDEO
+            </a>
+            <a href="#lp-section" style={{ 
+              color: '#fff', 
+              textDecoration: 'none',
+              display: 'inline-block',
+              transition: 'all 0.3s',
+              cursor: 'pointer',
+              whiteSpace: 'nowrap'
+            }}
+            onClick={(e) => {
+              e.preventDefault();
+              const section = document.querySelector('.lp-section');
+              if (section) {
+                section.scrollIntoView({ behavior: 'smooth' });
+              }
+            }}
+            onMouseEnter={(e) => {
+              e.target.style.color = '#FFD700';
+            }}
+            onMouseLeave={(e) => {
+              e.target.style.color = '#fff';
+            }}
+            >
+              TENTANG KAMI
+            </a>
+            <a href="#footer" style={{ 
+              color: '#fff', 
+              textDecoration: 'none',
+              display: 'inline-block',
+              transition: 'all 0.3s',
+              cursor: 'pointer',
+              whiteSpace: 'nowrap'
+            }}
+            onClick={(e) => {
+              e.preventDefault();
+              const footer = document.querySelector('.lp-footer');
+              if (footer) {
+                footer.scrollIntoView({ behavior: 'smooth' });
+              }
+            }}
+            onMouseEnter={(e) => {
+              e.target.style.color = '#FFD700';
+            }}
+            onMouseLeave={(e) => {
+              e.target.style.color = '#fff';
+            }}
+            >
+              KONTAK
+            </a>
+
+            {/* CTA Button */}
+            <Link 
+              to={PublicPaths.login}
+              style={{
+                background: 'linear-gradient(135deg, #FFD700, #FFA500)',
+                color: '#2c5f2d',
+                padding: '9px 24px',
+                borderRadius: '25px',
+                fontSize: '12px',
+                fontWeight: '700',
+                textDecoration: 'none',
+                cursor: 'pointer',
+                transition: 'all 0.3s',
+                boxShadow: '0 4px 12px rgba(255, 215, 0, 0.3)',
+                display: 'inline-block',
+                letterSpacing: '0.5px',
+                whiteSpace: 'nowrap'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.transform = 'translateY(-2px)';
+                e.currentTarget.style.boxShadow = '0 6px 20px rgba(255, 215, 0, 0.4)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.transform = 'translateY(0)';
+                e.currentTarget.style.boxShadow = '0 4px 12px rgba(255, 215, 0, 0.3)';
+              }}
+            >
+              Masuk
+            </Link>
+          </nav>
+        </div>
+      </header>
+
       {/* HERO */}
       <section className="lp-hero js-lp-hero">
         <div className="lp-hero-grid">
@@ -258,8 +511,8 @@ export default function LandingPage() {
       </section>
 
       {/* SECTION: Video Demo Sistem */}
-      <section style={{ padding: '80px 20px', backgroundColor: '#ffffff' }}>
-        <div style={{ maxWidth: '1000px', margin: '0 auto' }}>
+      <section id="sma-video-section" style={{ padding: '80px 20px', backgroundColor: '#ffffff' }}>
+        <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
           
           {/* Header Section */}
           <header style={{ textAlign: 'center', marginBottom: '50px' }}>
@@ -268,25 +521,56 @@ export default function LandingPage() {
               color: '#c62828', borderRadius: '20px', fontSize: '12px', fontWeight: '700', 
               letterSpacing: '1px', marginBottom: '15px', textTransform: 'uppercase'
             }}>
-              🎥 Cara Kerja Sistem
+              🎥 Demo Sistem
             </div>
             <h2 style={{ fontSize: '36px', fontWeight: '800', color: '#2c3e50', marginBottom: '15px', lineHeight: '1.2' }}>
               Lihat Smart Vineyard Beraksi
             </h2>
-            <p style={{ fontSize: '16px', color: '#7f8c8d', maxWidth: '700px', margin: '0 auto', lineHeight: '1.6' }}>
-              Saksikan tayangan singkat berikut untuk memahami bagaimana integrasi sensor IoT dan kecerdasan buatan (AI) dapat mengotomatisasi perawatan kebun anggur Anda.
+            <p style={{ fontSize: '16px', color: '#7f8c8d', maxWidth: '700px', margin: '0 auto', lineHeight: '1.6', marginBottom: '30px' }}>
+              Saksikan tayangan lengkap integrasi sensor IoT, AI diagnosis, dan kontrol otomatis dalam aksi
             </p>
+
+            {/* Manual Book Button */}
+            <a 
+              href="/manual-book.pdf"
+              download
+              style={{
+                background: 'linear-gradient(135deg, #FFD700, #FFA500)',
+                color: '#2c5f2d',
+                padding: '12px 32px',
+                borderRadius: '28px',
+                fontSize: '14px',
+                fontWeight: '700',
+                textDecoration: 'none',
+                cursor: 'pointer',
+                transition: 'all 0.3s',
+                display: 'inline-block',
+                letterSpacing: '0.5px',
+                whiteSpace: 'nowrap',
+                boxShadow: '0 4px 12px rgba(255, 215, 0, 0.3)'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.transform = 'translateY(-2px)';
+                e.currentTarget.style.boxShadow = '0 6px 20px rgba(255, 215, 0, 0.4)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.transform = 'translateY(0)';
+                e.currentTarget.style.boxShadow = '0 4px 12px rgba(255, 215, 0, 0.3)';
+              }}
+            >
+              📘 Download Manual Book
+            </a>
           </header>
 
           {/* Video Container (Responsive 16:9) */}
           <div style={{
             position: 'relative',
             width: '100%',
-            paddingBottom: '56.25%', // Membuat rasio 16:9
-            borderRadius: '24px', // Lengkungan yang serasi dengan card sebelumnya
+            paddingBottom: '56.25%',
+            borderRadius: '24px',
             overflow: 'hidden',
-            boxShadow: '0 20px 40px rgba(0,0,0,0.1)', // Efek mengambang/elevated
-            border: '8px solid #f8f9fa', // Bingkai luar menyerupai frame TV/Tablet
+            boxShadow: '0 20px 40px rgba(0,0,0,0.1)',
+            border: '8px solid #f8f9fa',
             backgroundColor: '#000'
           }}>
           <iframe 
@@ -299,10 +583,10 @@ export default function LandingPage() {
               border: 'none'
             }}
             src="https://www.youtube.com/embed/9LVn8DqpeGw?rel=0" 
-            title="Demo Smart Vineyard" 
+            title="Demo Smart Vineyard Management" 
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" 
             allowFullScreen
-            referrerPolicy="strict-origin-when-cross-origin" // TAMBAHKAN BARIS INI
+            referrerPolicy="strict-origin-when-cross-origin"
           ></iframe>
           </div>
 
