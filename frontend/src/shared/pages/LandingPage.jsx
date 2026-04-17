@@ -116,46 +116,134 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* SECTION: “Latest Products” versi sistem – modul utama */}
-      <section className="lp-section">
-        <header className="lp-section-header">
-          <h2 className="lp-section-title">Modul Utama Sistem</h2>
-          <p className="lp-section-subtitle">
-            Semua fitur yang Anda perlukan untuk mengelola kebun anggur pintar dalam satu tempat.
-          </p>
-        </header>
-        <div className="lp-product-grid">
-          <article className="lp-product-card">
-            <h3>Monitoring Lahan</h3>
-            <p>Kelembapan tanah, suhu, dan kondisi media tanam dari seluruh blok kebun.</p>
-          </article>
-          <article className="lp-product-card">
-            <h3>Monitoring Tandon</h3>
-            <p>Level air &amp; nutrisi tandon, termasuk peringatan saat hampir kosong.</p>
-          </article>
-          <article className="lp-product-card">
-            <h3>Kontrol Manual</h3>
-            <p>Aktifkan pompa irigasi &amp; injeksi nutrisi langsung dari dashboard.</p>
-          </article>
-          <article className="lp-product-card">
-            <h3>Diagnosis Penyakit AI</h3>
-            <p>Upload foto daun dan dapatkan hasil klasifikasi kondisi daun.</p>
-          </article>
-          <article className="lp-product-card">
-            <h3>Konfigurasi Threshold</h3>
-            <p>
-              Setel batas kelembapan &amp; nutrisi per varietas sehingga sistem bisa mengambil
-              keputusan otomatis.
+{/* SECTION: “Latest Products” / Modul Utama */}
+      <section style={{ padding: '80px 20px', backgroundColor: '#f8f9fa' }}>
+        {/* Style khusus untuk efek hover dan ikon (disematkan langsung agar rapi) */}
+        <style>{`
+          .lp-feature-card {
+            background-color: #ffffff;
+            border-radius: 20px;
+            padding: 35px 25px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.04);
+            border: 1px solid rgba(0,0,0,0.02);
+            transition: all 0.3s ease;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+          }
+          .lp-feature-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 15px 30px rgba(0,0,0,0.08);
+            border-color: #ecf0f1;
+          }
+          .lp-icon-box {
+            width: 65px;
+            height: 65px;
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 30px;
+            margin-bottom: 24px;
+          }
+        `}</style>
+
+        <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
+          {/* Header Section */}
+          <header style={{ textAlign: 'center', marginBottom: '60px' }}>
+            <div style={{ 
+              display: 'inline-block', padding: '6px 16px', backgroundColor: '#e8f5e9', 
+              color: '#27ae60', borderRadius: '20px', fontSize: '12px', fontWeight: '700', 
+              letterSpacing: '1px', marginBottom: '15px', textTransform: 'uppercase'
+            }}>
+              Fitur Lengkap
+            </div>
+            <h2 style={{ fontSize: '36px', fontWeight: '800', color: '#2c3e50', marginBottom: '15px', lineHeight: '1.2' }}>
+              Modul Utama Sistem
+            </h2>
+            <p style={{ fontSize: '16px', color: '#7f8c8d', maxWidth: '600px', margin: '0 auto', lineHeight: '1.6' }}>
+              Semua fitur yang Anda perlukan untuk mengelola kebun anggur pintar secara presisi dan otomatis dalam satu tempat.
             </p>
-          </article>
-          <article className="lp-product-card">
-            <h3>Laporan &amp; Prediksi Tren</h3>
-            <p>Laporan historis sensor &amp; aktivitas sistem untuk Analisis Owner dan Agronomis.</p>
-          </article>
+          </header>
+
+          {/* Grid Modul */}
+          <div style={{ 
+            display: 'grid', 
+            gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', 
+            gap: '30px' 
+          }}>
+            
+            {/* Card 1: Monitoring Lahan */}
+            <article className="lp-feature-card">
+              <div className="lp-icon-box" style={{ backgroundColor: '#e8f5e9', color: '#27ae60' }}>🌱</div>
+              <h3 style={{ fontSize: '18px', fontWeight: '700', color: '#2c3e50', marginBottom: '12px' }}>
+                Monitoring Lahan
+              </h3>
+              <p style={{ fontSize: '14px', color: '#7f8c8d', lineHeight: '1.6', margin: 0 }}>
+                Pantau kelembapan tanah, tingkat pH, dan nutrisi NPK/EC dari seluruh blok kebun secara real-time.
+              </p>
+            </article>
+
+            {/* Card 2: Monitoring Tandon */}
+            <article className="lp-feature-card">
+              <div className="lp-icon-box" style={{ backgroundColor: '#e3f2fd', color: '#3498db' }}>💧</div>
+              <h3 style={{ fontSize: '18px', fontWeight: '700', color: '#2c3e50', marginBottom: '12px' }}>
+                Monitoring Tandon
+              </h3>
+              <p style={{ fontSize: '14px', color: '#7f8c8d', lineHeight: '1.6', margin: 0 }}>
+                Ketahui level sisa air dan nutrisi pada tandon. Sistem dilengkapi fitur proteksi peringatan saat hampir kosong.
+              </p>
+            </article>
+
+            {/* Card 3: Kontrol Manual */}
+            <article className="lp-feature-card">
+              <div className="lp-icon-box" style={{ backgroundColor: '#fce4ec', color: '#e91e63' }}>⚙️</div>
+              <h3 style={{ fontSize: '18px', fontWeight: '700', color: '#2c3e50', marginBottom: '12px' }}>
+                Kontrol Jarak Jauh
+              </h3>
+              <p style={{ fontSize: '14px', color: '#7f8c8d', lineHeight: '1.6', margin: 0 }}>
+                Ambil alih sistem kapan saja. Aktifkan atau matikan pompa irigasi dan injeksi nutrisi langsung dari dashboard.
+              </p>
+            </article>
+
+            {/* Card 4: AI Diagnosis */}
+            <article className="lp-feature-card">
+              <div className="lp-icon-box" style={{ backgroundColor: '#f3e5f5', color: '#9b59b6' }}>🤖</div>
+              <h3 style={{ fontSize: '18px', fontWeight: '700', color: '#2c3e50', marginBottom: '12px' }}>
+                Diagnosis Penyakit AI
+              </h3>
+              <p style={{ fontSize: '14px', color: '#7f8c8d', lineHeight: '1.6', margin: 0 }}>
+                Tangkap foto daun melalui ESP-CAM atau unggah foto dari galeri untuk mendeteksi penyakit daun secara akurat.
+              </p>
+            </article>
+
+            {/* Card 5: Threshold Config */}
+            <article className="lp-feature-card">
+              <div className="lp-icon-box" style={{ backgroundColor: '#fff8e1', color: '#f39c12' }}>🎛️</div>
+              <h3 style={{ fontSize: '18px', fontWeight: '700', color: '#2c3e50', marginBottom: '12px' }}>
+                Konfigurasi Ambang Batas
+              </h3>
+              <p style={{ fontSize: '14px', color: '#7f8c8d', lineHeight: '1.6', margin: 0 }}>
+                Tentukan sendiri batas minimum kelembapan dan nutrisi agar sistem AI dapat menyiram otomatis sesuai kebutuhan varietas.
+              </p>
+            </article>
+
+            {/* Card 6: Laporan */}
+            <article className="lp-feature-card">
+              <div className="lp-icon-box" style={{ backgroundColor: '#e0f7fa', color: '#00bcd4' }}>📊</div>
+              <h3 style={{ fontSize: '18px', fontWeight: '700', color: '#2c3e50', marginBottom: '12px' }}>
+                Laporan & Prediksi Tren
+              </h3>
+              <p style={{ fontSize: '14px', color: '#7f8c8d', lineHeight: '1.6', margin: 0 }}>
+                Analisis data historis sensor dan aktivitas sistem untuk membantu Owner dan Agronomis mengambil keputusan strategis.
+              </p>
+            </article>
+
+          </div>
         </div>
       </section>
-
-      {/* SECTION: Banner “Be Healthy...” */}
+      
+    {/* SECTION: Banner “Be Healthy...” */}
       <section className="lp-banner">
         <div className="lp-banner-content">
           <h2>Be Healthy &amp; Grow Only Fresh Organic Grapes</h2>
@@ -166,6 +254,58 @@ export default function LandingPage() {
           <Link to={PublicPaths.login} className="btn-pill-primary">
             Mulai Pantau Sekarang
           </Link>
+        </div>
+      </section>
+
+      {/* SECTION: Video Demo Sistem */}
+      <section style={{ padding: '80px 20px', backgroundColor: '#ffffff' }}>
+        <div style={{ maxWidth: '1000px', margin: '0 auto' }}>
+          
+          {/* Header Section */}
+          <header style={{ textAlign: 'center', marginBottom: '50px' }}>
+            <div style={{ 
+              display: 'inline-block', padding: '8px 16px', backgroundColor: '#ffebee', 
+              color: '#c62828', borderRadius: '20px', fontSize: '12px', fontWeight: '700', 
+              letterSpacing: '1px', marginBottom: '15px', textTransform: 'uppercase'
+            }}>
+              🎥 Cara Kerja Sistem
+            </div>
+            <h2 style={{ fontSize: '36px', fontWeight: '800', color: '#2c3e50', marginBottom: '15px', lineHeight: '1.2' }}>
+              Lihat Smart Vineyard Beraksi
+            </h2>
+            <p style={{ fontSize: '16px', color: '#7f8c8d', maxWidth: '700px', margin: '0 auto', lineHeight: '1.6' }}>
+              Saksikan tayangan singkat berikut untuk memahami bagaimana integrasi sensor IoT dan kecerdasan buatan (AI) dapat mengotomatisasi perawatan kebun anggur Anda.
+            </p>
+          </header>
+
+          {/* Video Container (Responsive 16:9) */}
+          <div style={{
+            position: 'relative',
+            width: '100%',
+            paddingBottom: '56.25%', // Membuat rasio 16:9
+            borderRadius: '24px', // Lengkungan yang serasi dengan card sebelumnya
+            overflow: 'hidden',
+            boxShadow: '0 20px 40px rgba(0,0,0,0.1)', // Efek mengambang/elevated
+            border: '8px solid #f8f9fa', // Bingkai luar menyerupai frame TV/Tablet
+            backgroundColor: '#000'
+          }}>
+          <iframe 
+            style={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              width: '100%',
+              height: '100%',
+              border: 'none'
+            }}
+            src="https://www.youtube.com/embed/9LVn8DqpeGw?rel=0" 
+            title="Demo Smart Vineyard" 
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" 
+            allowFullScreen
+            referrerPolicy="strict-origin-when-cross-origin" // TAMBAHKAN BARIS INI
+          ></iframe>
+          </div>
+
         </div>
       </section>
 
@@ -223,52 +363,168 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* SECTION: Testimonial & News (ringkas) */}
-      <section className="lp-section lp-section-split">
-        <div className="lp-testimonials">
-          <h2 className="lp-section-title">Apa Kata Pengguna</h2>
-          <div className="lp-testimonial-card">
-            <p>
-              "Smart Vineyard System benar-benar mengubah cara kami mengelola kebun. Monitoring 
-              real-time membantu kami mengoptimalkan jadwal irigasi dan aplikasi nutrisi. Hasilnya, 
-              produktivitas meningkat 35% dan kualitas buah lebih konsisten."
-            </p>
-            <span className="lp-testimonial-name">– Hendra Wijaya, Agronomis Saung Tinanggur Subang</span>
-          </div>
-          <div className="lp-testimonial-card">
-            <p>
-              "Fitur AI Diagnosis sangat membantu mendeteksi penyakit daun lebih awal. Kami bisa 
-              mengambil tindakan preventif sebelum penyakit menyebar ke tanaman lain, sehingga 
-              mengurangi kerugian hingga 40%."
-            </p>
-            <span className="lp-testimonial-name">– Siti Maria, Koordinator Lapangan Saung Tinanggur</span>
-          </div>
-        </div>
-        <div className="lp-news">
-          <h2 className="lp-section-title">News &amp; Articles</h2>
-          <div className="lp-news-grid">
-            <article className="lp-news-card">
-              <h3>Optimasi Nutrisi untuk Varietas Jupiter</h3>
-              <p>
-                Tips mengatur threshold kelembapan &amp; nutrisi khusus varietas Jupiter berbasis
-                data sensor.
+{/* SECTION: Testimonial & News */}
+      <section style={{ padding: '80px 20px', backgroundColor: '#f9fafb' }}>
+        {/* Style khusus untuk efek hover pada kartu */}
+        <style>{`
+          .lp-testi-card {
+            background-color: #ffffff;
+            padding: 30px;
+            border-radius: 16px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.03);
+            border: 1px solid #ecf0f1;
+            position: relative;
+            transition: all 0.3s ease;
+          }
+          .lp-testi-card:hover {
+            box-shadow: 0 10px 25px rgba(0,0,0,0.08);
+            transform: translateY(-4px);
+          }
+          .lp-news-card {
+            display: flex;
+            gap: 20px;
+            background-color: #ffffff;
+            padding: 20px;
+            border-radius: 16px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.03);
+            border: 1px solid #ecf0f1;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            align-items: flex-start;
+          }
+          .lp-news-card:hover {
+            box-shadow: 0 10px 25px rgba(0,0,0,0.08);
+            border-color: #3498db;
+          }
+          @media (max-width: 768px) {
+            .lp-news-card { flex-direction: column; gap: 12px; }
+          }
+        `}</style>
+
+        <div style={{ 
+          maxWidth: '1200px', 
+          margin: '0 auto', 
+          display: 'grid', 
+          gridTemplateColumns: 'repeat(auto-fit, minmax(350px, 1fr))', 
+          gap: '50px' 
+        }}>
+          
+          {/* KOLOM KIRI: TESTIMONI */}
+          <div>
+            <div style={{ marginBottom: '30px' }}>
+              <div style={{ display: 'inline-block', padding: '6px 16px', backgroundColor: '#e3f2fd', color: '#2980b9', borderRadius: '20px', fontSize: '12px', fontWeight: '700', letterSpacing: '1px', textTransform: 'uppercase', marginBottom: '15px' }}>
+                💬 Apa Kata Mereka
+              </div>
+              <h2 style={{ fontSize: '32px', fontWeight: '800', color: '#2c3e50', marginBottom: '10px', lineHeight: '1.2' }}>
+                Dipercaya oleh Ahli Agronomi
+              </h2>
+              <p style={{ color: '#7f8c8d', fontSize: '15px' }}>
+                Pengalaman nyata dari para praktisi yang telah menggunakan Smart Vineyard.
               </p>
-            </article>
-            <article className="lp-news-card">
-              <h3>Mendeteksi Penyakit Daun Lebih Awal</h3>
-              <p>
-                Bagaimana AI membantu mendeteksi klorosis &amp; nekrosis sebelum gejalanya
-                menyebar di kebun anggur organik.
-              </p>
-            </article>
-            <article className="lp-news-card">
-              <h3>Sustainability di Saung Tinanggur</h3>
-              <p>
-                Komitmen kami terhadap pertanian organik berkelanjutan melalui teknologi hemat air 
-                dan pengurangan penggunaan pestisida kimia.
-              </p>
-            </article>
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+              {/* Testimoni 1 */}
+              <div className="lp-testi-card">
+                <div style={{ fontSize: '60px', color: '#f0f0f0', position: 'absolute', top: '10px', right: '20px', fontFamily: 'serif', lineHeight: '1' }}>❝</div>
+                <p style={{ fontSize: '14px', color: '#555', fontStyle: 'italic', lineHeight: '1.7', marginBottom: '20px', position: 'relative', zIndex: 1 }}>
+                  "Smart Vineyard System benar-benar mengubah cara kami mengelola kebun. Monitoring real-time membantu kami mengoptimalkan jadwal irigasi dan aplikasi nutrisi. Hasilnya, produktivitas meningkat 35% dan kualitas buah lebih konsisten."
+                </p>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                  <div style={{ width: '45px', height: '45px', borderRadius: '50%', background: 'linear-gradient(135deg, #27ae60 0%, #2ecc71 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: 'bold', fontSize: '16px' }}>
+                    HW
+                  </div>
+                  <div>
+                    <div style={{ fontSize: '15px', fontWeight: '700', color: '#2c3e50' }}>Hendra Wijaya</div>
+                    <div style={{ fontSize: '12px', color: '#7f8c8d' }}>Agronomis, Saung Tinanggur</div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Testimoni 2 */}
+              <div className="lp-testi-card">
+                <div style={{ fontSize: '60px', color: '#f0f0f0', position: 'absolute', top: '10px', right: '20px', fontFamily: 'serif', lineHeight: '1' }}>❝</div>
+                <p style={{ fontSize: '14px', color: '#555', fontStyle: 'italic', lineHeight: '1.7', marginBottom: '20px', position: 'relative', zIndex: 1 }}>
+                  "Fitur AI Diagnosis sangat membantu mendeteksi penyakit daun lebih awal. Kami bisa mengambil tindakan preventif sebelum penyakit menyebar ke tanaman lain, sehingga mengurangi kerugian hingga 40%."
+                </p>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                  <div style={{ width: '45px', height: '45px', borderRadius: '50%', background: 'linear-gradient(135deg, #8e44ad 0%, #9b59b6 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: 'bold', fontSize: '16px' }}>
+                    SM
+                  </div>
+                  <div>
+                    <div style={{ fontSize: '15px', fontWeight: '700', color: '#2c3e50' }}>Siti Maria</div>
+                    <div style={{ fontSize: '12px', color: '#7f8c8d' }}>Koordinator Lapangan</div>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
+
+          {/* KOLOM KANAN: NEWS & ARTICLES */}
+          <div>
+            <div style={{ marginBottom: '30px' }}>
+              <div style={{ display: 'inline-block', padding: '6px 16px', backgroundColor: '#fce4ec', color: '#c2185b', borderRadius: '20px', fontSize: '12px', fontWeight: '700', letterSpacing: '1px', textTransform: 'uppercase', marginBottom: '15px' }}>
+                📰 Kabar & Edukasi
+              </div>
+              <h2 style={{ fontSize: '32px', fontWeight: '800', color: '#2c3e50', marginBottom: '10px', lineHeight: '1.2' }}>
+                Wawasan Pertanian
+              </h2>
+              <p style={{ color: '#7f8c8d', fontSize: '15px' }}>
+                Artikel terbaru seputar teknologi IoT dan agronomi anggur.
+              </p>
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+              {/* Artikel 1 */}
+              <article className="lp-news-card">
+                <div style={{ minWidth: '70px', height: '70px', borderRadius: '12px', background: 'linear-gradient(135deg, #3498db 0%, #2980b9 100%)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: '#fff' }}>
+                  <span style={{ fontSize: '20px', fontWeight: '800', lineHeight: '1' }}>12</span>
+                  <span style={{ fontSize: '11px', textTransform: 'uppercase', fontWeight: '600', marginTop: '2px' }}>Okt</span>
+                </div>
+                <div>
+                  <h3 style={{ fontSize: '16px', fontWeight: '700', color: '#2c3e50', marginBottom: '6px', lineHeight: '1.4' }}>
+                    Optimasi Nutrisi untuk Varietas Jupiter
+                  </h3>
+                  <p style={{ fontSize: '13px', color: '#7f8c8d', lineHeight: '1.6', margin: 0 }}>
+                    Tips mengatur threshold kelembapan & nutrisi khusus varietas Jupiter berbasis data presisi sensor.
+                  </p>
+                </div>
+              </article>
+
+              {/* Artikel 2 */}
+              <article className="lp-news-card">
+                <div style={{ minWidth: '70px', height: '70px', borderRadius: '12px', background: 'linear-gradient(135deg, #e67e22 0%, #d35400 100%)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: '#fff' }}>
+                  <span style={{ fontSize: '20px', fontWeight: '800', lineHeight: '1' }}>08</span>
+                  <span style={{ fontSize: '11px', textTransform: 'uppercase', fontWeight: '600', marginTop: '2px' }}>Okt</span>
+                </div>
+                <div>
+                  <h3 style={{ fontSize: '16px', fontWeight: '700', color: '#2c3e50', marginBottom: '6px', lineHeight: '1.4' }}>
+                    Mendeteksi Penyakit Daun Lebih Awal
+                  </h3>
+                  <p style={{ fontSize: '13px', color: '#7f8c8d', lineHeight: '1.6', margin: 0 }}>
+                    Bagaimana AI membantu mendeteksi klorosis & nekrosis sebelum gejalanya menyebar di kebun anggur organik.
+                  </p>
+                </div>
+              </article>
+
+              {/* Artikel 3 */}
+              <article className="lp-news-card">
+                <div style={{ minWidth: '70px', height: '70px', borderRadius: '12px', background: 'linear-gradient(135deg, #27ae60 0%, #2ecc71 100%)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: '#fff' }}>
+                  <span style={{ fontSize: '20px', fontWeight: '800', lineHeight: '1' }}>29</span>
+                  <span style={{ fontSize: '11px', textTransform: 'uppercase', fontWeight: '600', marginTop: '2px' }}>Sep</span>
+                </div>
+                <div>
+                  <h3 style={{ fontSize: '16px', fontWeight: '700', color: '#2c3e50', marginBottom: '6px', lineHeight: '1.4' }}>
+                    Sustainability di Saung Tinanggur
+                  </h3>
+                  <p style={{ fontSize: '13px', color: '#7f8c8d', lineHeight: '1.6', margin: 0 }}>
+                    Komitmen kami terhadap pertanian organik berkelanjutan melalui teknologi hemat air dan pengurangan pestisida.
+                  </p>
+                </div>
+              </article>
+            </div>
+          </div>
+
         </div>
       </section>
 

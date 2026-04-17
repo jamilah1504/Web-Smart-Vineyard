@@ -6,7 +6,8 @@ export const roleNavConfig = {
     subtitle: 'Saung Tinanggur · Owner Console',
     links: [
       { to: OwnerPaths.dashboard, label: '📊 Dashboard' },
-      { to: OwnerPaths.sensors, label: '💧 Monitoring Lahan' },
+      { to: OwnerPaths.analysis, label: '💡 Diagnosa AI' },
+      { to: OwnerPaths.sensors, label: '🌿 Monitoring Lahan' },
       { to: OwnerPaths.tanks, label: '🏗️ Monitoring Tandon' },
       { to: OwnerPaths.manualControl, label: '⚙️ Kontrol Manual' },
       { to: OwnerPaths.thresholds, label: '⚙️ Konfigurasi Threshold' },
