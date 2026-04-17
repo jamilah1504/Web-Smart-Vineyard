@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import { animate } from 'animejs';
 import { getLatestSensorData } from '../services/sensorApi'; // Sesuaikan path ini dengan struktur folder Anda!
 
 function MonitoringPage() {
@@ -45,6 +46,45 @@ function MonitoringPage() {
     }, 15000); 
     return () => clearInterval(intervalId);
   }, [fetchData]);
+
+  // === ANIMASI MONITORING PAGE ===
+  useEffect(() => {
+    if (!loading && sensorData.length > 0) {
+      // Animate stat cards
+      animate('.card-responsive', {
+        opacity: [0, 1],
+        translateY: [30, 0],
+        duration: 600,
+        delay: (el, i) => i * 100,
+        easing: 'easeOutQuad',
+      })
+
+      // Animate filter section
+      animate('.filter-section', {
+        opacity: [0, 1],
+        translateX: [-20, 0],
+        duration: 600,
+        easing: 'easeOutQuad',
+      })
+
+      // Animate chart container
+      animate('[style*="Chart"]', {
+        opacity: [0, 1],
+        translateY: [40, 0],
+        duration: 700,
+        delay: 200,
+        easing: 'easeOutQuad',
+      })
+
+      // Animate chart lines
+      animate('line[stroke]', {
+        opacity: [0, 1],
+        duration: 1000,
+        delay: 500,
+        easing: 'easeOutQuad',
+      })
+    }
+  }, [loading, sensorData]);
 
   const latestData = sensorData.length > 0 ? sensorData[0] : null;
 

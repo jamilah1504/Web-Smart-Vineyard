@@ -57,6 +57,8 @@ exports.getDashboardSummary = async (req, res) => {
                     ec_val: latestSensor?.ec_val || 0,
                     kelembapan_val: latestSensor?.kelembapan_val || 0,
                     water_level: latestTandon?.ketinggian_air || 0,
+                    status_pompa_air: latestSensor?.status_pompa_air || 0,
+                    status_pompa_pupuk: latestSensor?.status_pompa_pupuk || 0,
                     diagnosis: latestAI?.hasil_diagnosis || 'Normal',
                     confidence: latestAI?.confidence_score || 0
                 },

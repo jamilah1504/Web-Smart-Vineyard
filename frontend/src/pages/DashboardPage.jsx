@@ -1,9 +1,12 @@
 import { useState, useMemo, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts'
+import { animate } from 'animejs'
 import { getDashboardSummary } from '../services/dashboardApi' 
-import { updatePumpStatus } from '../services/controlApi' // Pastikan import ini ada
+import { updatePumpStatus } from '../services/controlApi'
 
 function DashboardPage() {
+  const navigate = useNavigate()
   const [pumpOn, setPumpOn] = useState(false)
   const [fertilizerOn, setFertilizerOn] = useState(false)
   const [sensorData, setSensorData] = useState([]) 
@@ -20,7 +23,6 @@ function DashboardPage() {
       if (response.status === 'success') {
         setLatest(response.data.latest);
         setSensorData(response.data.history);
-        // Sinkronisasi status tombol dengan data DB
         setPumpOn(response.data.latest.status_pompa_air === 1);
         setFertilizerOn(response.data.latest.status_pompa_pupuk === 1);
       }
@@ -37,6 +39,46 @@ function DashboardPage() {
     return () => clearInterval(interval);
   }, [selectedDevice]);
 
+  // Define chartData SEBELUM menggunakannya di animasi
+  const chartData = useMemo(() => {
+    return sensorData.map(item => ({
+      time: new Date(item.timestamp).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }),
+      soilMoisture: item.kelembapan_val,
+      N: item.n_val,
+      EC: item.ec_val,
+      pH: item.ph_val
+    }));
+  }, [sensorData]);
+
+  // Animasi dashboard elements
+  useEffect(() => {
+    if (!loading && sensorData.length > 0) {
+      // Animate stat cards
+      animate('.card-responsive', {
+        opacity: [0, 1],
+        translateY: [30, 0],
+        duration: 600,
+        delay: (el, i) => i * 120,
+        easing: 'easeOutQuad',
+      })
+
+      // Animate chart section
+      animate('section[style*="Chart"]', {
+        opacity: [0, 1],
+        translateY: [40, 0],
+        duration: 700,
+        easing: 'easeOutQuad',
+      })
+
+      // Animate chart lines dengan delay
+      animate('line', {
+        opacity: [0, 1],
+        duration: 800,
+        delay: 300,
+        easing: 'easeOutQuad',
+      })
+    }
+  }, [loading, chartData]);
 const handleToggleControl = async (type, currentStatus) => {
   const newStatus = currentStatus ? 0 : 1; // Konversi boolean ke 0/1 untuk DB
   
@@ -67,16 +109,6 @@ const handleToggleControl = async (type, currentStatus) => {
     if (type === 'pupuk') setFertilizerOn(currentStatus);
   }
 };
-
-  const chartData = useMemo(() => {
-    return sensorData.map(item => ({
-      time: new Date(item.timestamp).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }),
-      soilMoisture: item.kelembapan_val,
-      N: item.n_val,
-      EC: item.ec_val,
-      pH: item.ph_val
-    }));
-  }, [sensorData]);
 
   const getWaterPercentage = (val) => {
     const height = parseFloat(val) || 0;
@@ -188,7 +220,7 @@ const handleToggleControl = async (type, currentStatus) => {
           {/* Switch 1: Pompa Air */}
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px', backgroundColor: '#f8f9fa', borderRadius: '10px', marginBottom: '10px' }}>
             <div style={{ fontSize: '14px', fontWeight: '600' }}>Pompa Air {pumpOn ? '🟢' : '⚪'}</div>
-            <button onClick={() => handleToggleControl('air', pumpOn)} disabled={latest?.water_level < 5} style={{ width: '50px', height: '26px', borderRadius: '13px', border: 'none', backgroundColor: pumpOn ? '#27ae60' : '#bdc3c7', cursor: 'pointer', position: 'relative' }}>
+            <button onClick={() => handleToggleControl('air', pumpOn)} disabled={latest?.water_level < 5} style={{ width: '50px', height: '26px', borderRadius: '13px', border: 'none', backgroundColor: pumpOn ? '#27ae60' : '#bdc3c7', cursor: latest?.water_level < 5 ? 'not-allowed' : 'pointer', opacity: latest?.water_level < 5 ? 0.5 : 1, position: 'relative' }}>
               <div style={{ position: 'absolute', width: '20px', height: '20px', borderRadius: '50%', backgroundColor: '#fff', top: '3px', left: pumpOn ? '27px' : '3px', transition: '0.3s' }} />
             </button>
           </div>
@@ -196,7 +228,7 @@ const handleToggleControl = async (type, currentStatus) => {
           {/* Switch 2: Pompa Pupuk */}
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px', backgroundColor: '#f8f9fa', borderRadius: '10px' }}>
             <div style={{ fontSize: '14px', fontWeight: '600' }}>Injeksi Pupuk {fertilizerOn ? '🟣' : '⚪'}</div>
-            <button onClick={() => handleToggleControl('pupuk', fertilizerOn)} style={{ width: '50px', height: '26px', borderRadius: '13px', border: 'none', backgroundColor: fertilizerOn ? '#8e44ad' : '#bdc3c7', cursor: 'pointer', position: 'relative' }}>
+            <button onClick={() => handleToggleControl('pupuk', fertilizerOn)} disabled={!pumpOn || latest?.water_level < 5} style={{ width: '50px', height: '26px', borderRadius: '13px', border: 'none', backgroundColor: fertilizerOn && pumpOn ? '#8e44ad' : '#bdc3c7', cursor: (!pumpOn || latest?.water_level < 5) ? 'not-allowed' : 'pointer', opacity: (!pumpOn || latest?.water_level < 5) ? 0.5 : 1, position: 'relative' }}>
               <div style={{ position: 'absolute', width: '20px', height: '20px', borderRadius: '50%', backgroundColor: '#fff', top: '3px', left: fertilizerOn ? '27px' : '3px', transition: '0.3s' }} />
             </button>
           </div>
@@ -204,10 +236,36 @@ const handleToggleControl = async (type, currentStatus) => {
 
         {/* AI Diagnosis */}
         <div className="card-responsive" style={{ borderRadius: '15px', padding: '24px', backgroundColor: '#ffffff', border: '1px solid #e0e0e0' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '20px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
             <div style={{ fontSize: '16px', fontWeight: '700' }}>🤖 AI Diagnosis</div>
-            <button onClick={() => window.location.href = '/analysis'} style={{ fontSize: '11px', color: '#3498db', background: 'none', border: 'none', cursor: 'pointer' }}>Detail Foto</button>
+            <button onClick={() => navigate('/agronomis/analysis')} style={{ fontSize: '12px', fontWeight: '600', color: '#fff', backgroundColor: '#27ae60', padding: '8px 16px', border: 'none', borderRadius: '8px', cursor: 'pointer', transition: '0.3s', boxShadow: '0 2px 6px rgba(39, 174, 96, 0.3)' }} onMouseOver={(e) => e.target.style.backgroundColor = '#229954'} onMouseOut={(e) => e.target.style.backgroundColor = '#27ae60'}>📊 Detail</button>
           </div>
+
+          {/* Diagnosis Image Display */}
+          {latest?.diagnosis_image ? (
+            <div style={{ marginBottom: '20px', borderRadius: '10px', overflow: 'hidden', boxShadow: '0 4px 12px rgba(0,0,0,0.08)', maxHeight: '250px' }}>
+              <img 
+                src={latest.diagnosis_image} 
+                alt="Diagnosis Result"
+                style={{ 
+                  width: '100%', 
+                  height: 'auto', 
+                  objectFit: 'cover',
+                  maxHeight: '250px'
+                }} 
+              />
+            </div>
+          ) : (
+            <div style={{ marginBottom: '20px', borderRadius: '10px', overflow: 'hidden', boxShadow: '0 4px 12px rgba(0,0,0,0.08)', backgroundColor: '#f0f0f0', height: '200px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <div style={{ textAlign: 'center', color: '#999' }}>
+                <div style={{ fontSize: '48px', marginBottom: '10px' }}>📷</div>
+                <div style={{ fontSize: '12px', fontWeight: '600' }}>Belum ada foto diagnosis</div>
+                <div style={{ fontSize: '11px', color: '#bbb', marginTop: '5px' }}>Upload foto untuk analisis AI</div>
+              </div>
+            </div>
+          )}
+
+          {/* Diagnosis Result */}
           <div style={{ backgroundColor: latest?.diagnosis === 'Sehat' ? '#e8f5e9' : '#fff3e0', padding: '20px', borderRadius: '10px', textAlign: 'center', border: `1px solid ${latest?.diagnosis === 'Sehat' ? '#27ae60' : '#f39c12'}` }}>
             <div style={{ fontSize: '32px' }}>{latest?.diagnosis === 'Sehat' ? '🌿' : '⚠️'}</div>
             <div style={{ fontSize: '18px', fontWeight: '700' }}>{latest?.diagnosis || 'Menunggu data...'}</div>
