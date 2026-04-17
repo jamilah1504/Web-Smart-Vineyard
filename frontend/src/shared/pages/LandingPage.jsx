@@ -532,7 +532,7 @@ export default function LandingPage() {
 
             {/* Manual Book Button */}
             <a 
-              href="/manual-book.pdf"
+              href="/manual_book_aetera.docx"
               download
               style={{
                 background: 'linear-gradient(135deg, #FFD700, #FFA500)',
@@ -593,56 +593,181 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* SECTION: Tentang Saung Tinanggur */}
-      <section className="lp-section">
-        <header className="lp-section-header">
-          <h2 className="lp-section-title">Tentang Saung Tinanggur Subang</h2>
-          <p className="lp-section-subtitle">
-            Pusat agrowisata kebun anggur organik dengan teknologi pertanian terdepan di Jawa Barat
-          </p>
-        </header>
-        <div className="lp-vineyard-grid">
-          <div className="lp-vineyard-card">
-            <h3>📍 Lokasi Strategis</h3>
-            <p>
-              Desa Cirangrang, Subang, Jawa Barat. Saung Tinanggur terletak dengan akses mudah dari 
-              pusat Kota Subang, menjadikannya destinasi agrowisata favorit bagi penggemar anggur organik.
+{/* SECTION: Tentang Saung Tinanggur (Bento Box Style - FIXED MAP) */}
+      <section style={{ padding: '100px 20px', backgroundColor: '#f8f9fa' }}>
+        <style>{`
+          .bento-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 24px;
+            max-width: 1200px;
+            margin: 0 auto;
+          }
+          .bento-card {
+            background-color: #ffffff;
+            border-radius: 28px;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.03);
+            border: 1px solid rgba(0,0,0,0.04);
+            transition: all 0.3s ease;
+            display: flex;
+            flex-direction: column;
+          }
+          .bento-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 35px rgba(0,0,0,0.08);
+          }
+          .span-2 { grid-column: span 2; }
+          .span-3 { grid-column: span 3; }
+          
+          @media (max-width: 960px) {
+            .bento-grid { grid-template-columns: repeat(2, 1fr); }
+            .span-3 { grid-column: span 2; }
+          }
+          @media (max-width: 768px) {
+            .bento-grid { grid-template-columns: 1fr; }
+            .span-2, .span-3 { grid-column: span 1; }
+          }
+        `}</style>
+
+        <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
+          
+          <header style={{ textAlign: 'center', marginBottom: '50px' }}>
+            <div style={{ 
+              display: 'inline-block', padding: '8px 18px', backgroundColor: '#e8f5e9', 
+              color: '#27ae60', borderRadius: '30px', fontSize: '13px', fontWeight: '700', 
+              letterSpacing: '1px', marginBottom: '20px', textTransform: 'uppercase'
+            }}>
+              Profil Kebun
+            </div>
+            <h2 style={{ fontSize: 'clamp(32px, 4vw, 42px)', fontWeight: '800', color: '#2c3e50', marginBottom: '15px', lineHeight: '1.2' }}>
+              Kenali Saung Tinanggur
+            </h2>
+            <p style={{ fontSize: '16px', color: '#7f8c8d', maxWidth: '600px', margin: '0 auto', lineHeight: '1.6' }}>
+              Pusat agrowisata anggur organik dengan teknologi pertanian presisi terdepan di Subang, Jawa Barat.
             </p>
-          </div>
-          <div className="lp-vineyard-card">
-            <h3>🍇 Varietas Unggulan</h3>
-            <p>
-              Menanam varietas anggur premium: Jupiter, Excelsa, Flameless, dan Istria. Setiap varietas 
-              dipilih berdasarkan adaptabilitas iklim Subang dan preferensi pasar lokal serta ekspor.
-            </p>
-          </div>
-          <div className="lp-vineyard-card">
-            <h3>🌱 Sistem Fertigasi</h3>
-            <p>
-              Menggunakan sistem fertigasi otomatis dengan kontrol presisi kelembapan tanah dan nutrisi. 
-              Setiap tanaman mendapat kebutuhan air dan nutrisi optimal sepanjang musim.
-            </p>
-          </div>
-          <div className="lp-vineyard-card">
-            <h3>👥 Tim Ahli Berpengalaman</h3>
-            <p>
-              Tim agronomis berpengalaman lebih dari 10 tahun dalam budidaya anggur organik. Terus 
-              berinovasi menerapkan standar internasional untuk menghasilkan buah berkualitas terbaik.
-            </p>
-          </div>
-          <div className="lp-vineyard-card">
-            <h3>📊 Produksi Tahunan</h3>
-            <p>
-              Dengan luas lahan 5 hektar, memproduksi hingga 50-60 ton anggur segar per tahun. Produksi 
-              didistribusikan ke pasar modern, restoran, dan langsung ke konsumen melalui wisata agro.
-            </p>
-          </div>
-          <div className="lp-vineyard-card">
-            <h3>🏆 Komitmen Sustainability</h3>
-            <p>
-              Komitmen terhadap pertanian organik berkelanjutan melalui teknologi hemat air dan 
-              pengurangan penggunaan pestisida kimia untuk hasil panen yang sehat dan ramah lingkungan.
-            </p>
+          </header>
+
+          <div className="bento-grid">
+            
+            {/* CARD 1: Gambar Utama & Kisah */}
+            <article className="bento-card span-2" style={{ 
+              position: 'relative', 
+              minHeight: '350px',
+              backgroundImage: 'url("/image.png")',
+              backgroundSize: 'cover',
+              backgroundPosition: 'center',
+              color: 'white',
+              justifyContent: 'flex-end',
+              padding: '40px'
+            }}>
+              <div style={{ position: 'relative', zIndex: 2 }}>
+                <div style={{ display: 'inline-block', padding: '6px 12px', backgroundColor: 'rgba(255,255,255,0.2)', backdropFilter: 'blur(10px)', borderRadius: '8px', fontSize: '12px', fontWeight: '700', marginBottom: '15px' }}>
+                  🌱 Sejak 2014
+                </div>
+                <h3 style={{ fontSize: '28px', fontWeight: '800', marginBottom: '10px' }}>Agrowisata & Inovasi</h3>
+                <p style={{ fontSize: '15px', lineHeight: '1.6', opacity: 0.9, maxWidth: '500px' }}>
+                  Menggabungkan pariwisata alam dengan teknologi fertigasi cerdas. Kami berdedikasi menghasilkan buah anggur berkualitas premium tanpa pestisida kimia berbahaya.
+                </p>
+              </div>
+            </article>
+
+            {/* CARD 2: Statistik Angka Besar */}
+            <article className="bento-card" style={{ padding: '30px', justifyContent: 'center', backgroundColor: '#2c3e50', color: 'white' }}>
+              <h3 style={{ fontSize: '16px', color: '#bdc3c7', marginBottom: '25px', fontWeight: '600' }}>Skala Operasional</h3>
+              <div style={{ marginBottom: '20px' }}>
+                <div style={{ fontSize: '36px', fontWeight: '800', color: '#2ecc71', lineHeight: '1' }}>5 <span style={{ fontSize: '20px' }}>Hektar</span></div>
+                <div style={{ fontSize: '13px', color: '#95a5a6', marginTop: '4px' }}>Luas Area Kebun Aktif</div>
+              </div>
+              <div style={{ marginBottom: '20px' }}>
+                <div style={{ fontSize: '36px', fontWeight: '800', color: '#3498db', lineHeight: '1' }}>60 <span style={{ fontSize: '20px' }}>Ton</span></div>
+                <div style={{ fontSize: '13px', color: '#95a5a6', marginTop: '4px' }}>Kapasitas Produksi Tahunan</div>
+              </div>
+              <div>
+                <div style={{ fontSize: '36px', fontWeight: '800', color: '#f1c40f', lineHeight: '1' }}>10+ <span style={{ fontSize: '20px' }}>Tahun</span></div>
+                <div style={{ fontSize: '13px', color: '#95a5a6', marginTop: '4px' }}>Pengalaman Agronomi</div>
+              </div>
+            </article>
+
+            {/* CARD 3: Varietas */}
+            <article className="bento-card" style={{ padding: '30px' }}>
+              <div style={{ fontSize: '30px', marginBottom: '15px' }}>🍇</div>
+              <h3 style={{ fontSize: '18px', fontWeight: '700', color: '#2c3e50', marginBottom: '10px' }}>Varietas Premium</h3>
+              <p style={{ fontSize: '14px', color: '#7f8c8d', lineHeight: '1.6' }}>
+                Fokus pada varietas adaptif bernilai tinggi seperti <strong>Jupiter, Excelsa, Flameless,</strong> dan <strong>Istria</strong>.
+              </p>
+            </article>
+
+            {/* CARD 4: Teknologi */}
+            <article className="bento-card" style={{ padding: '30px' }}>
+              <div style={{ fontSize: '30px', marginBottom: '15px' }}>⚙️</div>
+              <h3 style={{ fontSize: '18px', fontWeight: '700', color: '#2c3e50', marginBottom: '10px' }}>Smart Farming</h3>
+              <p style={{ fontSize: '14px', color: '#7f8c8d', lineHeight: '1.6' }}>
+                Terintegrasi penuh dengan <strong>IoT & Artificial Intelligence</strong> untuk mengatur irigasi dan nutrisi otomatis.
+              </p>
+            </article>
+
+            {/* CARD 5: Sustainability */}
+            <article className="bento-card" style={{ padding: '30px', backgroundColor: '#e8f5e9' }}>
+              <div style={{ fontSize: '30px', marginBottom: '15px' }}>🌍</div>
+              <h3 style={{ fontSize: '18px', fontWeight: '700', color: '#27ae60', marginBottom: '10px' }}>Keberlanjutan</h3>
+              <p style={{ fontSize: '14px', color: '#34495e', lineHeight: '1.6' }}>
+                Komitmen kuat pada <strong>pertanian organik</strong>. Menghemat hingga 40% air dan menghilangkan residu kimia.
+              </p>
+            </article>
+
+            {/* CARD 6: Peta Lokasi FIXED (Span 3 Kolom) */}
+            <article className="bento-card span-3" style={{ padding: '20px', flexDirection: 'row', alignItems: 'center', gap: '30px', flexWrap: 'wrap' }}>
+              <div style={{ flex: '1 1 400px', height: '300px', borderRadius: '20px', overflow: 'hidden', border: '1px solid #eee' }}>
+                {/* LOGIKA FIX: Menggunakan URL Embed resmi Google Maps untuk Saung Tinanggur.
+                   Link 'share.google' tidak bisa dipakai langsung di iframe.
+                */}
+                <iframe 
+                  src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3963.364495574042!2d107.6965154!3d-6.6015501!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x2e693b8c34f3e58b%3A0x67de61d61f4d4924!2sSaung%20Tinanggur!5e0!3m2!1sid!2sid!4v1712715000000!5m2!1sid!2sid" 
+                  width="100%" 
+                  height="100%" 
+                  style={{ border: 0 }} 
+                  allowFullScreen="" 
+                  loading="lazy" 
+                  referrerPolicy="no-referrer-when-cross-origin"
+                  title="Peta Lokasi Saung Tinanggur"
+                ></iframe>
+              </div>
+              
+              <div style={{ flex: '1 1 300px', padding: '10px 20px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '10px' }}>
+                  <span style={{ fontSize: '24px' }}>📍</span>
+                  <h3 style={{ fontSize: '22px', fontWeight: '800', color: '#2c3e50', margin: 0 }}>Kunjungi Kami</h3>
+                </div>
+                <p style={{ fontSize: '15px', color: '#7f8c8d', lineHeight: '1.6', marginBottom: '25px' }}>
+                  Desa Cirangrang, Subang, Jawa Barat.<br/> Buka setiap hari untuk wisata edukasi, petik anggur langsung, dan konsultasi teknologi tani.
+                </p>
+                <a 
+                  href="https://share.google/I6P8fHbVzeiB44B2r" 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '10px',
+                    backgroundColor: '#2c3e50',
+                    color: '#ffffff',
+                    padding: '14px 28px',
+                    borderRadius: '50px',
+                    fontSize: '14px',
+                    fontWeight: '700',
+                    textDecoration: 'none',
+                    transition: 'all 0.3s ease',
+                    boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
+                  }}
+                  onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#34495e'}
+                  onMouseOut={(e) => e.currentTarget.style.backgroundColor = '#2c3e50'}
+                >
+                  🗺️ Buka di Google Maps
+                </a>
+              </div>
+            </article>
+
           </div>
         </div>
       </section>
