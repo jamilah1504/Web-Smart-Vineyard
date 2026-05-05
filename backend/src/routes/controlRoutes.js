@@ -1,10 +1,11 @@
 const express = require('express');
 const router = express.Router();
-const controlController = require('../controllers/controlController');
+const controlController = require('../controllers/controlController'); 
 
-// Route Kendali Pompa (Manual/Auto Switch)
-// Pastikan nama fungsi di sini SAMA dengan di controller
+// Rute untuk Arduino mengambil status (Tanpa token protect, agar ESP32 mudah akses)
+router.get('/pump/:id', controlController.getPumpStatus);
+
+// Rute untuk React / Web mengubah status 
 router.put('/pump/:id', controlController.updatePumpStatus);
-router.get('/pump-status/:id', controlController.getPumpStatus);
 
 module.exports = router;

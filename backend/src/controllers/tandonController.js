@@ -75,41 +75,26 @@ exports.getLatestWaterLevel = async (req, res) => {
 
 exports.controlPump = async (req, res) => {
     try {
-        // Tangkap data yang dikirim dari tombol React
         const { perangkat_id, pompa_type, status } = req.body;
 
-        // Validasi sederhana
-        if (!perangkat_id || !pompa_type || status === undefined) {
-            return res.status(400).json({ status: 'error', message: 'Data perintah tidak lengkap' });
-        }
+        const updateData = {
+            // 🌟 SETIAP KLIK TOMBOL, UBAH MODE JADI MANUAL 🌟
+            mode_kerja: 'manual' 
+        };
 
-        // Tentukan kolom mana yang mau diupdate (air atau nutrisi/solenoid)
-        const updateData = {};
         if (pompa_type === 'air') {
             updateData.status_pompa_air = status;
         } else if (pompa_type === 'nutrisi') {
-            updateData.status_pompa_pupuk = status; // Sesuaikan dengan nama kolom di database kamu
-        } else {
-            return res.status(400).json({ status: 'error', message: 'Jenis pompa tidak dikenali' });
+            updateData.status_pompa_pupuk = status;
         }
 
-        // Update ke tabel Perangkat_IoT
-        const [updatedRows] = await PerangkatIoT.update(updateData, {
+        await PerangkatIoT.update(updateData, {
             where: { id: perangkat_id },
-            individualHooks: true // Penting: Agar fitur Notifikasi otomatis kamu berjalan!
+            individualHooks: true 
         });
 
-        if (updatedRows === 0) {
-            return res.status(404).json({ status: 'error', message: 'Perangkat tidak ditemukan di database' });
-        }
-
-        res.status(200).json({ 
-            status: 'success', 
-            message: `Pompa ${pompa_type} berhasil diubah.` 
-        });
-
+        res.status(200).json({ status: 'success', message: 'Mode manual aktif & status diubah' });
     } catch (error) {
-        console.error("❌ Error controlPump:", error.message);
         res.status(500).json({ status: 'error', message: error.message });
     }
 };
