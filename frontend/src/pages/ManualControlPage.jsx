@@ -4,8 +4,8 @@ import { getAllDevices, controlPump } from '../services/controlApi';
 
 function OwnerManualControlPage() {
   const [deviceId, setDeviceId] = useState(null);
-  const [pump, setPump] = useState(false);
-  const [solenoid, setSolenoid] = useState(false);
+  const [pumpAir, setPumpAir] = useState(false);
+  const [pumpPupuk, setPumpPupuk] = useState(false);
   const [loading, setLoading] = useState(false);
 
   // 1. Mengambil status awal perangkat saat halaman pertama kali dibuka
@@ -19,8 +19,8 @@ function OwnerManualControlPage() {
           setDeviceId(device.id);
           
           // Set status toggle sesuai dengan data di database
-          setPump(device.status_pompa_air || false);
-          setSolenoid(device.status_pompa_pupuk || false);
+          setPumpAir(device.status_pompa_air || false);
+          setPumpPupuk(device.status_pompa_pupuk || false);
         }
       } catch (error) {
         console.error("🔴 Gagal mengambil data perangkat:", error);
@@ -31,16 +31,16 @@ function OwnerManualControlPage() {
   }, []);
 
   // 2. Fungsi Menyalakan/Mematikan Pompa Irigasi (Air)
-  const togglePump = async () => {
+  const togglePumpAir = async () => {
     if (!deviceId) return alert("Sistem masih memuat data perangkat...");
     
-    const targetStatus = !pump; // Kebalikan dari status saat ini
+    const targetStatus = !pumpAir; // Kebalikan dari status saat ini
     setLoading(true);
 
     try {
       // Panggil API Backend (perangkat_id, pompa_type, status)
       await controlPump(deviceId, 'air', targetStatus);
-      setPump(targetStatus); // Update UI jika sukses
+      setPumpAir(targetStatus); // Update UI jika sukses
     } catch (error) {
       alert("❌ Gagal mengontrol pompa irigasi: " + error.message);
     } finally {
@@ -48,19 +48,19 @@ function OwnerManualControlPage() {
     }
   };
 
-  // 3. Fungsi Menyalakan/Mematikan Solenoid Valve (Nutrisi)
-  const toggleSolenoid = async () => {
+  // 3. Fungsi Menyalakan/Mematikan Pompa Pupuk
+  const togglePumpPupuk = async () => {
     if (!deviceId) return alert("Sistem masih memuat data perangkat...");
     
-    const targetStatus = !solenoid;
+    const targetStatus = !pumpPupuk;
     setLoading(true);
 
     try {
       // Panggil API Backend
       await controlPump(deviceId, 'nutrisi', targetStatus);
-      setSolenoid(targetStatus); // Update UI jika sukses
+      setPumpPupuk(targetStatus); // Update UI jika sukses
     } catch (error) {
-      alert("❌ Gagal mengontrol solenoid valve: " + error.message);
+      alert("❌ Gagal mengontrol pompa pupuk: " + error.message);
     } finally {
       setLoading(false);
     }
@@ -183,8 +183,8 @@ function OwnerManualControlPage() {
                   Sistem Irigasi Utama
                 </p>
               </div>
-              <span className={`status-badge ${pump ? 'status-active' : 'status-inactive'}`}>
-                {pump ? '⚡ Aktif' : '⏸ Mati'}
+              <span className={`status-badge ${pumpAir ? 'status-active' : 'status-inactive'}`}>
+                {pumpAir ? '⚡ Aktif' : '⏸ Mati'}
               </span>
             </div>
 
@@ -204,17 +204,17 @@ function OwnerManualControlPage() {
                 {deviceId ? deviceId : 'Menghubungkan...'}
               </p>
               <p style={{ fontSize: '0.8rem', opacity: 0.85, margin: '8px 0 0 0' }}>
-                {pump ? '▶ Arus daya mengalir' : '• Standby'}
+                {pumpAir ? '▶ Arus daya mengalir' : '• Standby'}
               </p>
             </div>
 
             <button
-              onClick={() => togglePump()}
+              onClick={() => togglePumpAir()}
               disabled={loading || !deviceId}
-              className={`toggle-switch ${pump ? 'active' : 'inactive'}`}
+              className={`toggle-switch ${pumpAir ? 'active' : 'inactive'}`}
               style={{ marginBottom: '10px' }}
             >
-              {loading ? '⏱️ Memproses...' : (pump ? '⏹️ Matikan Pompa' : '▶️ Nyalakan Pompa')}
+              {loading ? '⏱️ Memproses...' : (pumpAir ? '⏹️ Matikan Pompa' : '▶️ Nyalakan Pompa')}
             </button>
             <button style={{
               width: '100%', padding: '12px 16px', backgroundColor: '#3498db',
@@ -239,71 +239,91 @@ function OwnerManualControlPage() {
         </section>
       </div>
 
-      {/* SOLENOID VALVE CONTROLS SECTION */}
+      {/* POMPA PUPUK CONTROLS SECTION */}
       <div style={{ marginBottom: '50px' }}>
-        <h2 style={{ fontSize: '1.6rem', fontWeight: '700', color: '#3498db', marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '10px' }}>
-          🚰 Solenoid Valve
+        <h2 style={{ fontSize: '1.6rem', fontWeight: '700', color: '#e67e22', marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '10px' }}>
+          🧪 Pompa Pupuk
         </h2>
         <section style={{
           display: 'grid',
           gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
           gap: '24px'
         }}>
-          {/* Solenoid Valve */}
+          {/* Pompa Pupuk */}
           <div className="card-responsive" style={{
             background: 'linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%)',
             borderRadius: '16px',
             padding: '28px',
-            boxShadow: '0 6px 20px rgba(52, 152, 219, 0.12)',
-            border: '2px solid #ebf5fb',
+            boxShadow: '0 6px 20px rgba(230, 126, 34, 0.12)',
+            border: '2px solid #fdebd0',
             position: 'relative',
             overflow: 'hidden'
           }}>
             <div style={{
               position: 'absolute', top: 0, left: 0, right: 0, height: '4px',
-              background: 'linear-gradient(90deg, #3498db 0%, #2980b9 100%)'
+              background: 'linear-gradient(90deg, #e67e22 0%, #d35400 100%)'
             }} />
 
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '20px' }}>
               <div>
                 <h3 style={{ fontSize: '1.4rem', fontWeight: '700', color: '#2c3e50', margin: 0 }}>
-                  Solenoid Valve
+                  Pompa Pupuk
                 </h3>
                 <p style={{ fontSize: '0.9rem', color: '#7f8c8d', margin: '6px 0 0 0', fontWeight: '500' }}>
-                  Pengontrol Distribusi Nutrisi
+                  Tandon Pupuk (Nutrisi)
                 </p>
               </div>
-              <span className={`status-badge ${solenoid ? 'status-active' : 'status-inactive'}`}>
-                {solenoid ? '🔓 Terbuka' : '🔒 Tertutup'}
+              <span className={`status-badge ${pumpPupuk ? 'status-active' : 'status-inactive'}`}>
+                {pumpPupuk ? '⚡ Aktif' : '⏸ Mati'}
               </span>
             </div>
 
             <div style={{
-              background: 'linear-gradient(135deg, #27ae60 0%, #1e8449 100%)',
+              background: 'linear-gradient(135deg, #e67e22 0%, #d35400 100%)',
               borderRadius: '14px',
               padding: '20px',
               marginBottom: '20px',
               textAlign: 'center',
               color: 'white',
-              boxShadow: '0 4px 15px rgba(39, 174, 96, 0.3)'
+              boxShadow: '0 4px 15px rgba(230, 126, 34, 0.3)'
             }}>
-              <p style={{ fontSize: '0.85rem', opacity: 0.9, margin: 0, marginBottom: '12px', fontWeight: '600' }}>
-                Kondisi Aliran
+              <p style={{ fontSize: '0.85rem', opacity: 0.9, margin: 0, marginBottom: '8px', fontWeight: '600' }}>
+                Status Koneksi
               </p>
-              <p style={{ fontSize: '3rem', margin: 0 }}>
-                {solenoid ? '🔓' : '🔒'}
+              <p style={{ fontSize: '1.8rem', fontWeight: '800', margin: 0 }}>
+                {deviceId ? deviceId : 'Menghubungkan...'}
               </p>
-              <p style={{ fontSize: '0.9rem', fontWeight: '700', margin: '12px 0 0 0' }}>
-                {solenoid ? 'TERBUKA' : 'TERTUTUP'}
+              <p style={{ fontSize: '0.8rem', opacity: 0.85, margin: '8px 0 0 0' }}>
+                {pumpPupuk ? '▶ Arus daya mengalir' : '• Standby'}
               </p>
             </div>
 
             <button
-              onClick={() => toggleSolenoid()}
+              onClick={() => togglePumpPupuk()}
               disabled={loading || !deviceId}
-              className={`toggle-switch ${solenoid ? 'active' : 'inactive'}`}
+              className={`toggle-switch ${pumpPupuk ? 'active' : 'inactive'}`}
+              style={{ marginBottom: '10px' }}
             >
-              {loading ? '⏱️ Memproses...' : (solenoid ? '🔐 Tutup Valve' : '🔓 Buka Valve')}
+              {loading ? '⏱️ Memproses...' : (pumpPupuk ? '⏹️ Matikan Pompa' : '▶️ Nyalakan Pompa')}
+            </button>
+            <button style={{
+              width: '100%', padding: '12px 16px', backgroundColor: '#3498db',
+              color: 'white', border: 'none', borderRadius: '10px',
+              fontWeight: '700', cursor: 'pointer', transition: 'all 0.3s ease',
+              fontSize: '0.95rem', boxShadow: '0 4px 12px rgba(52, 152, 219, 0.3)'
+            }}
+            onMouseOver={e => {
+              e.target.style.backgroundColor = '#2980b9';
+              e.target.style.transform = 'translateY(-2px)';
+              e.target.style.boxShadow = '0 6px 16px rgba(52, 152, 219, 0.4)';
+            }}
+            onMouseOut={e => {
+              e.target.style.backgroundColor = '#3498db';
+              e.target.style.transform = 'translateY(0)';
+              e.target.style.boxShadow = '0 4px 12px rgba(52, 152, 219, 0.3)';
+            }}
+            >
+              ⏱️ Atur Durasi
             </button>
           </div>
         </section>
