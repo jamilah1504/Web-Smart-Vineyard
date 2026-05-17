@@ -39,5 +39,5 @@ module.exports = {
   LogSensorTanah,
   LogDiagnosisAI,
   LogTandon,
-  Notification
+  Notification,
 };

@@ -5,50 +5,42 @@ const sendTelegram = require('../utils/telegram');
 exports.recordWaterLevel = async (req, res) => {
     try {
         const { perangkat_id, ketinggian_air, jenis_tandon } = req.body;
+        const TINGGI_MAX = 42.0;
+        const persentase = (ketinggian_air / TINGGI_MAX) * 100;
 
-        // Validasi input sederhana
-        if (!perangkat_id || ketinggian_air === undefined) {
-            return res.status(400).json({ status: 'error', message: 'Data tidak lengkap.' });
-        }
-
-        // Simpan log tandon terlebih dahulu
         await LogTandon.create({ perangkat_id, ketinggian_air, jenis_tandon });
 
-        // LOGIKA PROTEKSI KRITIS (< 10%)
-        if (ketinggian_air < 10 && jenis_tandon === 'air') {
-            // 1. Update Perangkat (Matikan Pompa)
-            // individualHooks: true digunakan jika Anda memiliki 'afterUpdate' hook di model
+        // 1. LOGIKA PROTEKSI (Air < 10%)
+        if (persentase < 10 && jenis_tandon === 'air') {
             await PerangkatIoT.update(
-                { status_pompa_air: false }, 
-                { where: { id: perangkat_id }, individualHooks: true }
+                { 
+                    status_pompa_air: false, 
+                    status_pompa_pupuk: false,
+                    mode_kerja: 'manual' // Paksa manual agar berhenti
+                }, 
+                { where: { id: perangkat_id } }
             );
-
-            // 2. Kirim ke Telegram (Async, tidak perlu ditunggu jika ingin respon cepat)
-            const pesanTelegram = `🚨 *DARURAT TANDON*\n\nID Perangkat: *${perangkat_id}*\nAir di tandon kritis: *${ketinggian_air}%*.\nPompa telah dimatikan otomatis untuk keamanan.`;
-            sendTelegram(pesanTelegram).catch(err => console.error("❌ Gagal kirim Telegram:", err));
-
-            // 3. Simpan ke Notification DB (untuk dashboard web)
-            await Notification.create({
-                perangkat_id,
-                pesan: `Darurat! Air kritis (${ketinggian_air}%). Pompa dimatikan otomatis.`,
-                tipe: 'critical'
-            });
-
-            console.log(`⚠️ Safety Triggered untuk ${perangkat_id}: Air ${ketinggian_air}%`);
+            
+            // Kirim notifikasi Telegram
+            sendTelegram(`🚨 *ALARM*: Air kritis (${persentase.toFixed(1)}%). Pompa dimatikan!`);
+        } 
+        
+        // 2. LOGIKA RECOVERY (Otomatis kembali ke AUTO jika air sudah cukup, misal > 25%)
+        else if (persentase > 25 && jenis_tandon === 'air') {
+            // Cek apakah saat ini sedang manual karena error sebelumnya
+            const perangkat = await PerangkatIoT.findByPk(perangkat_id);
+            if (perangkat.mode_kerja === 'manual' && perangkat.status_pompa_air === false) {
+                await PerangkatIoT.update(
+                    { mode_kerja: 'auto' }, 
+                    { where: { id: perangkat_id } }
+                );
+                sendTelegram(`✅ *INFO*: Air terisi (${persentase.toFixed(1)}%). Sistem kembali ke Mode AUTO.`);
+            }
         }
 
-        // Kirim respon HANYA SEKALI di akhir proses try
-        return res.status(201).json({ 
-            status: 'success', 
-            message: 'Data berhasil dicatat' 
-        });
-
+        return res.status(201).json({ status: 'success' });
     } catch (error) {
-        console.error("❌ Error recordWaterLevel:", error);
-        // Pastikan tidak mengirim respon jika sudah terkirim (headers sent)
-        if (!res.headersSent) {
-            return res.status(500).json({ status: 'error', message: error.message });
-        }
+        // ... error handling
     }
 };
 

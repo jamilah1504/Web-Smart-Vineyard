@@ -216,7 +216,7 @@ function OwnerManualControlPage() {
             >
               {loading ? '⏱️ Memproses...' : (pumpAir ? '⏹️ Matikan Pompa' : '▶️ Nyalakan Pompa')}
             </button>
-            <button style={{
+            {/* <button style={{
               width: '100%', padding: '12px 16px', backgroundColor: '#3498db',
               color: 'white', border: 'none', borderRadius: '10px',
               fontWeight: '700', cursor: 'pointer', transition: 'all 0.3s ease',
@@ -234,7 +234,7 @@ function OwnerManualControlPage() {
             }}
             >
               ⏱️ Atur Durasi
-            </button>
+            </button> */}
           </div>
         </section>
       </div>
@@ -306,7 +306,7 @@ function OwnerManualControlPage() {
             >
               {loading ? '⏱️ Memproses...' : (pumpPupuk ? '⏹️ Matikan Pompa' : '▶️ Nyalakan Pompa')}
             </button>
-            <button style={{
+            {/* <button style={{
               width: '100%', padding: '12px 16px', backgroundColor: '#3498db',
               color: 'white', border: 'none', borderRadius: '10px',
               fontWeight: '700', cursor: 'pointer', transition: 'all 0.3s ease',
@@ -324,13 +324,13 @@ function OwnerManualControlPage() {
             }}
             >
               ⏱️ Atur Durasi
-            </button>
+            </button> */}
           </div>
         </section>
       </div>
 
       {/* SYSTEM CONTROLS SECTION */}
-      <div>
+      {/* <div>
         <h2 style={{ fontSize: '1.6rem', fontWeight: '700', color: '#f39c12', marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '10px' }}>
           ⚡ Kontrol Sistem
         </h2>
@@ -446,7 +446,7 @@ function OwnerManualControlPage() {
             </div>
           </div>
         </section>
-      </div>
+      </div> */}
       </div>
     </div>
   );

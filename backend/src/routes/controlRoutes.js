@@ -2,10 +2,10 @@ const express = require('express');
 const router = express.Router();
 const controlController = require('../controllers/controlController'); 
 
-// Rute untuk Arduino mengambil status (Tanpa token protect, agar ESP32 mudah akses)
+// Jalur GET untuk ESP32 menarik instruksi dan threshold dinamis
 router.get('/pump/:id', controlController.getPumpStatus);
 
-// Rute untuk React / Web mengubah status 
-router.put('/pump/:id', controlController.updatePumpStatus);
+// Jalur POST untuk Website mengubah status aktuator
+router.post('/pump/update/:id', controlController.updatePumpStatus);
 
 module.exports = router;

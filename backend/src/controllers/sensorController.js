@@ -7,8 +7,15 @@ exports.receiveAllData = async (req, res) => {
 
         const { 
             perangkat_id, 
-            kelembapan_val, suhu_val, ec_val, ph_val, n_val, p_val, k_val, // Data Tanah
-            ketinggian_air, jenis_tandon // Data Tandon
+            kelembapan_tanah,  // Sebelumnya: kelembapan_val
+            suhu_tanah,        // Sebelumnya: suhu_val
+            ec,                // Sebelumnya: ec_val
+            ph_tanah,          // Sebelumnya: ph_val
+            nitrogen,          // Sebelumnya: n_val
+            fosfor,            // Sebelumnya: p_val
+            kalium,            // Sebelumnya: k_val
+            ketinggian_air, 
+            jenis_tandon 
         } = req.body;
 
         const perangkat = await PerangkatIoT.findByPk(perangkat_id, {
@@ -20,15 +27,16 @@ exports.receiveAllData = async (req, res) => {
         }
 
         // --- 1. SIMPAN DATA SENSOR TANAH ---
+        // 🌟 PERBAIKAN 2: Masukkan variabel dari ESP32 ke dalam nama kolom tabel database
         await LogSensorTanah.create({
-            perangkat_id,
-            kelembapan_val: kelembapan_val || 0,
-            suhu_val: suhu_val || 0,
-            ec_val: ec_val || 0,
-            ph_val: ph_val || 0,
-            n_val: n_val || 0,
-            p_val: p_val || 0,
-            k_val: k_val || 0
+            perangkat_id: perangkat_id,
+            kelembapan_val: kelembapan_tanah || 0,
+            suhu_val: suhu_tanah || 0,
+            ec_val: ec || 0,
+            ph_val: ph_tanah || 0,
+            n_val: nitrogen || 0,
+            p_val: fosfor || 0,
+            k_val: kalium || 0
         });
 
         // --- 2. SIMPAN DATA TANDON ---
@@ -61,9 +69,10 @@ exports.receiveAllData = async (req, res) => {
         // B. Evaluasi Kelembapan Tanah (Hanya jika air tandon aman)
         else if (perangkat.Varietas_Anggur) {
             const v = perangkat.Varietas_Anggur;
-            if (kelembapan_val < v.min_moisture) {
+            // 🌟 PERBAIKAN 3: Evaluasi menggunakan variabel kelembapan_tanah
+            if (kelembapan_tanah < v.min_moisture) {
                 statusKritis = true;
-                pesanPeringatan.push(`Tanah Kering (${kelembapan_val}%)`);
+                pesanPeringatan.push(`Tanah Kering (${kelembapan_tanah}%)`);
                 if (perangkat.mode_kerja === 'auto') perangkat.status_pompa_air = true;
             } else {
                 if (perangkat.mode_kerja === 'auto') perangkat.status_pompa_air = false;
@@ -109,7 +118,8 @@ exports.getLatestSensorData = async (req, res) => {
 exports.getLatestWaterLevel = async (req, res) => {
     try {
         const { perangkat_id } = req.params;
-        const data = await log_tandon.findAll({ // PASTIKAN LogTandon
+        // 🌟 PERBAIKAN 4: Mengganti log_tandon (typo) menjadi LogTandon sesuai nama model
+        const data = await LogTandon.findAll({ 
             where: { perangkat_id },
             order: [['createdAt', 'DESC']], 
             limit: 20 

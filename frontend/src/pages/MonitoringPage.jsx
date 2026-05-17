@@ -1,23 +1,25 @@
-import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { animate } from 'animejs';
-import { getLatestSensorData } from '../services/sensorApi'; 
+import { getLatestSensorData } from '../services/sensorApi'; // Sesuaikan path ini dengan struktur folder Anda!
 
 function MonitoringPage() {
-  const chartContainerRef = useRef(null);
+  // === STATE MANAGEMENT ===
   const [sensorData, setSensorData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [retryCount, setRetryCount] = useState(0);
   
+  // State untuk form filter
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
   const [selectedParam, setSelectedParam] = useState('Semua Parameter');
   const [filteredData, setFilteredData] = useState([]);
   const [useFilter, setUseFilter] = useState(false);
   
-  const DEVICE_ID = "ESP32-MAC-A001"; 
+  const DEVICE_ID = "ESP32-MAC-A001";
 
+  // === FUNGSI TARIK DATA & RETRY LOGIC ===
   const fetchData = useCallback(async () => {
     try {
       const response = await getLatestSensorData(DEVICE_ID);
@@ -36,6 +38,7 @@ function MonitoringPage() {
     }
   }, [retryCount]);
 
+  // === TRIGGER: AUTO REFRESH ===
   useEffect(() => {
     fetchData();
     const intervalId = setInterval(() => {
@@ -44,72 +47,66 @@ function MonitoringPage() {
     return () => clearInterval(intervalId);
   }, [fetchData]);
 
+  // === ANIMASI MONITORING PAGE ===
   useEffect(() => {
     if (!loading && sensorData.length > 0) {
-      const cards = document.querySelectorAll('.card-responsive');
-      if (cards.length) {
-        animate(cards, {
-          opacity: [0, 1],
-          translateY: [30, 0],
-          duration: 600,
-          delay: (el, i) => i * 100,
-          easing: 'easeOutQuad',
-        });
-      }
+      animate('.card-responsive', {
+        opacity: [0, 1],
+        translateY: [30, 0],
+        duration: 600,
+        delay: (el, i) => i * 100,
+        easing: 'easeOutQuad',
+      });
 
-      const filterSection = document.querySelector('.filter-section');
-      if (filterSection) {
-        animate(filterSection, {
-          opacity: [0, 1],
-          translateX: [-20, 0],
-          duration: 600,
-          easing: 'easeOutQuad',
-        });
-      }
+      animate('.filter-section', {
+        opacity: [0, 1],
+        translateX: [-20, 0],
+        duration: 600,
+        easing: 'easeOutQuad',
+      });
 
-      const chartContainer = chartContainerRef.current || document.querySelector('.chart-container');
-      if (chartContainer) {
-        animate(chartContainer, {
-          opacity: [0, 1],
-          translateY: [40, 0],
-          duration: 700,
-          delay: 200,
-          easing: 'easeOutQuad',
-        });
+      animate('[style*="Chart"]', {
+        opacity: [0, 1],
+        translateY: [40, 0],
+        duration: 700,
+        delay: 200,
+        easing: 'easeOutQuad',
+      });
 
-        const chartLines = chartContainer.querySelectorAll('line[stroke]');
-        if (chartLines.length) {
-          animate(chartLines, {
-            opacity: [0, 1],
-            duration: 1000,
-            delay: 500,
-            easing: 'easeOutQuad',
-          });
-        }
-      }
+      animate('line[stroke]', {
+        opacity: [0, 1],
+        duration: 1000,
+        delay: 500,
+        easing: 'easeOutQuad',
+      });
     }
   }, [loading, sensorData]);
 
   const latestData = sensorData.length > 0 ? sensorData[0] : null;
 
+  // === LOGIKA FILTER ===
   const handleApplyFilter = () => {
     let filtered = [...sensorData];
+    
     if (startDate) {
       filtered = filtered.filter(item => {
         const itemDate = new Date(item.timestamp).toISOString().split('T')[0];
         return itemDate >= startDate;
       });
     }
+    
     if (endDate) {
       filtered = filtered.filter(item => {
         const itemDate = new Date(item.timestamp).toISOString().split('T')[0];
         return itemDate <= endDate;
       });
     }
+    
     setFilteredData(filtered);
     setUseFilter(true);
   };
 
+  // ✅ FIX 1: handleResetFilter mereset semua state termasuk filteredData & useFilter
   const handleResetFilter = () => {
     setStartDate('');
     setEndDate('');
@@ -118,20 +115,35 @@ function MonitoringPage() {
     setUseFilter(false);
   };
 
+  // Data yang ditampilkan (filtered atau semua)
   const displayData = useFilter ? filteredData : sensorData;
 
-  // 🌟 PERBAIKAN 1: Menyesuaikan nama variabel untuk Grafik
+  // ✅ FIX 2: chartData sekarang memetakan EC, P, dan K
   const chartData = useMemo(() => {
     if (displayData.length === 0) return [];
     
     return displayData.map(item => ({
       time: new Date(item.timestamp).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }),
-      soilMoisture: parseFloat(item.kelembapan_tanah) || 0,
-      pH: parseFloat(item.ph_tanah) || 0,
-      N: parseFloat(item.nitrogen) || 0,
-      suhu: parseFloat(item.suhu_tanah) || 0
-    })).reverse(); // Di-reverse agar grafik berjalan dari kiri ke kanan (waktu terlama -> terbaru)
+      soilMoisture: parseFloat(item.kelembapan_val) || 0,
+      pH: parseFloat(item.ph_val) || 0,
+      suhu: parseFloat(item.suhu_val) || 0,
+      N: parseFloat(item.n_val) || 0,
+      P: parseFloat(item.p_val) || 0,   // ✅ Ditambahkan
+      K: parseFloat(item.k_val) || 0,   // ✅ Ditambahkan
+      EC: parseFloat(item.ec_val) || 0  // ✅ Ditambahkan
+    }));
   }, [displayData]);
+
+  // === Tentukan Line mana yang ditampilkan berdasarkan selectedParam ===
+  const showLine = (param) => {
+    if (selectedParam === 'Semua Parameter') return true;
+    if (selectedParam === 'Soil Moisture' && param === 'soilMoisture') return true;
+    if (selectedParam === 'pH Tanah' && param === 'pH') return true;
+    if (selectedParam === 'NPK' && ['N', 'P', 'K'].includes(param)) return true;
+    if (selectedParam === 'EC' && param === 'EC') return true;
+    if (selectedParam === 'Suhu' && param === 'suhu') return true;
+    return false;
+  };
 
   return (
     <div className="page page-with-padding page-shell" style={{ backgroundColor: '#f8f9fa' }}>
@@ -156,6 +168,7 @@ function MonitoringPage() {
         }
       `}</style>
 
+      {/* Header */}
       <div className="page-header u-mb-15">
         <div>
           <div className="page-title page-title-lg">📊 Monitoring Sensor</div>
@@ -165,9 +178,16 @@ function MonitoringPage() {
 
       {error && (
         <div style={{
-          backgroundColor: '#fadbd8', color: '#c62828', padding: '16px', borderRadius: '12px',
-          marginBottom: '20px', border: '2px solid #e74c3c', display: 'flex', alignItems: 'center',
-          gap: '12px', animation: 'slideIn 0.3s ease-out'
+          backgroundColor: '#fadbd8',
+          color: '#c62828',
+          padding: '16px',
+          borderRadius: '12px',
+          marginBottom: '20px',
+          border: '2px solid #e74c3c',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '12px',
+          animation: 'slideIn 0.3s ease-out'
         }}>
           <span style={{ fontSize: '20px' }}>⚠️</span>
           <div>
@@ -177,11 +197,19 @@ function MonitoringPage() {
         </div>
       )}
 
-      <section className="filter-section" style={{
-        display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
-        gap: '20px', marginBottom: '30px'
+      {/* Filter + Status Cards */}
+      <section style={{
+        display: 'grid',
+        gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
+        gap: '20px',
+        marginBottom: '30px'
       }}>
-        <div className="card-responsive" style={{ backgroundColor: '#ffffff', border: '1px solid #ecf0f1', padding: '24px' }}>
+        {/* Filter Card */}
+        <div className="card-responsive filter-section" style={{
+          backgroundColor: '#ffffff',
+          border: '1px solid #ecf0f1',
+          padding: '24px'
+        }}>
           <div style={{ marginBottom: '20px' }}>
             <div style={{ fontSize: '16px', fontWeight: '600', color: '#2c3e50', marginBottom: '4px' }}>🔍 Filter & Pencarian</div>
             <div style={{ fontSize: '12px', color: '#7f8c8d' }}>Sesuaikan rentang data</div>
@@ -190,91 +218,199 @@ function MonitoringPage() {
           <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
             <div>
               <label style={{ fontSize: '12px', fontWeight: '500', color: '#7f8c8d', display: 'block', marginBottom: '6px' }}>Dari Tanggal</label>
-              <input type="date" className="form-control" value={startDate} onChange={(e) => setStartDate(e.target.value)} style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid #ecf0f1' }} />
+              <input 
+                type="date" 
+                className="form-control"
+                value={startDate}
+                onChange={(e) => setStartDate(e.target.value)}
+                style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid #ecf0f1' }}
+              />
             </div>
             <div>
               <label style={{ fontSize: '12px', fontWeight: '500', color: '#7f8c8d', display: 'block', marginBottom: '6px' }}>Sampai Tanggal</label>
-              <input type="date" className="form-control" value={endDate} onChange={(e) => setEndDate(e.target.value)} style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid #ecf0f1' }} />
+              <input 
+                type="date" 
+                className="form-control"
+                value={endDate}
+                onChange={(e) => setEndDate(e.target.value)}
+                style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid #ecf0f1' }}
+              />
             </div>
             <div>
               <label style={{ fontSize: '12px', fontWeight: '500', color: '#7f8c8d', display: 'block', marginBottom: '6px' }}>Parameter</label>
-              <select className="form-control" value={selectedParam} onChange={(e) => setSelectedParam(e.target.value)} style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid #ecf0f1' }}>
+              {/* ✅ FIX 3: Opsi parameter dilengkapi EC & Suhu */}
+              <select 
+                className="form-control"
+                value={selectedParam}
+                onChange={(e) => setSelectedParam(e.target.value)}
+                style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid #ecf0f1' }}
+              >
                 <option>Semua Parameter</option>
                 <option>Soil Moisture</option>
                 <option>pH Tanah</option>
                 <option>NPK</option>
+                <option>EC</option>
+                <option>Suhu</option>
               </select>
             </div>
 
             <div style={{ display: 'flex', gap: '8px', marginTop: '8px' }}>
-              <button style={{ flex: 1, backgroundColor: '#27ae60', color: 'white', border: 'none', padding: '10px 16px', borderRadius: '8px', cursor: 'pointer', fontWeight: '500', transition: 'all 0.3s' }} onClick={handleApplyFilter}>Terapkan</button>
-              <button style={{ flex: 1, backgroundColor: '#ecf0f1', color: '#2c3e50', border: 'none', padding: '10px 16px', borderRadius: '8px', cursor: 'pointer', fontWeight: '500', transition: 'all 0.3s' }} onClick={handleResetFilter}>Reset</button>
+              {/* ✅ FIX 4: onClick handleApplyFilter dipasang ke tombol Terapkan */}
+              <button 
+                onClick={handleApplyFilter}
+                style={{
+                  flex: 1,
+                  backgroundColor: '#27ae60',
+                  color: 'white',
+                  border: 'none',
+                  padding: '10px 16px',
+                  borderRadius: '8px',
+                  cursor: 'pointer',
+                  fontWeight: '500',
+                  transition: 'all 0.3s'
+                }}
+                onMouseOver={(e) => e.target.style.backgroundColor = '#229954'}
+                onMouseOut={(e) => e.target.style.backgroundColor = '#27ae60'}
+              >
+                Terapkan
+              </button>
+              {/* ✅ FIX 5: onClick handleResetFilter (bukan inline) agar filteredData & useFilter ikut direset */}
+              <button 
+                onClick={handleResetFilter}
+                style={{
+                  flex: 1,
+                  backgroundColor: '#ecf0f1',
+                  color: '#2c3e50',
+                  border: 'none',
+                  padding: '10px 16px',
+                  borderRadius: '8px',
+                  cursor: 'pointer',
+                  fontWeight: '500',
+                  transition: 'all 0.3s'
+                }}
+                onMouseOver={(e) => e.target.style.backgroundColor = '#bdc3c7'}
+                onMouseOut={(e) => e.target.style.backgroundColor = '#ecf0f1'}
+              >
+                Reset
+              </button>
             </div>
           </div>
         </div>
 
-        <div className="card-responsive" style={{ background: 'linear-gradient(135deg, #27ae60 0%, #1e8449 100%)', color: 'white', padding: '24px', boxShadow: '0 4px 15px rgba(39, 174, 96, 0.3)' }}>
+        {/* Status Cards */}
+        <div className="card-responsive" style={{
+          background: 'linear-gradient(135deg, #27ae60 0%, #1e8449 100%)',
+          color: 'white',
+          padding: '24px',
+          boxShadow: '0 4px 15px rgba(39, 174, 96, 0.3)'
+        }}>
           <div style={{ marginBottom: '20px' }}>
             <div style={{ fontSize: '14px', fontWeight: '500', opacity: 0.9 }}>📍 Lokasi Sensor</div>
             <div style={{ fontSize: '11px', opacity: 0.7 }}>Perangkat aktif</div>
           </div>
-          <div style={{ backgroundColor: 'rgba(255,255,255,0.1)', borderRadius: '12px', padding: '16px', textAlign: 'center', backdropFilter: 'blur(10px)' }}>
+          <div style={{
+            backgroundColor: 'rgba(255,255,255,0.1)',
+            borderRadius: '12px',
+            padding: '16px',
+            textAlign: 'center',
+            backdropFilter: 'blur(10px)'
+          }}>
             <div style={{ fontSize: '24px', marginBottom: '8px' }}>✓</div>
             <div style={{ fontSize: '18px', fontWeight: '600', marginBottom: '4px' }}>Blok A</div>
-            <div style={{ fontSize: '12px', opacity: 0.9 }}><strong>{DEVICE_ID}</strong></div>
+            <div style={{ fontSize: '12px', opacity: 0.9 }}>
+              <strong>{DEVICE_ID}</strong>
+            </div>
           </div>
-          <div style={{ marginTop: '16px', paddingTop: '12px', borderTop: '1px solid rgba(255,255,255,0.2)', fontSize: '13px' }}>
+          <div style={{
+            marginTop: '16px',
+            paddingTop: '12px',
+            borderTop: '1px solid rgba(255,255,255,0.2)',
+            fontSize: '13px'
+          }}>
             Status: <strong>{error ? '🔴 Offline' : '🟢 Online'}</strong>
           </div>
         </div>
 
-        <div className="card-responsive" style={{ background: 'linear-gradient(135deg, #3498db 0%, #2980b9 100%)', color: 'white', padding: '24px', boxShadow: '0 4px 15px rgba(52, 152, 219, 0.3)', gridColumn: 'span 2' }}>
+        {/* All Parameters in One Card */}
+        <div className="card-responsive" style={{
+          background: 'linear-gradient(135deg, #3498db 0%, #2980b9 100%)',
+          color: 'white',
+          padding: '24px',
+          boxShadow: '0 4px 15px rgba(52, 152, 219, 0.3)',
+          gridColumn: 'span 2'
+        }}>
           <div style={{ marginBottom: '20px' }}>
             <div style={{ fontSize: '14px', fontWeight: '500', opacity: 0.9 }}>📊 Semua Parameter</div>
             <div style={{ fontSize: '11px', opacity: 0.7 }}>Data sensor real-time</div>
           </div>
           
           {loading && sensorData.length === 0 ? (
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '16px' }}>
-              {[1,2,3,4,5,6].map(i => <div key={i} style={{ height: '70px', backgroundColor: 'rgba(255,255,255,0.1)', borderRadius: '8px', animation: 'pulse 2s infinite' }} />)}
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(2, 1fr)',
+              gap: '16px'
+            }}>
+              {[1,2,3,4,5,6,7,8].map(i => (
+                <div key={i} style={{
+                  height: '70px',
+                  backgroundColor: 'rgba(255,255,255,0.1)',
+                  borderRadius: '8px',
+                  animation: 'pulse 2s infinite'
+                }} />
+              ))}
             </div>
           ) : (
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '16px' }}>
-              
-              {/* 🌟 PERBAIKAN 2: Menyesuaikan nama variabel untuk Card Dashboard */}
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))',
+              gap: '16px'
+            }}>
+              {/* Moisture */}
               <div style={{ backgroundColor: 'rgba(255,255,255,0.1)', borderRadius: '12px', padding: '16px', textAlign: 'center', backdropFilter: 'blur(10px)' }}>
                 <div style={{ fontSize: '12px', opacity: 0.8, marginBottom: '8px' }}>💧 Kelembapan</div>
-                <div style={{ fontSize: '32px', fontWeight: '700', marginBottom: '4px' }}>{latestData?.kelembapan_tanah ?? '--'}</div>
+                <div style={{ fontSize: '28px', fontWeight: '700', marginBottom: '4px' }}>{latestData?.kelembapan_val ?? '--'}</div>
                 <div style={{ fontSize: '11px', opacity: 0.7 }}>%</div>
               </div>
 
+              {/* Temperature */}
               <div style={{ backgroundColor: 'rgba(255,255,255,0.1)', borderRadius: '12px', padding: '16px', textAlign: 'center', backdropFilter: 'blur(10px)' }}>
                 <div style={{ fontSize: '12px', opacity: 0.8, marginBottom: '8px' }}>🌡️ Suhu</div>
-                <div style={{ fontSize: '32px', fontWeight: '700', marginBottom: '4px' }}>{latestData?.suhu_tanah ?? '--'}</div>
+                <div style={{ fontSize: '28px', fontWeight: '700', marginBottom: '4px' }}>{latestData?.suhu_val ?? '--'}</div>
                 <div style={{ fontSize: '11px', opacity: 0.7 }}>°C</div>
               </div>
 
+              {/* EC — ✅ sebelumnya tidak ada kartu ini */}
+              <div style={{ backgroundColor: 'rgba(255,255,255,0.1)', borderRadius: '12px', padding: '16px', textAlign: 'center', backdropFilter: 'blur(10px)' }}>
+                <div style={{ fontSize: '12px', opacity: 0.8, marginBottom: '8px' }}>⚡ EC</div>
+                <div style={{ fontSize: '28px', fontWeight: '700', marginBottom: '4px' }}>{latestData?.ec_val ?? '--'}</div>
+                <div style={{ fontSize: '11px', opacity: 0.7 }}>µS/cm</div>
+              </div>
+
+              {/* pH */}
               <div style={{ backgroundColor: 'rgba(255,255,255,0.1)', borderRadius: '12px', padding: '16px', textAlign: 'center', backdropFilter: 'blur(10px)' }}>
                 <div style={{ fontSize: '12px', opacity: 0.8, marginBottom: '8px' }}>⚗️ pH</div>
-                <div style={{ fontSize: '32px', fontWeight: '700', marginBottom: '4px' }}>{latestData?.ph_tanah ?? '--'}</div>
+                <div style={{ fontSize: '28px', fontWeight: '700', marginBottom: '4px' }}>{latestData?.ph_val ?? '--'}</div>
                 <div style={{ fontSize: '11px', opacity: 0.7 }}>pH</div>
               </div>
 
+              {/* Nitrogen */}
               <div style={{ backgroundColor: 'rgba(255,255,255,0.1)', borderRadius: '12px', padding: '16px', textAlign: 'center', backdropFilter: 'blur(10px)' }}>
                 <div style={{ fontSize: '12px', opacity: 0.8, marginBottom: '8px' }}>🌱 N</div>
-                <div style={{ fontSize: '32px', fontWeight: '700', marginBottom: '4px' }}>{latestData?.nitrogen ?? '--'}</div>
+                <div style={{ fontSize: '28px', fontWeight: '700', marginBottom: '4px' }}>{latestData?.n_val ?? '--'}</div>
                 <div style={{ fontSize: '11px', opacity: 0.7 }}>ppm</div>
               </div>
 
+              {/* Phosphorus */}
               <div style={{ backgroundColor: 'rgba(255,255,255,0.1)', borderRadius: '12px', padding: '16px', textAlign: 'center', backdropFilter: 'blur(10px)' }}>
                 <div style={{ fontSize: '12px', opacity: 0.8, marginBottom: '8px' }}>🔴 P</div>
-                <div style={{ fontSize: '32px', fontWeight: '700', marginBottom: '4px' }}>{latestData?.fosfor ?? '--'}</div>
+                <div style={{ fontSize: '28px', fontWeight: '700', marginBottom: '4px' }}>{latestData?.p_val ?? '--'}</div>
                 <div style={{ fontSize: '11px', opacity: 0.7 }}>ppm</div>
               </div>
 
+              {/* Potassium */}
               <div style={{ backgroundColor: 'rgba(255,255,255,0.1)', borderRadius: '12px', padding: '16px', textAlign: 'center', backdropFilter: 'blur(10px)' }}>
                 <div style={{ fontSize: '12px', opacity: 0.8, marginBottom: '8px' }}>🟡 K</div>
-                <div style={{ fontSize: '32px', fontWeight: '700', marginBottom: '4px' }}>{latestData?.kalium ?? '--'}</div>
+                <div style={{ fontSize: '28px', fontWeight: '700', marginBottom: '4px' }}>{latestData?.k_val ?? '--'}</div>
                 <div style={{ fontSize: '11px', opacity: 0.7 }}>ppm</div>
               </div>
             </div>
@@ -282,7 +418,16 @@ function MonitoringPage() {
         </div>
       </section>
 
-      <section style={{ backgroundColor: '#ffffff', borderRadius: '15px', padding: '24px', marginBottom: '30px', border: '1px solid #ecf0f1', boxShadow: '0 2px 8px rgba(0,0,0,0.04)', animation: 'slideIn 0.5s ease-out' }}>
+      {/* Data Table */}
+      <section style={{
+        backgroundColor: '#ffffff',
+        borderRadius: '15px',
+        padding: '24px',
+        marginBottom: '30px',
+        border: '1px solid #ecf0f1',
+        boxShadow: '0 2px 8px rgba(0,0,0,0.04)',
+        animation: 'slideIn 0.5s ease-out'
+      }}>
         <div style={{ marginBottom: '20px' }}>
           <div style={{ fontSize: '18px', fontWeight: '600', color: '#2c3e50', marginBottom: '4px' }}>📋 Data Sensor Real-Time</div>
           <div style={{ fontSize: '13px', color: '#7f8c8d' }}>Riwayat pembacaan sensor terbaru</div>
@@ -306,27 +451,50 @@ function MonitoringPage() {
             <tbody>
               {loading && displayData.length === 0 ? (
                 <tr>
-                  <td colSpan="9" style={{ padding: '20px', textAlign: 'center', color: '#95a5a6' }}>⏳ Memuat data sensor...</td>
+                  <td colSpan="9" style={{ padding: '20px', textAlign: 'center', color: '#95a5a6' }}>
+                    ⏳ Memuat data sensor...
+                  </td>
                 </tr>
               ) : displayData.length > 0 ? (
                 displayData.slice(0, 20).map((row, idx) => (
-                  <tr key={idx} style={{ borderBottom: '1px solid #ecf0f1', backgroundColor: idx % 2 === 0 ? '#ffffff' : '#f8f9fa', transition: 'background-color 0.3s' }}>
-                    <td style={{ padding: '12px 16px' }}><span style={{ fontSize: '12px' }}>{new Date(row.timestamp).toLocaleString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}</span></td>
-                    <td style={{ padding: '12px 16px' }}><span style={{ backgroundColor: '#e8f5e9', color: '#27ae60', padding: '4px 8px', borderRadius: '6px', fontSize: '12px', fontWeight: '500' }}>Blok A</span></td>
-                    
-                    {/* 🌟 PERBAIKAN 3: Menyesuaikan nama variabel untuk Tabel Riwayat */}
-                    <td style={{ padding: '12px 16px', fontWeight: '500', color: '#3498db' }}>{row.kelembapan_tanah}%</td>
-                    <td style={{ padding: '12px 16px', fontWeight: '500', color: '#e67e22' }}>{row.suhu_tanah}°C</td>
-                    <td style={{ padding: '12px 16px', fontWeight: '500', color: '#9b59b6' }}>{row.ec}</td>
-                    <td style={{ padding: '12px 16px', fontWeight: '500' }}>{row.ph_tanah}</td>
-                    <td style={{ padding: '12px 16px' }}>{row.nitrogen}</td>
-                    <td style={{ padding: '12px 16px' }}>{row.fosfor}</td>
-                    <td style={{ padding: '12px 16px' }}>{row.kalium}</td>
+                  <tr key={row.id} style={{
+                    borderBottom: '1px solid #ecf0f1',
+                    backgroundColor: idx % 2 === 0 ? '#ffffff' : '#f8f9fa',
+                    transition: 'background-color 0.3s'
+                  }}>
+                    <td style={{ padding: '12px 16px' }}>
+                      <span style={{ fontSize: '12px' }}>
+                        {new Date(row.timestamp).toLocaleString('id-ID', {
+                          hour: '2-digit',
+                          minute: '2-digit',
+                          second: '2-digit'
+                        })}
+                      </span>
+                    </td>
+                    <td style={{ padding: '12px 16px' }}>
+                      <span style={{
+                        backgroundColor: '#e8f5e9',
+                        color: '#27ae60',
+                        padding: '4px 8px',
+                        borderRadius: '6px',
+                        fontSize: '12px',
+                        fontWeight: '500'
+                      }}>Blok A</span>
+                    </td>
+                    <td style={{ padding: '12px 16px', fontWeight: '500', color: '#3498db' }}>{row.kelembapan_val}%</td>
+                    <td style={{ padding: '12px 16px', fontWeight: '500', color: '#e67e22' }}>{row.suhu_val}°C</td>
+                    <td style={{ padding: '12px 16px', fontWeight: '500', color: '#9b59b6' }}>{row.ec_val}</td>
+                    <td style={{ padding: '12px 16px', fontWeight: '500' }}>{row.ph_val}</td>
+                    <td style={{ padding: '12px 16px' }}>{row.n_val}</td>
+                    <td style={{ padding: '12px 16px' }}>{row.p_val}</td>
+                    <td style={{ padding: '12px 16px' }}>{row.k_val}</td>
                   </tr>
                 ))
               ) : (
                 <tr>
-                  <td colSpan="9" style={{ padding: '20px', textAlign: 'center', color: '#95a5a6' }}>📭 Tidak ada data tersedia</td>
+                  <td colSpan="9" style={{ padding: '20px', textAlign: 'center', color: '#95a5a6' }}>
+                    📭 Tidak ada data tersedia
+                  </td>
                 </tr>
               )}
             </tbody>
@@ -334,29 +502,78 @@ function MonitoringPage() {
         </div>
       </section>
 
-      <section style={{ backgroundColor: '#ffffff', borderRadius: '15px', padding: '24px', border: '1px solid #ecf0f1', boxShadow: '0 2px 8px rgba(0,0,0,0.04)', animation: 'slideIn 0.6s ease-out' }}>
+      {/* Chart */}
+      <section style={{
+        backgroundColor: '#ffffff',
+        borderRadius: '15px',
+        padding: '24px',
+        border: '1px solid #ecf0f1',
+        boxShadow: '0 2px 8px rgba(0,0,0,0.04)',
+        animation: 'slideIn 0.6s ease-out'
+      }}>
         <div style={{ marginBottom: '20px' }}>
           <div style={{ fontSize: '18px', fontWeight: '600', color: '#2c3e50', marginBottom: '4px' }}>📈 Tren 24 Jam Terakhir</div>
-          <div style={{ fontSize: '13px', color: '#7f8c8d' }}>Visualisasi parameter sensor IoT</div>
+          <div style={{ fontSize: '13px', color: '#7f8c8d' }}>
+            Visualisasi parameter sensor IoT
+            {useFilter && <span style={{ marginLeft: '8px', color: '#27ae60', fontWeight: '500' }}>· Filter aktif</span>}
+          </div>
         </div>
 
         {loading && displayData.length === 0 ? (
-          <div style={{ height: '360px', backgroundColor: '#f5f7fa', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', animation: 'pulse 2s infinite' }}>
-            <div style={{ textAlign: 'center', color: '#95a5a6' }}><div style={{ fontSize: '32px', marginBottom: '8px' }}>📊</div><div>Loading chart...</div></div>
+          <div style={{
+            height: '360px',
+            backgroundColor: '#f5f7fa',
+            borderRadius: '12px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            animation: 'pulse 2s infinite'
+          }}>
+            <div style={{ textAlign: 'center', color: '#95a5a6' }}>
+              <div style={{ fontSize: '32px', marginBottom: '8px' }}>📊</div>
+              <div>Loading chart...</div>
+            </div>
           </div>
         ) : (
-          <div ref={chartContainerRef} className="chart-container" style={{ width: '100%', height: '380px' }}>
+          <div style={{ width: '100%', height: '380px' }}>
             <ResponsiveContainer width="100%" height={360}>
               <LineChart data={chartData} margin={{ top: 5, right: 30, left: 0, bottom: 5 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#ecf0f1" />
                 <XAxis dataKey="time" stroke="#95a5a6" tick={{ fill: '#95a5a6', fontSize: 12 }} />
                 <YAxis stroke="#95a5a6" tick={{ fill: '#95a5a6', fontSize: 12 }} />
-                <Tooltip contentStyle={{ backgroundColor: '#ffffff', border: '1px solid #ecf0f1', borderRadius: '8px', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }} cursor={{ stroke: '#ecf0f1', strokeWidth: 2 }} />
+                <Tooltip
+                  contentStyle={{
+                    backgroundColor: '#ffffff',
+                    border: '1px solid #ecf0f1',
+                    borderRadius: '8px',
+                    boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
+                  }}
+                  cursor={{ stroke: '#ecf0f1', strokeWidth: 2 }}
+                />
                 <Legend wrapperStyle={{ paddingTop: '15px' }} />
-                <Line type="monotone" dataKey="soilMoisture" stroke="#27ae60" name="Moisture (%)" strokeWidth={3} dot={false} />
-                <Line type="monotone" dataKey="suhu" stroke="#e67e22" name="Suhu (°C)" strokeWidth={2} dot={false} />
-                <Line type="monotone" dataKey="pH" stroke="#e74c3c" name="pH" strokeWidth={2} dot={false} />
-                <Line type="monotone" dataKey="N" stroke="#3498db" name="Nitrogen (N)" strokeWidth={2} dot={false} />
+
+                {/* ✅ FIX 6: Semua line ditambahkan, dengan logika show/hide berdasarkan selectedParam */}
+                {showLine('soilMoisture') && (
+                  <Line type="monotone" dataKey="soilMoisture" stroke="#27ae60" name="Moisture (%)" strokeWidth={3} dot={false} />
+                )}
+                {showLine('suhu') && (
+                  <Line type="monotone" dataKey="suhu" stroke="#e67e22" name="Suhu (°C)" strokeWidth={2} dot={false} />
+                )}
+                {showLine('pH') && (
+                  <Line type="monotone" dataKey="pH" stroke="#e74c3c" name="pH" strokeWidth={2} dot={false} />
+                )}
+                {showLine('EC') && (
+                  <Line type="monotone" dataKey="EC" stroke="#9b59b6" name="EC (µS/cm)" strokeWidth={2} dot={false} />
+                )}
+                {showLine('N') && (
+                  <Line type="monotone" dataKey="N" stroke="#3498db" name="Nitrogen (N)" strokeWidth={2} dot={false} />
+                )}
+                {showLine('P') && (
+                  <Line type="monotone" dataKey="P" stroke="#e74c3c" name="Fosfor (P)" strokeWidth={2} dot={false} strokeDasharray="5 5" />
+                )}
+                {showLine('K') && (
+                  <Line type="monotone" dataKey="K" stroke="#f39c12" name="Kalium (K)" strokeWidth={2} dot={false} />
+                )}
               </LineChart>
             </ResponsiveContainer>
           </div>

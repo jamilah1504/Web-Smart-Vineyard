@@ -10,8 +10,8 @@ const app = express();
 app.use(cors());
 
 // PINDAHKAN INI KE ATAS SEBELUM "IMPOR ROUTE"
-app.use(express.json({ limit: '20mb' }));
-app.use(express.urlencoded({ limit: '20mb', extended: true }));
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
 // Menyajikan file statis
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));

@@ -1,6 +1,7 @@
 export const PublicPaths = {
   landing: '/landing',
   login: '/login',
+  register: '/register',
   forgotPassword: '/forgot-password',
 }
 

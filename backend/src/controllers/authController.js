@@ -150,41 +150,41 @@ exports.deleteUser = async (req, res) => {
 
 exports.googleLogin = async (req, res) => {
     try {
-        const { idToken } = req.body; // Token yang dikirim dari Frontend (React/Flutter)
+        // 👇 1. UBAH idToken MENJADI token (sesuai yang dikirim React)
+        const { token } = req.body; 
 
-        if (!idToken) {
+        if (!token) {
             return res.status(400).json({ message: 'Token Google tidak ditemukan' });
         }
 
         // Verifikasi token asli dari Google
         const ticket = await client.verifyIdToken({
-            idToken: idToken,
+            idToken: token, // 👇 2. Masukkan variabel token ke sini
             audience: process.env.GOOGLE_CLIENT_ID,
         });
 
         const payload = ticket.getPayload();
-        const { email, name } = payload; // Ambil email dan nama dari akun Google
+        const { email, name } = payload; 
 
-        // Cek apakah email tersebut sudah terdaftar di database kita
         let user = await User.findOne({ where: { email } });
 
-        // Jika user belum ada, daftarkan secara otomatis
         if (!user) {
             user = await User.create({
                 nama_lengkap: name,
                 email: email,
-                password_hash: null, // Kosongkan karena dia login pakai Google
-                role: 'Staff' // Role default untuk user baru
+                password_hash: null, 
+                role: 'Staff' 
             });
         }
 
-        // Berikan JWT lokal sistem Anda
         res.status(200).json({
+            status: 'success', // Tambahkan status ini agar React bisa membacanya
             id: user.id,
             nama_lengkap: user.nama_lengkap,
             email: user.email,
             role: user.role,
-            token: generateToken(user.id), // Gunakan JWT yang sudah ada
+            token: generateToken(user.id), 
+            user: { name, email } // Kirim data user untuk dashboard
         });
 
     } catch (error) {

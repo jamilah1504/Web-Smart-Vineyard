@@ -7,24 +7,45 @@ const sendTelegram = require('../utils/telegram');
 exports.diagnoseLeaf = async (req, res) => {
     try {
         if (!req.body || Object.keys(req.body).length === 0) {
-            return res.status(400).json({ status: 'error', message: 'Body request kosong.' });
+            return res.status(400).json({ status: 'error', message: 'Body request kosong atau file tidak terbaca.' });
         }
 
-        let { perangkat_id, image_base64, hasil_diagnosis, confidence_score } = req.body;
+        let perangkat_id = "ESP32-MAC-A001";
+        let base64Data = "";
+        let finalLabel = "";
+        let finalScore = 0;
 
+        // 🌟 CEK SUMBER DATA: Dari ESP32-CAM (Buffer) atau Web (JSON)?
+        if (Buffer.isBuffer(req.body)) {
+            // Pintu 1: Data datang langsung dari ESP32-CAM (Raw Buffer / Gambar Mentah)
+            console.log("📸 [KAMERA] Menerima gambar mentah langsung dari ESP32-CAM!");
+            base64Data = req.body.toString('base64');
+            
+            // Jika ada Header User-Agent dari ESP, bisa dipakai untuk identifikasi
+            if(req.headers['x-device-id']) {
+                perangkat_id = req.headers['x-device-id'];
+            }
+        } else {
+            // Pintu 2: Data datang dari Upload Web Frontend (JSON)
+            console.log("💻 [WEB] Menerima request deteksi dari Web Dashboard");
+            perangkat_id = req.body.perangkat_id || perangkat_id;
+            finalLabel = req.body.hasil_diagnosis;
+            finalScore = req.body.confidence_score;
+            base64Data = req.body.image_base64.includes(",") ? req.body.image_base64.split(",")[1] : req.body.image_base64;
+        }
+
+        // Siapkan file Buffer untuk disimpan secara fisik nanti
+        const bufferImage = Buffer.from(base64Data, 'base64');
+
+        // Validasi Perangkat
         const perangkat = await PerangkatIoT.findByPk(perangkat_id);
         if (!perangkat) {
             return res.status(404).json({ status: 'error', message: `Perangkat ID ${perangkat_id} tidak terdaftar.` });
         }
 
-        let base64Data = image_base64.includes(",") ? image_base64.split(",")[1] : image_base64;
-        const buffer = Buffer.from(base64Data, 'base64');
-
-        let finalLabel = hasil_diagnosis;
-        let finalScore = confidence_score;
-
-        // 1. Ambil data dari Roboflow jika dari Web
+        // --- 1. AMBIL DATA DARI ROBOFLOW (Jika label masih kosong) ---
         if (!finalLabel) {
+            console.log("⏳ Mengirim foto ke AI Roboflow untuk dianalisis...");
             try {
                 const response = await axios({
                     method: "POST",
@@ -43,7 +64,8 @@ exports.diagnoseLeaf = async (req, res) => {
                     finalScore = 0;
                 }
             } catch (error) {
-                return res.status(502).json({ status: 'error', message: 'AI Server Error' });
+                console.error("❌ Roboflow Error:", error.message);
+                return res.status(502).json({ status: 'error', message: 'AI Server Roboflow Error' });
             }
         }
 
@@ -59,7 +81,7 @@ exports.diagnoseLeaf = async (req, res) => {
 
         const isValidLeaf = isHealthy || isEsca || isBlackRot || isIsariopsis || isBlight || isKlorosis;
 
-        console.log(`🔍 DEBUG: Raw="${finalLabel}", Valid=${isValidLeaf}, Score=${finalScore}`);
+        console.log(`🔍 DEBUG: Hasil AI = "${finalLabel}", Score = ${Math.round(finalScore * 100)}%`);
 
         // Validasi Jenis Objek
         if (!isValidLeaf) {
@@ -73,6 +95,7 @@ exports.diagnoseLeaf = async (req, res) => {
         // --- VALIDASI AKURASI (> 70%) ---
         // Jika akurasi <= 0.7, hentikan proses (jangan simpan ke DB/Folder)
         if (finalScore <= 0.7) {
+            console.log("⚠️ Ditolak: Akurasi di bawah 70%");
             return res.status(200).json({ 
                 status: 'invalid', 
                 message: `Hasil analisis (${(finalScore * 100).toFixed(1)}%) di bawah standar akurasi 70%. Silakan ambil foto ulang.`,
@@ -82,27 +105,32 @@ exports.diagnoseLeaf = async (req, res) => {
         }
 
         // --- 3. SIMPAN GAMBAR FISIK ---
-        // Hanya dijalankan jika lolos validasi daun & akurasi > 70%
+        console.log("✅ Lolos Validasi! Menyimpan gambar ke folder lokal...");
         const fileName = `diag_${perangkat_id}_${Date.now()}.jpg`;
         const dirPath = path.join(__dirname, '../../public/uploads/diagnosis');
-        const imageUrl = `/public/uploads/diagnosis/${fileName}`;
+        const imageUrl = `/public/uploads/diagnosis/${fileName}`; // URL untuk frontend
 
+        // Buat folder jika belum ada
         if (!fs.existsSync(dirPath)) fs.mkdirSync(dirPath, { recursive: true });
-        fs.writeFileSync(path.join(dirPath, fileName), buffer);
+        
+        // Simpan gambar secara fisik
+        fs.writeFileSync(path.join(dirPath, fileName), bufferImage);
 
         // --- 4. SIMPAN KE DATABASE ---
         const logAI = await LogDiagnosisAI.create({
             perangkat_id,
-            image_url: imageUrl, 
+            image_url: imageUrl, // Menyimpan URL fisik, bukan Base64
             hasil_diagnosis: finalLabel,
             confidence_score: finalScore,
             saran_tindakan: getSaran(finalLabel)
         });
 
-        // --- 5. NOTIFIKASI ---
+        // --- 5. NOTIFIKASI TELEGRAM ---
         if ((isEsca || isBlackRot || isIsariopsis || isBlight) && finalScore > 0.7) {
             await triggerAlerts(perangkat, finalLabel, finalScore);
         }
+
+        console.log("🎉 Proses Diagnosa Berhasil Disimpan!");
 
         res.status(201).json({ 
             status: 'success', 
@@ -113,7 +141,7 @@ exports.diagnoseLeaf = async (req, res) => {
         });
 
     } catch (error) {
-        console.error("❌ Error Global:", error.message);
+        console.error("❌ Error Global Diagnosis:", error.message);
         if (!res.headersSent) res.status(500).json({ status: 'error', message: error.message });
     }
 };

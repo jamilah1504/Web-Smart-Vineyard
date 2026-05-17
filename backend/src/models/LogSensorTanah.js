@@ -10,7 +10,7 @@ const LogSensorTanah = sequelize.define('Log_Sensor_Tanah', {
   ph_val: { type: DataTypes.FLOAT },
   suhu_val: { type: DataTypes.FLOAT },
   ec_val: { type: DataTypes.FLOAT },
-  kelembapan_val: { type: DataTypes.FLOAT }, // <-- SUDAH DIGANTI
+  kelembapan_val: { type: DataTypes.FLOAT },
   timestamp: { type: DataTypes.DATE, defaultValue: DataTypes.NOW }
 }, { tableName: 'log_sensor_tanah', timestamps: false });
 

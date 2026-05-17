@@ -11,11 +11,11 @@ function TankMonitoringPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
-  // Helper function untuk tentukan status peringatan
-  const determinateStatus = (level) => {
-    if (level >= 60) return 'normal';    // Di atas 60% Aman
-    if (level >= 25) return 'warning';   // 25% - 59% Siaga
-    return 'critical';                   // Di bawah 25% Kritis
+  // Helper function: Status disinkronkan dengan backend (Cut-off di bawah 10 cm)
+  const determinateStatus = (tinggiCm) => {
+    if (tinggiCm >= 20) return 'normal';    // Aman (> 20 cm)
+    if (tinggiCm >= 10) return 'warning';   // Siaga (10 cm - 19.9 cm)
+    return 'critical';                      // Kritis (< 10 cm, pompa mati otomatis)
   };
 
   // === FUNGSI TARIK DATA ===
@@ -27,29 +27,37 @@ function TankMonitoringPage() {
 
       if (response.data && Array.isArray(response.data) && response.data.length > 0) {
         const transformed = response.data.map(item => {
-          // Ambil jarak sensor ke air
-          const jarakSensor = parseFloat(item.ketinggian_air) || 0;
-          const TINGGI_MAKSIMAL_TANDON = 42; 
+          // 1. Ambil nilai aktual (ESP32 SUDAH mengirimkan tinggi air dalam cm, bukan jarak sensor)
+          const tinggiAirAsli = parseFloat(item.ketinggian_air) || 0;
+          const TINGGI_MAKSIMAL_TANDON = 42.0; 
 
-          // Rumus: Sisa Air = Tinggi Tandon - Jarak Bacaan Sensor
-          const tinggiAirAsli = TINGGI_MAKSIMAL_TANDON - jarakSensor;
+          // 2. Kalkulasi Sisa Air dalam Persentase
           let persentase = Math.round((tinggiAirAsli / TINGGI_MAKSIMAL_TANDON) * 100);
-          
-          // Safety guard agar tidak lewat batas 0-100
-          persentase = Math.max(0, Math.min(100, persentase));
+          persentase = Math.max(0, Math.min(100, persentase)); // Safety guard 0-100%
 
-          // Penamaan tandon dinamis berdasarkan database
-          const namaTandon = item.jenis_tandon === 'pupuk' ? 'Tandon Nutrisi' : 'Tandon Air Baku';
+          // 3. Penamaan tandon dinamis
+          const jenisTandon = item.jenis_tandon?.toLowerCase() === 'pupuk' ? 'Tandon Nutrisi' : 'Tandon Air Baku';
+
+          // 4. Standarisasi Tanggal
+          const rawDate = new Date(item.timestamp || item.createdAt); 
+          const year = rawDate.getFullYear();
+          const month = String(rawDate.getMonth() + 1).padStart(2, '0');
+          const day = String(rawDate.getDate()).padStart(2, '0');
+          const isoDate = `${year}-${month}-${day}`; 
 
           return {
-            time: new Date(item.timestamp).toLocaleString('id-ID'),
-            tank: namaTandon,
+            time: rawDate.toLocaleString('id-ID'), 
+            isoDate: isoDate,                      
+            timestampStr: rawDate.getTime(),       
+            tank: jenisTandon,
             level: persentase,
-            ketinggian_cm: tinggiAirAsli.toFixed(1), // Ketinggian riil dalam cm
-            jarak_sensor: jarakSensor.toFixed(1), // Jarak yang dibaca ultrasonik
-            status: determinateStatus(persentase)
+            ketinggian_cm: tinggiAirAsli.toFixed(1),
+            status: determinateStatus(tinggiAirAsli) // Status dicek berdasarkan CM
           };
         });
+
+        // Urutkan dari yang paling baru
+        transformed.sort((a, b) => b.timestampStr - a.timestampStr);
 
         setTankData(transformed);
         setError('');
@@ -58,7 +66,7 @@ function TankMonitoringPage() {
       }
     } catch (err) {
       console.error("Error Fetch:", err);
-      setError("Gagal koneksi ke server tandon.");
+      setError("Gagal koneksi ke server tandon. Pastikan backend aktif.");
     } finally {
       setLoading(false);
     }
@@ -69,6 +77,7 @@ function TankMonitoringPage() {
     setLoading(true);
     fetchTankData();
     
+    // Auto refresh setiap 15 detik mengikuti siklus POST dari ESP32
     const intervalId = setInterval(fetchTankData, 15000);
     return () => clearInterval(intervalId);
   }, [fetchTankData]);
@@ -76,10 +85,10 @@ function TankMonitoringPage() {
   // === LOGIKA FILTER TANGGAL & JENIS TANDON ===
   const filtered = useMemo(() => {
     return tankData.filter((row) => {
-      const d = row.time.split(',')[0].split('/').reverse().join('-');
-      const matchesFrom = !dateFrom || d >= dateFrom;
-      const matchesTo = !dateTo || d <= dateTo;
+      const matchesFrom = !dateFrom || row.isoDate >= dateFrom;
+      const matchesTo = !dateTo || row.isoDate <= dateTo;
       const matchesTank = tank === 'all' || row.tank === tank;
+      
       return matchesFrom && matchesTo && matchesTank;
     });
   }, [dateFrom, dateTo, tank, tankData]);
@@ -153,7 +162,7 @@ function TankMonitoringPage() {
             <div style={{ fontSize: '12px', color: '#7f8c8d' }}>Pembacaan sensor JSN-SR04T</div>
           </div>
           
-          {loading ? (
+          {loading && !latest ? (
             <div style={{ textAlign: 'center', color: '#95a5a6', padding: '30px 0', backgroundColor: '#f8f9fa', borderRadius: '10px' }}>
               <div style={{ animation: 'pulse 1.5s infinite' }}>⏳ Memuat data tandon...</div>
             </div>
@@ -181,7 +190,7 @@ function TankMonitoringPage() {
                 </div>
               </div>
               <div style={{ fontSize: '10px', color: '#95a5a6', textAlign: 'right', marginTop: '4px' }}>
-                Diperbarui: {latest.time.split(', ')[1]} WIB
+                Diperbarui: {latest.time}
               </div>
             </div>
           ) : (
@@ -217,13 +226,13 @@ function TankMonitoringPage() {
                 <span style={{ fontWeight: '600', color: '#34495e', fontSize: '13px' }}>Ambang Kritis</span>
               </div>
               <span style={{ backgroundColor: '#ffebee', color: '#c62828', padding: '4px 12px', borderRadius: '20px', fontSize: '11px', fontWeight: '800' }}>
-                &lt; 10%
+                &lt; 10 cm (~24%)
               </span>
             </div>
           </div>
 
           <div style={{ marginTop: '20px', padding: '12px', backgroundColor: '#f8f9fa', borderRadius: '8px', fontSize: '11px', color: '#7f8c8d', textAlign: 'center', border: '1px dashed #bdc3c7' }}>
-             💡 Pompa akan dimatikan otomatis oleh sistem jika volume air menyentuh batas kritis (10%).
+             💡 Pompa akan dimatikan otomatis oleh sistem jika volume air menyentuh batas kritis (di bawah 10 cm).
           </div>
         </div>
       </section>
@@ -239,7 +248,7 @@ function TankMonitoringPage() {
           </div>
         </div>
         <div className="table-wrapper u-mt-05">
-          {loading ? (
+          {loading && filtered.length === 0 ? (
             <div className="text-center text-muted" style={{ padding: '3rem' }}>
               <p>⏳ Sedang menyinkronkan data...</p>
             </div>
@@ -255,7 +264,7 @@ function TankMonitoringPage() {
               </thead>
               <tbody>
                 {filtered.map((row, index) => (
-                  <tr key={`${row.time}-${row.tank}-${index}`} style={{ borderBottom: '1px solid #f9f9f9' }}>
+                  <tr key={`${row.timestampStr}-${index}`} style={{ borderBottom: '1px solid #f9f9f9' }}>
                     <td style={{ fontWeight: '500', padding: '10px 12px' }}>{row.time}</td>
                     <td style={{ padding: '10px 12px' }}>{row.tank}</td>
                     <td style={{ padding: '10px 12px' }}>

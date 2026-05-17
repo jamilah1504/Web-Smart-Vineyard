@@ -9,11 +9,6 @@ const sendTelegram = require('../utils/telegram');
 
 const router = express.Router();
 
-/**
- * 1. RUTE PENGETESAN TELEGRAM
- * Taruh di paling atas agar Express mendeteksi ini sebagai teks statis, 
- * bukan dianggap sebagai :perangkat_id
- */
 router.get('/test-tele', async (req, res) => {
     try {
         await sendTelegram("🚀 *TES KONEKSI AETERA*\nBot berhasil terhubung ke server!");

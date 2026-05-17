@@ -1,51 +1,60 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
-import { loginRequest } from '../../services/authApi'; // Import API call
-import { setAccessToken, setUser, getUser, clearAuth } from '../../utils/authStorage'; // Import storage utils
+import React, { createContext, useContext, useState } from 'react';
+import { loginRequest } from '../../services/authApi'; 
+import { setAccessToken, setUser, getUser, clearAuth } from '../../utils/authStorage'; 
 
 const AuthContext = createContext();
 
 export function AuthProvider({ children }) {
-  // Ambil user dari localStorage saat aplikasi pertama kali dimuat
   const [currentUser, setCurrentUserState] = useState(getUser());
 
-  // Fungsi Login yang dipanggil oleh LoginPage.jsx
+  // 1. Fungsi Login Manual (Biarkan seperti aslinya)
   const login = async ({ email, password }) => {
     try {
-      // 1. Panggil API ke Backend (pastikan authApi.js sudah pakai http://localhost:5000)
       const data = await loginRequest({ email, password });
-      
-      // 2. Simpan token dan data user ke localStorage (menggunakan utils Anda)
       setAccessToken(data.token);
-      
-      // Pisahkan token dari data user sebelum disimpan ke state
       const userData = {
         id: data.id,
         nama_lengkap: data.nama_lengkap,
         email: data.email,
         role: data.role
       };
-      
       setUser(userData);
-      
-      // 3. Update state aplikasi
       setCurrentUserState(userData);
-
-      // Kembalikan data user agar bisa dibaca oleh .then(u => ...) di LoginPage
       return userData; 
     } catch (error) {
-      // Lempar error ke LoginPage agar bisa ditampilkan di UI
       throw error; 
     }
   };
 
-  // Fungsi Logout
+  // 2. 🌟 FUNGSI BARU KHUSUS UNTUK GOOGLE LOGIN
+  const loginWithGoogle = (dataDariBackend) => {
+    // Simpan ke localStorage pakai utils kamu
+    setAccessToken(dataDariBackend.token);
+    
+    // Rakit KTP User (Pastikan role terisi)
+    const userData = {
+      id: dataDariBackend.id,
+      nama_lengkap: dataDariBackend.nama_lengkap,
+      email: dataDariBackend.email,
+      role: dataDariBackend.role || 'Staff' // Beri default 'Staff' jika kosong
+    };
+    
+    setUser(userData);
+    
+    // Beritahu otak React bahwa user sudah masuk (Ini yang bikin tidak ditendang Satpam!)
+    setCurrentUserState(userData);
+    
+    return userData;
+  };
+
   const logout = () => {
-    clearAuth(); // Hapus dari localStorage
-    setCurrentUserState(null); // Hapus dari state
+    clearAuth(); 
+    setCurrentUserState(null); 
   };
 
   return (
-    <AuthContext.Provider value={{ currentUser, login, logout }}>
+    // 3. 🌟 DAFTARKAN FUNGSI BARU KE PROVIDER
+    <AuthContext.Provider value={{ currentUser, login, logout, loginWithGoogle }}>
       {children}
     </AuthContext.Provider>
   );

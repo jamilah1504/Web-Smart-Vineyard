@@ -57,7 +57,6 @@ export function RoleLayout({ role }) {
         </nav>
 
         <div className="sidebar-footer">
-          <div>Login sebagai: <strong>{user?.name ?? 'User'}</strong></div>
           <div className="u-mt-04">
             <button
               type="button"
