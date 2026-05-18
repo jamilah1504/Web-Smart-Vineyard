@@ -14,6 +14,7 @@ function SmartVisionPage() {
   // State untuk modal detail
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [selectedAnalysis, setSelectedAnalysis] = useState(null);
+  const [expandedHistoryTable, setExpandedHistoryTable] = useState(false);
   
   // Fitur Filter dari Kode 2
   const DEVICES = ["SEMUA", "ESP32-MAC-A001", "ESPCAM-001"]; 
@@ -211,10 +212,35 @@ function SmartVisionPage() {
       {/* Riwayat & Filter */}
       <section className="card card-elevated">
         <div className="card-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <div className="card-title">Riwayat Log</div>
-          <select value={filterDevice} onChange={(e) => setFilterDevice(e.target.value)} style={{ padding: '5px', borderRadius: '8px' }}>
-            {DEVICES.map(d => <option key={d} value={d}>{d}</option>)}
-          </select>
+          <div style={{ flex: 1 }}>
+            <div className="card-title">Riwayat Log {filteredHistory.length > 0 && `(${filteredHistory.length} data)`}</div>
+          </div>
+          <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+            {filteredHistory.length > 10 && (
+              <button
+                onClick={() => setExpandedHistoryTable(!expandedHistoryTable)}
+                style={{
+                  padding: '6px 12px',
+                  borderRadius: '6px',
+                  border: 'none',
+                  backgroundColor: expandedHistoryTable ? '#e74c3c' : '#27ae60',
+                  color: '#ffffff',
+                  fontWeight: '600',
+                  cursor: 'pointer',
+                  fontSize: '12px',
+                  transition: 'all 0.3s ease',
+                  whiteSpace: 'nowrap'
+                }}
+                onMouseOver={(e) => e.target.style.transform = 'scale(1.05)'}
+                onMouseOut={(e) => e.target.style.transform = 'scale(1)'}
+              >
+                {expandedHistoryTable ? '🔽 Tutup' : '🔼 Lihat Semua'}
+              </button>
+            )}
+            <select value={filterDevice} onChange={(e) => setFilterDevice(e.target.value)} style={{ padding: '5px', borderRadius: '8px' }}>
+              {DEVICES.map(d => <option key={d} value={d}>{d}</option>)}
+            </select>
+          </div>
         </div>
         <div className="u-overflow-x">
           <table style={{ width: '100%' }}>
@@ -227,7 +253,7 @@ function SmartVisionPage() {
               </tr>
             </thead>
             <tbody>
-              {filteredHistory.map(item => (
+              {(expandedHistoryTable ? filteredHistory : filteredHistory.slice(0, 10)).map(item => (
                 <tr 
                   key={item.id} 
                   style={{ 

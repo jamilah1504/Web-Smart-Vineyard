@@ -10,6 +10,7 @@ function TankMonitoringPage() {
   const [tankData, setTankData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [expandedTankTable, setExpandedTankTable] = useState(false);
 
   // Helper function: Status disinkronkan dengan backend (Cut-off di bawah 10 cm)
   const determinateStatus = (tinggiCm) => {
@@ -239,20 +240,41 @@ function TankMonitoringPage() {
 
       {/* TABEL RIWAYAT DI BAWAH */}
       <section className="card card-animate card-animate-delay-4 card-elevated">
-        <div className="card-header card-header-top">
+        <div className="card-header card-header-top" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div>
-            <div className="card-title card-title-lg">Riwayat Level Tandon</div>
+            <div className="card-title card-title-lg">Riwayat Level Tandon {filtered.length > 0 && `(${filtered.length} data)`}</div>
             <div className="card-subtitle card-subtitle-lg">
               Data riwayat fluktuasi air berdasarkan waktu (Terbaru di atas)
             </div>
           </div>
+          {filtered.length > 20 && (
+            <button
+              onClick={() => setExpandedTankTable(!expandedTankTable)}
+              style={{
+                padding: '8px 16px',
+                borderRadius: '8px',
+                border: 'none',
+                backgroundColor: expandedTankTable ? '#e74c3c' : '#27ae60',
+                color: '#ffffff',
+                fontWeight: '600',
+                cursor: 'pointer',
+                fontSize: '13px',
+                transition: 'all 0.3s ease',
+                whiteSpace: 'nowrap'
+              }}
+              onMouseOver={(e) => e.target.style.transform = 'scale(1.05)'}
+              onMouseOut={(e) => e.target.style.transform = 'scale(1)'}
+            >
+              {expandedTankTable ? '🔽 Tutup' : '🔼 Lihat Semua (' + filtered.length + ')'}
+            </button>
+          )}
         </div>
         <div className="table-wrapper u-mt-05">
           {loading && filtered.length === 0 ? (
             <div className="text-center text-muted" style={{ padding: '3rem' }}>
               <p>⏳ Sedang menyinkronkan data...</p>
             </div>
-          ) : filtered.length > 0 ? (
+          ) : (expandedTankTable ? filtered : filtered.slice(0, 20)).length > 0 ? (
             <table className="table table-compact">
               <thead>
                 <tr style={{ borderBottom: '2px solid #3498db' }}>
@@ -263,7 +285,7 @@ function TankMonitoringPage() {
                 </tr>
               </thead>
               <tbody>
-                {filtered.map((row, index) => (
+                {(expandedTankTable ? filtered : filtered.slice(0, 20)).map((row, index) => (
                   <tr key={`${row.timestampStr}-${index}`} style={{ borderBottom: '1px solid #f9f9f9' }}>
                     <td style={{ fontWeight: '500', padding: '10px 12px' }}>{row.time}</td>
                     <td style={{ padding: '10px 12px' }}>{row.tank}</td>

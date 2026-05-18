@@ -9,6 +9,7 @@ function NotificationsPage() {
   const [dateFrom, setDateFrom] = useState('')
   const [dateTo, setDateTo] = useState('')
   const [filterType, setFilterType] = useState('semua')
+  const [expandedNotifTable, setExpandedNotifTable] = useState(false)
 
   // Pastikan kunci (key) di sini sesuai dengan isi kolom 'tipe' di database
   const typeColor = {
@@ -179,13 +180,34 @@ function NotificationsPage() {
 
       {/* Daftar Notifikasi */}
       <section className="card card-animate card-animate-delay-2 card-elevated">
-        <div className="card-header card-header-top">
+        <div className="card-header card-header-top" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div>
-            <div className="card-title card-title-lg">Riwayat Notifikasi</div>
+            <div className="card-title card-title-lg">Riwayat Notifikasi {filteredNotifications && filteredNotifications.length > 0 && `(${filteredNotifications.length} data)`}</div>
             <div className="card-subtitle card-subtitle-lg">
               Daftar semua alert dengan severity &amp; waktu kejadian.
             </div>
           </div>
+          {filteredNotifications && filteredNotifications.length > 15 && (
+            <button
+              onClick={() => setExpandedNotifTable(!expandedNotifTable)}
+              style={{
+                padding: '8px 16px',
+                borderRadius: '8px',
+                border: 'none',
+                backgroundColor: expandedNotifTable ? '#e74c3c' : '#27ae60',
+                color: '#ffffff',
+                fontWeight: '600',
+                cursor: 'pointer',
+                fontSize: '13px',
+                transition: 'all 0.3s ease',
+                whiteSpace: 'nowrap'
+              }}
+              onMouseOver={(e) => e.target.style.transform = 'scale(1.05)'}
+              onMouseOut={(e) => e.target.style.transform = 'scale(1)'}
+            >
+              {expandedNotifTable ? '🔽 Tutup' : '🔼 Lihat Semua (' + filteredNotifications.length + ')'}
+            </button>
+          )}
         </div>
         
         <div className="u-p-1">
@@ -212,7 +234,7 @@ function NotificationsPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {filteredNotifications.map((notif, idx) => (
+                  {(expandedNotifTable ? filteredNotifications : filteredNotifications.slice(0, 15)).map((notif, idx) => (
                     <tr key={notif.id} style={{
                       borderBottom: '1px solid #ecf0f1',
                       backgroundColor: idx % 2 === 0 ? '#ffffff' : '#f8f9fa',

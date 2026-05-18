@@ -7,6 +7,7 @@ function OwnerManualControlPage() {
   const [pumpAir, setPumpAir] = useState(false);
   const [pumpPupuk, setPumpPupuk] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [autoMode, setAutoMode] = useState(false);
 
   // 1. Mengambil status awal perangkat saat halaman pertama kali dibuka
   useEffect(() => {
@@ -61,6 +62,23 @@ function OwnerManualControlPage() {
       setPumpPupuk(targetStatus); // Update UI jika sukses
     } catch (error) {
       alert("❌ Gagal mengontrol pompa pupuk: " + error.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // 4. Fungsi Toggle Mode Otomatis
+  const toggleAutoMode = async () => {
+    const targetMode = !autoMode;
+    setLoading(true);
+
+    try {
+      // Jika ada API untuk set auto mode, call di sini
+      // await setAutoMode(deviceId, targetMode);
+      setAutoMode(targetMode);
+      console.log(targetMode ? '✅ Mode Otomatis Diaktifkan' : '✅ Mode Manual Diaktifkan');
+    } catch (error) {
+      alert("❌ Gagal mengubah mode: " + error.message);
     } finally {
       setLoading(false);
     }
@@ -149,6 +167,102 @@ function OwnerManualControlPage() {
         </div>
       </div>
 
+      {/* MODE OTOMATIS SECTION */}
+      <div style={{
+        marginBottom: '40px',
+        background: autoMode 
+          ? 'linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%)'
+          : 'linear-gradient(135deg, #fff3cd 0%, #ffeeba 100%)',
+        borderRadius: '16px',
+        padding: '24px',
+        border: `3px solid ${autoMode ? '#28a745' : '#ffc107'}`,
+        boxShadow: `0 6px 20px ${autoMode ? 'rgba(40, 167, 69, 0.2)' : 'rgba(255, 193, 7, 0.2)'}`,
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        animation: 'slideIn 0.5s ease-out'
+      }}>
+        <div style={{ flex: 1 }}>
+          <div style={{
+            fontSize: '1.3rem',
+            fontWeight: '700',
+            color: autoMode ? '#155724' : '#856404',
+            marginBottom: '8px',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '10px'
+          }}>
+            {autoMode ? '🤖 Mode Otomatis AKTIF' : '🕹️ Mode Manual AKTIF'}
+          </div>
+          <p style={{
+            fontSize: '0.95rem',
+            color: autoMode ? '#0c5460' : '#7a6e2e',
+            margin: 0,
+            fontWeight: '500'
+          }}>
+            {autoMode
+              ? 'Sistem berjalan otomatis berdasarkan sensor. Kontrol manual dinonaktifkan.'
+              : 'Anda sedang mengendalikan sistem secara manual. Klik tombol untuk mengaktifkan mode otomatis.'}
+          </p>
+        </div>
+        <button
+          onClick={() => toggleAutoMode()}
+          disabled={loading || !deviceId}
+          style={{
+            padding: '12px 28px',
+            borderRadius: '12px',
+            border: 'none',
+            backgroundColor: autoMode ? '#28a745' : '#ffc107',
+            color: autoMode ? '#fff' : '#000',
+            fontWeight: '700',
+            fontSize: '1rem',
+            cursor: loading ? 'not-allowed' : 'pointer',
+            transition: 'all 0.3s ease',
+            whiteSpace: 'nowrap',
+            boxShadow: `0 4px 12px ${autoMode ? 'rgba(40, 167, 69, 0.3)' : 'rgba(255, 193, 7, 0.3)'}`,
+            opacity: loading ? 0.6 : 1,
+            marginLeft: '20px'
+          }}
+          onMouseOver={(e) => {
+            if (!loading) {
+              e.target.style.transform = 'translateY(-2px)';
+              e.target.style.boxShadow = `0 6px 16px ${autoMode ? 'rgba(40, 167, 69, 0.4)' : 'rgba(255, 193, 7, 0.4)'}`;
+            }
+          }}
+          onMouseOut={(e) => {
+            if (!loading) {
+              e.target.style.transform = 'translateY(0)';
+              e.target.style.boxShadow = `0 4px 12px ${autoMode ? 'rgba(40, 167, 69, 0.3)' : 'rgba(255, 193, 7, 0.3)'}`;
+            }
+          }}
+        >
+          {loading ? '⏱️ Memproses...' : (autoMode ? '✅ Matikan Otomatis' : '🤖 Aktifkan Otomatis')}
+        </button>
+      </div>
+
+      {/* POMPA CONTROLS DISABLED WARNING */}
+      {autoMode && (
+        <div style={{
+          marginBottom: '30px',
+          backgroundColor: '#e7f3ff',
+          border: '2px solid #3498db',
+          borderRadius: '12px',
+          padding: '16px',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '12px',
+          color: '#0c5460'
+        }}>
+          <span style={{ fontSize: '20px' }}>ℹ️</span>
+          <div>
+            <strong>Mode Otomatis Aktif</strong>
+            <p style={{ margin: '4px 0 0 0', fontSize: '0.9rem' }}>
+              Kontrol manual pompa sedang dinonaktifkan. Tombol di bawah hanya untuk referensi status saja.
+            </p>
+          </div>
+        </div>
+      )}
+
       {/* PUMP CONTROLS SECTION */}
       <div style={{ marginBottom: '50px' }}>
         <h2 style={{ fontSize: '1.6rem', fontWeight: '700', color: '#27ae60', marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '10px' }}>
@@ -210,9 +324,10 @@ function OwnerManualControlPage() {
 
             <button
               onClick={() => togglePumpAir()}
-              disabled={loading || !deviceId}
+              disabled={loading || !deviceId || autoMode}
               className={`toggle-switch ${pumpAir ? 'active' : 'inactive'}`}
-              style={{ marginBottom: '10px' }}
+              style={{ marginBottom: '10px', opacity: autoMode ? 0.5 : 1 }}
+              title={autoMode ? 'Kontrol dinonaktifkan - Mode Otomatis aktif' : ''}
             >
               {loading ? '⏱️ Memproses...' : (pumpAir ? '⏹️ Matikan Pompa' : '▶️ Nyalakan Pompa')}
             </button>
@@ -300,9 +415,10 @@ function OwnerManualControlPage() {
 
             <button
               onClick={() => togglePumpPupuk()}
-              disabled={loading || !deviceId}
+              disabled={loading || !deviceId || autoMode}
               className={`toggle-switch ${pumpPupuk ? 'active' : 'inactive'}`}
-              style={{ marginBottom: '10px' }}
+              style={{ marginBottom: '10px', opacity: autoMode ? 0.5 : 1 }}
+              title={autoMode ? 'Kontrol dinonaktifkan - Mode Otomatis aktif' : ''}
             >
               {loading ? '⏱️ Memproses...' : (pumpPupuk ? '⏹️ Matikan Pompa' : '▶️ Nyalakan Pompa')}
             </button>

@@ -117,6 +117,9 @@ function MonitoringPage() {
 
   // Data yang ditampilkan (filtered atau semua)
   const displayData = useFilter ? filteredData : sensorData;
+  
+  // State untuk expand table
+  const [expandedTable, setExpandedTable] = useState(false);
 
   // ✅ FIX 2: chartData sekarang memetakan EC, P, dan K
   const chartData = useMemo(() => {
@@ -428,9 +431,32 @@ function MonitoringPage() {
         boxShadow: '0 2px 8px rgba(0,0,0,0.04)',
         animation: 'slideIn 0.5s ease-out'
       }}>
-        <div style={{ marginBottom: '20px' }}>
-          <div style={{ fontSize: '18px', fontWeight: '600', color: '#2c3e50', marginBottom: '4px' }}>📋 Data Sensor Real-Time</div>
-          <div style={{ fontSize: '13px', color: '#7f8c8d' }}>Riwayat pembacaan sensor terbaru</div>
+        <div style={{ marginBottom: '20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div>
+            <div style={{ fontSize: '18px', fontWeight: '600', color: '#2c3e50', marginBottom: '4px' }}>📋 Data Sensor Real-Time</div>
+            <div style={{ fontSize: '13px', color: '#7f8c8d' }}>Riwayat pembacaan sensor terbaru {displayData.length > 0 && `(${displayData.length} data)`}</div>
+          </div>
+          {displayData.length > 20 && (
+            <button
+              onClick={() => setExpandedTable(!expandedTable)}
+              style={{
+                padding: '8px 16px',
+                borderRadius: '8px',
+                border: 'none',
+                backgroundColor: expandedTable ? '#e74c3c' : '#27ae60',
+                color: '#ffffff',
+                fontWeight: '600',
+                cursor: 'pointer',
+                fontSize: '13px',
+                transition: 'all 0.3s ease',
+                whiteSpace: 'nowrap'
+              }}
+              onMouseOver={(e) => e.target.style.transform = 'scale(1.05)'}
+              onMouseOut={(e) => e.target.style.transform = 'scale(1)'}
+            >
+              {expandedTable ? '🔽 Tutup' : '🔼 Lihat Semua (' + displayData.length + ')'}
+            </button>
+          )}
         </div>
 
         <div style={{ overflowX: 'auto', borderRadius: '12px', border: '1px solid #ecf0f1' }}>
@@ -456,7 +482,7 @@ function MonitoringPage() {
                   </td>
                 </tr>
               ) : displayData.length > 0 ? (
-                displayData.slice(0, 20).map((row, idx) => (
+                (expandedTable ? displayData : displayData.slice(0, 20)).map((row, idx) => (
                   <tr key={row.id} style={{
                     borderBottom: '1px solid #ecf0f1',
                     backgroundColor: idx % 2 === 0 ? '#ffffff' : '#f8f9fa',

@@ -10,6 +10,7 @@ function TrendsPage() {
   const [locationName, setLocationName] = useState('Memuat lokasi...');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [expandedTrendsTable, setExpandedTrendsTable] = useState(false);
 
   // Fetch data dari Backend
   useEffect(() => {
@@ -284,11 +285,32 @@ function TrendsPage() {
       </section>
             {/* TABEL RINCIAN 3 HARI */}
       <section className="card card-animate card-elevated">
-        <div className="card-header card-header-top">
+        <div className="card-header card-header-top" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div>
             <div className="card-title card-title-lg">Tabel Rincian Prediksi (3 Hari)</div>
             <div className="card-subtitle card-subtitle-lg">Berdasarkan integrasi cuaca BMKG dan Evapotranspirasi</div>
           </div>
+          {forecastData.length > 3 && (
+            <button
+              onClick={() => setExpandedTrendsTable(!expandedTrendsTable)}
+              style={{
+                padding: '8px 16px',
+                borderRadius: '8px',
+                border: 'none',
+                backgroundColor: expandedTrendsTable ? '#e74c3c' : '#27ae60',
+                color: '#ffffff',
+                fontWeight: '600',
+                cursor: 'pointer',
+                fontSize: '13px',
+                transition: 'all 0.3s ease',
+                whiteSpace: 'nowrap'
+              }}
+              onMouseOver={(e) => e.target.style.transform = 'scale(1.05)'}
+              onMouseOut={(e) => e.target.style.transform = 'scale(1)'}
+            >
+              {expandedTrendsTable ? '🔽 Tutup' : '🔼 Lihat Semua (' + forecastData.length + ')'}
+            </button>
+          )}
         </div>
         <div className="table-wrapper u-mt-05">
           <table className="table table-compact">
@@ -308,8 +330,8 @@ function TrendsPage() {
                     ⏳ Memuat data dari server...
                   </td>
                 </tr>
-              ) : forecastData.length > 0 ? (
-                forecastData.map((day, idx) => (
+              ) : (expandedTrendsTable ? forecastData : forecastData.slice(0, 3)).length > 0 ? (
+                (expandedTrendsTable ? forecastData : forecastData.slice(0, 3)).map((day, idx) => (
                   <tr key={idx}>
                     <td style={{ fontWeight: '500', paddingLeft: '15px' }}>{day.date}</td>
                     <td>{day.weather} ({day.temp}°C)</td>
