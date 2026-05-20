@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { animate } from 'animejs';
 import { getLatestSensorData } from '../services/sensorApi'; // Sesuaikan path ini dengan struktur folder Anda!
@@ -8,6 +8,10 @@ function MonitoringPage() {
   const [sensorData, setSensorData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [canScrollLeft, setCanScrollLeft] = useState(false);
+  const [canScrollRight, setCanScrollRight] = useState(false);
+  const [expandedTable, setExpandedTable] = useState(false);
+  const tableWrapperRef = useRef(null);
   const [retryCount, setRetryCount] = useState(0);
   
   // State untuk form filter
@@ -16,6 +20,18 @@ function MonitoringPage() {
   const [selectedParam, setSelectedParam] = useState('Semua Parameter');
   const [filteredData, setFilteredData] = useState([]);
   const [useFilter, setUseFilter] = useState(false);
+  
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(0);
+  const [windowWidth, setWindowWidth] = useState(typeof window !== 'undefined' ? window.innerWidth : 1024);
+  const ITEMS_PER_PAGE = 15;
+
+  // Track window resize for responsive design
+  useEffect(() => {
+    const handleResize = () => setWindowWidth(window.innerWidth);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
   
   const DEVICE_ID = "ESP32-MAC-A001";
 
@@ -113,13 +129,68 @@ function MonitoringPage() {
     setSelectedParam('Semua Parameter');
     setFilteredData([]);
     setUseFilter(false);
+    setCurrentPage(0);
   };
 
   // Data yang ditampilkan (filtered atau semua)
-  const displayData = useFilter ? filteredData : sensorData;
+  const dataSource = useFilter ? filteredData : sensorData;
   
-  // State untuk expand table
-  const [expandedTable, setExpandedTable] = useState(false);
+  // Pagination logic
+  const totalPages = Math.ceil(dataSource.length / ITEMS_PER_PAGE);
+  const startIndex = currentPage * ITEMS_PER_PAGE;
+  const endIndex = startIndex + ITEMS_PER_PAGE;
+  const displayData = dataSource.slice(startIndex, endIndex);
+  
+  const canGoPrevious = currentPage > 0;
+  const canGoNext = currentPage < totalPages - 1;
+  
+  const handlePreviousPage = () => {
+    if (canGoPrevious) {
+      setCurrentPage(currentPage - 1);
+    }
+  };
+  
+  const handleNextPage = () => {
+    if (canGoNext) {
+      setCurrentPage(currentPage + 1);
+    }
+  };
+
+  // === FUNGSI SCROLL TABEL HORIZONTAL ===
+  const handleMonitoringTableScroll = () => {
+    if (tableWrapperRef.current) {
+      const element = tableWrapperRef.current;
+      setCanScrollLeft(element.scrollLeft > 0);
+      setCanScrollRight(element.scrollLeft < element.scrollWidth - element.clientWidth - 10);
+    }
+  };
+
+  const scrollMonitoringTableLeft = () => {
+    if (tableWrapperRef.current) {
+      tableWrapperRef.current.scrollBy({
+        left: -300,
+        behavior: 'smooth'
+      });
+    }
+  };
+
+  const scrollMonitoringTableRight = () => {
+    if (tableWrapperRef.current) {
+      tableWrapperRef.current.scrollBy({
+        left: 300,
+        behavior: 'smooth'
+      });
+    }
+  };
+
+  // === EFFECT: CEK SCROLL POSITION SAAT TABEL BERUBAH ===
+  useEffect(() => {
+    if (tableWrapperRef.current) {
+      setTimeout(handleMonitoringTableScroll, 300);
+    }
+    // Reset ke halaman 1 saat data berubah
+    setCurrentPage(0);
+  }, [displayData.length]);
 
   // ✅ FIX 2: chartData sekarang memetakan EC, P, dan K
   const chartData = useMemo(() => {
@@ -431,36 +502,116 @@ function MonitoringPage() {
         boxShadow: '0 2px 8px rgba(0,0,0,0.04)',
         animation: 'slideIn 0.5s ease-out'
       }}>
-        <div style={{ marginBottom: '20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div style={{ marginBottom: '20px', display: 'flex', flexDirection: windowWidth < 768 ? 'column' : 'row', justifyContent: windowWidth < 768 ? 'flex-start' : 'space-between', alignItems: windowWidth < 768 ? 'flex-start' : 'center', gap: windowWidth < 768 ? '12px' : '0' }}>
           <div>
             <div style={{ fontSize: '18px', fontWeight: '600', color: '#2c3e50', marginBottom: '4px' }}>📋 Data Sensor Real-Time</div>
             <div style={{ fontSize: '13px', color: '#7f8c8d' }}>Riwayat pembacaan sensor terbaru {displayData.length > 0 && `(${displayData.length} data)`}</div>
           </div>
-          {displayData.length > 20 && (
-            <button
-              onClick={() => setExpandedTable(!expandedTable)}
-              style={{
-                padding: '8px 16px',
-                borderRadius: '8px',
-                border: 'none',
-                backgroundColor: expandedTable ? '#e74c3c' : '#27ae60',
-                color: '#ffffff',
-                fontWeight: '600',
-                cursor: 'pointer',
-                fontSize: '13px',
-                transition: 'all 0.3s ease',
+          {dataSource.length > 0 && (
+            <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: windowWidth < 768 ? 'wrap' : 'nowrap' }}>
+              {/* Info Halaman */}
+              <div style={{ 
+                fontSize: '12px', 
+                color: '#666', 
+                marginRight: '8px',
                 whiteSpace: 'nowrap'
-              }}
-              onMouseOver={(e) => e.target.style.transform = 'scale(1.05)'}
-              onMouseOut={(e) => e.target.style.transform = 'scale(1)'}
-            >
-              {expandedTable ? '🔽 Tutup' : '🔼 Lihat Semua (' + displayData.length + ')'}
-            </button>
+              }}>
+                Hal. {currentPage + 1} dari {totalPages > 0 ? totalPages : 1}
+              </div>
+              
+              {/* Tombol Sebelumnya */}
+              <button
+                onClick={handlePreviousPage}
+                disabled={!canGoPrevious}
+                style={{
+                  padding: '8px 12px',
+                  borderRadius: '6px',
+                  border: 'none',
+                  backgroundColor: canGoPrevious ? '#3498db' : '#ecf0f1',
+                  color: canGoPrevious ? '#fff' : '#bdc3c7',
+                  cursor: canGoPrevious ? 'pointer' : 'not-allowed',
+                  fontWeight: '600',
+                  fontSize: '12px',
+                  transition: 'all 0.3s ease',
+                  whiteSpace: 'nowrap'
+                }}
+                onMouseOver={(e) => canGoPrevious && (e.target.style.backgroundColor = '#2980b9')}
+                onMouseOut={(e) => canGoPrevious && (e.target.style.backgroundColor = '#3498db')}
+                title="Lihat data sebelumnya"
+              >
+                ◀ Sebelumnya
+              </button>
+
+              {/* Tombol Sesudahnya */}
+              <button
+                onClick={handleNextPage}
+                disabled={!canGoNext}
+                style={{
+                  padding: '8px 12px',
+                  borderRadius: '6px',
+                  border: 'none',
+                  backgroundColor: canGoNext ? '#27ae60' : '#ecf0f1',
+                  color: canGoNext ? '#fff' : '#bdc3c7',
+                  cursor: canGoNext ? 'pointer' : 'not-allowed',
+                  fontWeight: '600',
+                  fontSize: '12px',
+                  transition: 'all 0.3s ease',
+                  whiteSpace: 'nowrap'
+                }}
+                onMouseOver={(e) => canGoNext && (e.target.style.backgroundColor = '#229954')}
+                onMouseOut={(e) => canGoNext && (e.target.style.backgroundColor = '#27ae60')}
+                title="Lihat data selanjutnya"
+              >
+                Sesudahnya ▶
+              </button>
+            </div>
           )}
         </div>
 
-        <div style={{ overflowX: 'auto', borderRadius: '12px', border: '1px solid #ecf0f1' }}>
-          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '14px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', position: 'relative' }}>
+          {/* Tombol Scroll Kiri */}
+          <button
+            onClick={scrollMonitoringTableLeft}
+            disabled={!canScrollLeft}
+            style={{
+              padding: '8px 10px',
+              borderRadius: '6px',
+              border: 'none',
+              backgroundColor: canScrollLeft ? '#3498db' : '#ecf0f1',
+              color: canScrollLeft ? '#fff' : '#bdc3c7',
+              cursor: canScrollLeft ? 'pointer' : 'not-allowed',
+              fontSize: '16px',
+              fontWeight: '600',
+              transition: 'all 0.3s ease',
+              flexShrink: 0,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              minWidth: '36px',
+              height: '36px'
+            }}
+            onMouseOver={(e) => canScrollLeft && (e.target.style.backgroundColor = '#2980b9')}
+            onMouseOut={(e) => canScrollLeft && (e.target.style.backgroundColor = '#3498db')}
+            title="Scroll ke kiri"
+          >
+            ◀
+          </button>
+
+          {/* Tabel Container dengan Scroll */}
+          <div
+            ref={tableWrapperRef}
+            onScroll={handleMonitoringTableScroll}
+            style={{
+              flex: 1,
+              overflowX: 'auto',
+              overflowY: 'hidden',
+              borderRadius: '6px',
+              WebkitOverflowScrolling: 'touch',
+              scrollBehavior: 'smooth'
+            }}
+          >
+            <div style={{ overflowX: 'auto', borderRadius: '12px', border: '1px solid #ecf0f1' }}>
+              <table style={{ width: '100%', minWidth: '100%', borderCollapse: 'collapse', fontSize: '14px' }}>
             <thead>
               <tr style={{ backgroundColor: '#f8f9fa', borderBottom: '2px solid #ecf0f1' }}>
                 <th style={{ padding: '12px 16px', textAlign: 'left', color: '#2c3e50', fontWeight: '600' }}>Waktu</th>
@@ -482,7 +633,7 @@ function MonitoringPage() {
                   </td>
                 </tr>
               ) : displayData.length > 0 ? (
-                (expandedTable ? displayData : displayData.slice(0, 20)).map((row, idx) => (
+                displayData.map((row, idx) => (
                   <tr key={row.id} style={{
                     borderBottom: '1px solid #ecf0f1',
                     backgroundColor: idx % 2 === 0 ? '#ffffff' : '#f8f9fa',
@@ -525,6 +676,36 @@ function MonitoringPage() {
               )}
             </tbody>
           </table>
+            </div>
+          </div>
+
+          {/* Tombol Scroll Kanan */}
+          <button
+            onClick={scrollMonitoringTableRight}
+            disabled={!canScrollRight}
+            style={{
+              padding: '8px 10px',
+              borderRadius: '6px',
+              border: 'none',
+              backgroundColor: canScrollRight ? '#3498db' : '#ecf0f1',
+              color: canScrollRight ? '#fff' : '#bdc3c7',
+              cursor: canScrollRight ? 'pointer' : 'not-allowed',
+              fontSize: '16px',
+              fontWeight: '600',
+              transition: 'all 0.3s ease',
+              flexShrink: 0,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              minWidth: '36px',
+              height: '36px'
+            }}
+            onMouseOver={(e) => canScrollRight && (e.target.style.backgroundColor = '#2980b9')}
+            onMouseOut={(e) => canScrollRight && (e.target.style.backgroundColor = '#3498db')}
+            title="Scroll ke kanan"
+          >
+            ▶
+          </button>
         </div>
       </section>
 

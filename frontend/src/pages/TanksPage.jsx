@@ -1,4 +1,4 @@
-import { useMemo, useState, useEffect, useCallback } from 'react';
+import { useMemo, useState, useEffect, useCallback, useRef } from 'react';
 import { getLatestWaterLevel } from '../services/controlApi';
 
 const DEVICE_ID = "ESP32-MAC-A001"; // ID Perangkat
@@ -11,6 +11,22 @@ function TankMonitoringPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [expandedTankTable, setExpandedTankTable] = useState(false);
+  const [scrollPosition, setScrollPosition] = useState(0);
+  const [canScrollLeft, setCanScrollLeft] = useState(false);
+  const [canScrollRight, setCanScrollRight] = useState(false);
+  const tableWrapperRef = useRef(null);
+  
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(0);
+  const [windowWidth, setWindowWidth] = useState(typeof window !== 'undefined' ? window.innerWidth : 1024);
+  const ITEMS_PER_PAGE = 15;
+
+  // Track window resize for responsive design
+  useEffect(() => {
+    const handleResize = () => setWindowWidth(window.innerWidth);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   // Helper function: Status disinkronkan dengan backend (Cut-off di bawah 10 cm)
   const determinateStatus = (tinggiCm) => {
@@ -18,6 +34,41 @@ function TankMonitoringPage() {
     if (tinggiCm >= 10) return 'warning';   // Siaga (10 cm - 19.9 cm)
     return 'critical';                      // Kritis (< 10 cm, pompa mati otomatis)
   };
+
+  // === FUNGSI SCROLL TABEL HORIZONTAL ===
+  const handleTableScroll = () => {
+    if (tableWrapperRef.current) {
+      const element = tableWrapperRef.current;
+      setScrollPosition(element.scrollLeft);
+      setCanScrollLeft(element.scrollLeft > 0);
+      setCanScrollRight(element.scrollLeft < element.scrollWidth - element.clientWidth - 10);
+    }
+  };
+
+  const scrollTableLeft = () => {
+    if (tableWrapperRef.current) {
+      tableWrapperRef.current.scrollBy({
+        left: -300,
+        behavior: 'smooth'
+      });
+    }
+  };
+
+  const scrollTableRight = () => {
+    if (tableWrapperRef.current) {
+      tableWrapperRef.current.scrollBy({
+        left: 300,
+        behavior: 'smooth'
+      });
+    }
+  };
+
+  // === EFFECT: CEK SCROLL POSITION SAAT TABEL BERUBAH ===
+  useEffect(() => {
+    if (tableWrapperRef.current) {
+      setTimeout(handleTableScroll, 300);
+    }
+  }, [expandedTankTable, tankData]);
 
   // === FUNGSI TARIK DATA ===
   const fetchTankData = useCallback(async () => {
@@ -93,6 +144,32 @@ function TankMonitoringPage() {
       return matchesFrom && matchesTo && matchesTank;
     });
   }, [dateFrom, dateTo, tank, tankData]);
+  
+  // Pagination logic
+  const totalPages = Math.ceil(filtered.length / ITEMS_PER_PAGE);
+  const startIndex = currentPage * ITEMS_PER_PAGE;
+  const endIndex = startIndex + ITEMS_PER_PAGE;
+  const displayData = filtered.slice(startIndex, endIndex);
+  
+  const canGoPrevious = currentPage > 0;
+  const canGoNext = currentPage < totalPages - 1;
+  
+  const handlePreviousPage = () => {
+    if (canGoPrevious) {
+      setCurrentPage(currentPage - 1);
+    }
+  };
+  
+  const handleNextPage = () => {
+    if (canGoNext) {
+      setCurrentPage(currentPage + 1);
+    }
+  };
+  
+  // Reset page saat filter berubah
+  useEffect(() => {
+    setCurrentPage(0);
+  }, [filtered.length]);
 
   const latest = filtered.length > 0 ? filtered[0] : null;
 
@@ -240,42 +317,121 @@ function TankMonitoringPage() {
 
       {/* TABEL RIWAYAT DI BAWAH */}
       <section className="card card-animate card-animate-delay-4 card-elevated">
-        <div className="card-header card-header-top" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div style={{ marginBottom: '20px', display: 'flex', flexDirection: windowWidth < 768 ? 'column' : 'row', justifyContent: windowWidth < 768 ? 'flex-start' : 'space-between', alignItems: windowWidth < 768 ? 'flex-start' : 'center', gap: windowWidth < 768 ? '12px' : '0' }}>
           <div>
-            <div className="card-title card-title-lg">Riwayat Level Tandon {filtered.length > 0 && `(${filtered.length} data)`}</div>
-            <div className="card-subtitle card-subtitle-lg">
+            <div style={{ fontSize: '18px', fontWeight: '600', color: '#2c3e50' }}>💧 Riwayat Level Tandon {filtered.length > 0 && `(${filtered.length} data)`}</div>
+            <div style={{ fontSize: '13px', color: '#7f8c8d' }}>
               Data riwayat fluktuasi air berdasarkan waktu (Terbaru di atas)
             </div>
           </div>
-          {filtered.length > 20 && (
-            <button
-              onClick={() => setExpandedTankTable(!expandedTankTable)}
-              style={{
-                padding: '8px 16px',
-                borderRadius: '8px',
-                border: 'none',
-                backgroundColor: expandedTankTable ? '#e74c3c' : '#27ae60',
-                color: '#ffffff',
-                fontWeight: '600',
-                cursor: 'pointer',
-                fontSize: '13px',
-                transition: 'all 0.3s ease',
+          {filtered.length > 0 && (
+            <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: windowWidth < 768 ? 'wrap' : 'nowrap' }}>
+              {/* Info Halaman */}
+              <div style={{ 
+                fontSize: '12px', 
+                color: '#666', 
+                marginRight: '8px',
                 whiteSpace: 'nowrap'
-              }}
-              onMouseOver={(e) => e.target.style.transform = 'scale(1.05)'}
-              onMouseOut={(e) => e.target.style.transform = 'scale(1)'}
-            >
-              {expandedTankTable ? '🔽 Tutup' : '🔼 Lihat Semua (' + filtered.length + ')'}
-            </button>
+              }}>
+                Hal. {currentPage + 1} dari {totalPages > 0 ? totalPages : 1}
+              </div>
+              
+              {/* Tombol Sebelumnya */}
+              <button
+                onClick={handlePreviousPage}
+                disabled={!canGoPrevious}
+                style={{
+                  padding: '8px 12px',
+                  borderRadius: '6px',
+                  border: 'none',
+                  backgroundColor: canGoPrevious ? '#3498db' : '#ecf0f1',
+                  color: canGoPrevious ? '#fff' : '#bdc3c7',
+                  cursor: canGoPrevious ? 'pointer' : 'not-allowed',
+                  fontWeight: '600',
+                  fontSize: '12px',
+                  transition: 'all 0.3s ease',
+                  whiteSpace: 'nowrap'
+                }}
+                onMouseOver={(e) => canGoPrevious && (e.target.style.backgroundColor = '#2980b9')}
+                onMouseOut={(e) => canGoPrevious && (e.target.style.backgroundColor = '#3498db')}
+                title="Lihat data sebelumnya"
+              >
+                ◀ Sebelumnya
+              </button>
+
+              {/* Tombol Sesudahnya */}
+              <button
+                onClick={handleNextPage}
+                disabled={!canGoNext}
+                style={{
+                  padding: '8px 12px',
+                  borderRadius: '6px',
+                  border: 'none',
+                  backgroundColor: canGoNext ? '#27ae60' : '#ecf0f1',
+                  color: canGoNext ? '#fff' : '#bdc3c7',
+                  cursor: canGoNext ? 'pointer' : 'not-allowed',
+                  fontWeight: '600',
+                  fontSize: '12px',
+                  transition: 'all 0.3s ease',
+                  whiteSpace: 'nowrap'
+                }}
+                onMouseOver={(e) => canGoNext && (e.target.style.backgroundColor = '#229954')}
+                onMouseOut={(e) => canGoNext && (e.target.style.backgroundColor = '#27ae60')}
+                title="Lihat data selanjutnya"
+              >
+                Sesudahnya ▶
+              </button>
+            </div>
           )}
         </div>
-        <div className="table-wrapper u-mt-05">
+        <div className="table-wrapper u-mt-05" style={{ display: 'flex', alignItems: 'center', gap: '8px', position: 'relative' }}>
+          {/* Tombol Scroll Kiri */}
+          <button
+            onClick={scrollTableLeft}
+            disabled={!canScrollLeft}
+            style={{
+              padding: '8px 10px',
+              borderRadius: '6px',
+              border: 'none',
+              backgroundColor: canScrollLeft ? '#3498db' : '#ecf0f1',
+              color: canScrollLeft ? '#fff' : '#bdc3c7',
+              cursor: canScrollLeft ? 'pointer' : 'not-allowed',
+              fontSize: '16px',
+              fontWeight: '600',
+              transition: 'all 0.3s ease',
+              flexShrink: 0,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              minWidth: '36px',
+              height: '36px'
+            }}
+            onMouseOver={(e) => canScrollLeft && (e.target.style.backgroundColor = '#2980b9')}
+            onMouseOut={(e) => canScrollLeft && (e.target.style.backgroundColor = '#3498db')}
+            title="Scroll ke kiri"
+          >
+            ◀
+          </button>
+
+          {/* Tabel Container dengan Scroll */}
+          <div
+            ref={tableWrapperRef}
+            onScroll={handleTableScroll}
+            style={{
+              flex: 1,
+              overflowX: 'auto',
+              overflowY: 'hidden',
+              borderRadius: '6px',
+              WebkitOverflowScrolling: 'touch',
+              scrollBehavior: 'smooth'
+            }}
+          >
           {loading && filtered.length === 0 ? (
             <div className="text-center text-muted" style={{ padding: '3rem' }}>
               <p>⏳ Sedang menyinkronkan data...</p>
             </div>
-          ) : (expandedTankTable ? filtered : filtered.slice(0, 20)).length > 0 ? (
-            <table className="table table-compact">
+          ) : (displayData).length > 0 ? (
+            <table className="table table-compact" style={{ minWidth: '100%', width: 'auto' }}>
               <thead>
                 <tr style={{ borderBottom: '2px solid #3498db' }}>
                   <th style={{ color: '#2c3e50', padding: '12px' }}>Waktu Catat</th>
@@ -285,7 +441,7 @@ function TankMonitoringPage() {
                 </tr>
               </thead>
               <tbody>
-                {(expandedTankTable ? filtered : filtered.slice(0, 20)).map((row, index) => (
+                {(displayData).map((row, index) => (
                   <tr key={`${row.timestampStr}-${index}`} style={{ borderBottom: '1px solid #f9f9f9' }}>
                     <td style={{ fontWeight: '500', padding: '10px 12px' }}>{row.time}</td>
                     <td style={{ padding: '10px 12px' }}>{row.tank}</td>
@@ -315,6 +471,35 @@ function TankMonitoringPage() {
               <p>📭 Tidak ada data riwayat yang cocok dengan filter.</p>
             </div>
           )}
+          </div>
+
+          {/* Tombol Scroll Kanan */}
+          <button
+            onClick={scrollTableRight}
+            disabled={!canScrollRight}
+            style={{
+              padding: '8px 10px',
+              borderRadius: '6px',
+              border: 'none',
+              backgroundColor: canScrollRight ? '#3498db' : '#ecf0f1',
+              color: canScrollRight ? '#fff' : '#bdc3c7',
+              cursor: canScrollRight ? 'pointer' : 'not-allowed',
+              fontSize: '16px',
+              fontWeight: '600',
+              transition: 'all 0.3s ease',
+              flexShrink: 0,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              minWidth: '36px',
+              height: '36px'
+            }}
+            onMouseOver={(e) => canScrollRight && (e.target.style.backgroundColor = '#2980b9')}
+            onMouseOut={(e) => canScrollRight && (e.target.style.backgroundColor = '#3498db')}
+            title="Scroll ke kanan"
+          >
+            ▶
+          </button>
         </div>
       </section>
     </div>

@@ -15,10 +15,25 @@ function SmartVisionPage() {
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [selectedAnalysis, setSelectedAnalysis] = useState(null);
   const [expandedHistoryTable, setExpandedHistoryTable] = useState(false);
+  const [canScrollLeft, setCanScrollLeft] = useState(false);
+  const [canScrollRight, setCanScrollRight] = useState(false);
+  const diagnosisTableWrapperRef = useRef(null);
   
   // Fitur Filter dari Kode 2
   const DEVICES = ["SEMUA", "ESP32-MAC-A001", "ESPCAM-001"]; 
   const [filterDevice, setFilterDevice] = useState("SEMUA");
+  
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(0);
+  const [windowWidth, setWindowWidth] = useState(typeof window !== 'undefined' ? window.innerWidth : 1024);
+  const ITEMS_PER_PAGE = 15;
+
+  // Track window resize for responsive design
+  useEffect(() => {
+    const handleResize = () => setWindowWidth(window.innerWidth);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
   
   const fileInputRef = useRef(null);
   const videoRef = useRef(null);
@@ -63,6 +78,32 @@ function SmartVisionPage() {
     if (filterDevice === "SEMUA") return history;
     return history.filter(item => item.perangkat_id === filterDevice);
   }, [history, filterDevice]);
+  
+  // Pagination logic
+  const totalPages = Math.ceil(filteredHistory.length / ITEMS_PER_PAGE);
+  const startIndex = currentPage * ITEMS_PER_PAGE;
+  const endIndex = startIndex + ITEMS_PER_PAGE;
+  const displayHistory = filteredHistory.slice(startIndex, endIndex);
+  
+  const canGoPrevious = currentPage > 0;
+  const canGoNext = currentPage < totalPages - 1;
+  
+  const handlePreviousPage = () => {
+    if (canGoPrevious) {
+      setCurrentPage(currentPage - 1);
+    }
+  };
+  
+  const handleNextPage = () => {
+    if (canGoNext) {
+      setCurrentPage(currentPage + 1);
+    }
+  };
+  
+  // Reset page saat filter berubah
+  useEffect(() => {
+    setCurrentPage(0);
+  }, [filteredHistory.length]);
 
   // --- 2. LOGIKA KAMERA & GALERI (DARI KODE 1) ---
   const handleOpenCamera = async () => {
@@ -140,6 +181,40 @@ function SmartVisionPage() {
     setSelectedAnalysis(null);
   };
 
+  // === FUNGSI SCROLL TABEL HORIZONTAL DIAGNOSIS ===
+  const handleDiagnosisTableScroll = () => {
+    if (diagnosisTableWrapperRef.current) {
+      const element = diagnosisTableWrapperRef.current;
+      setCanScrollLeft(element.scrollLeft > 0);
+      setCanScrollRight(element.scrollLeft < element.scrollWidth - element.clientWidth - 10);
+    }
+  };
+
+  const scrollDiagnosisTableLeft = () => {
+    if (diagnosisTableWrapperRef.current) {
+      diagnosisTableWrapperRef.current.scrollBy({
+        left: -300,
+        behavior: 'smooth'
+      });
+    }
+  };
+
+  const scrollDiagnosisTableRight = () => {
+    if (diagnosisTableWrapperRef.current) {
+      diagnosisTableWrapperRef.current.scrollBy({
+        left: 300,
+        behavior: 'smooth'
+      });
+    }
+  };
+
+  // === EFFECT: CEK SCROLL POSITION SAAT TABEL BERUBAH ===
+  useEffect(() => {
+    if (diagnosisTableWrapperRef.current) {
+      setTimeout(handleDiagnosisTableScroll, 300);
+    }
+  }, [expandedHistoryTable, history]);
+
   return (
     <div className="page page-with-padding page-shell" style={{ backgroundColor: '#f8f9fa' }}>
       <div className="page-header u-mb-15">
@@ -211,39 +286,119 @@ function SmartVisionPage() {
 
       {/* Riwayat & Filter */}
       <section className="card card-elevated">
-        <div className="card-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div className="card-header" style={{ display: 'flex', flexDirection: windowWidth < 768 ? 'column' : 'row', justifyContent: windowWidth < 768 ? 'flex-start' : 'space-between', alignItems: windowWidth < 768 ? 'flex-start' : 'center', gap: windowWidth < 768 ? '12px' : '0' }}>
           <div style={{ flex: 1 }}>
             <div className="card-title">Riwayat Log {filteredHistory.length > 0 && `(${filteredHistory.length} data)`}</div>
           </div>
-          <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
-            {filteredHistory.length > 10 && (
-              <button
-                onClick={() => setExpandedHistoryTable(!expandedHistoryTable)}
-                style={{
-                  padding: '6px 12px',
-                  borderRadius: '6px',
-                  border: 'none',
-                  backgroundColor: expandedHistoryTable ? '#e74c3c' : '#27ae60',
-                  color: '#ffffff',
-                  fontWeight: '600',
-                  cursor: 'pointer',
-                  fontSize: '12px',
-                  transition: 'all 0.3s ease',
+          <div style={{ display: 'flex', gap: '10px', alignItems: 'center', flexWrap: windowWidth < 768 ? 'wrap' : 'nowrap' }}>
+            {filteredHistory.length > 0 && (
+              <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                {/* Info Halaman */}
+                <div style={{ 
+                  fontSize: '12px', 
+                  color: '#666', 
+                  marginRight: '8px',
                   whiteSpace: 'nowrap'
-                }}
-                onMouseOver={(e) => e.target.style.transform = 'scale(1.05)'}
-                onMouseOut={(e) => e.target.style.transform = 'scale(1)'}
-              >
-                {expandedHistoryTable ? '🔽 Tutup' : '🔼 Lihat Semua'}
-              </button>
+                }}>
+                  Hal. {currentPage + 1} dari {totalPages > 0 ? totalPages : 1}
+                </div>
+                
+                {/* Tombol Sebelumnya */}
+                <button
+                  onClick={handlePreviousPage}
+                  disabled={!canGoPrevious}
+                  style={{
+                    padding: '8px 12px',
+                    borderRadius: '6px',
+                    border: 'none',
+                    backgroundColor: canGoPrevious ? '#3498db' : '#ecf0f1',
+                    color: canGoPrevious ? '#fff' : '#bdc3c7',
+                    cursor: canGoPrevious ? 'pointer' : 'not-allowed',
+                    fontWeight: '600',
+                    fontSize: '12px',
+                    transition: 'all 0.3s ease',
+                    whiteSpace: 'nowrap'
+                  }}
+                  onMouseOver={(e) => canGoPrevious && (e.target.style.backgroundColor = '#2980b9')}
+                  onMouseOut={(e) => canGoPrevious && (e.target.style.backgroundColor = '#3498db')}
+                  title="Lihat data sebelumnya"
+                >
+                  ◀ Sebelumnya
+                </button>
+
+                {/* Tombol Sesudahnya */}
+                <button
+                  onClick={handleNextPage}
+                  disabled={!canGoNext}
+                  style={{
+                    padding: '8px 12px',
+                    borderRadius: '6px',
+                    border: 'none',
+                    backgroundColor: canGoNext ? '#27ae60' : '#ecf0f1',
+                    color: canGoNext ? '#fff' : '#bdc3c7',
+                    cursor: canGoNext ? 'pointer' : 'not-allowed',
+                    fontWeight: '600',
+                    fontSize: '12px',
+                    transition: 'all 0.3s ease',
+                    whiteSpace: 'nowrap'
+                  }}
+                  onMouseOver={(e) => canGoNext && (e.target.style.backgroundColor = '#229954')}
+                  onMouseOut={(e) => canGoNext && (e.target.style.backgroundColor = '#27ae60')}
+                  title="Lihat data selanjutnya"
+                >
+                  Sesudahnya ▶
+                </button>
+              </div>
             )}
             <select value={filterDevice} onChange={(e) => setFilterDevice(e.target.value)} style={{ padding: '5px', borderRadius: '8px' }}>
               {DEVICES.map(d => <option key={d} value={d}>{d}</option>)}
             </select>
           </div>
         </div>
-        <div className="u-overflow-x">
-          <table style={{ width: '100%' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', position: 'relative' }}>
+          {/* Tombol Scroll Kiri */}
+          <button
+            onClick={scrollDiagnosisTableLeft}
+            disabled={!canScrollLeft}
+            style={{
+              padding: '8px 10px',
+              borderRadius: '6px',
+              border: 'none',
+              backgroundColor: canScrollLeft ? '#3498db' : '#ecf0f1',
+              color: canScrollLeft ? '#fff' : '#bdc3c7',
+              cursor: canScrollLeft ? 'pointer' : 'not-allowed',
+              fontSize: '16px',
+              fontWeight: '600',
+              transition: 'all 0.3s ease',
+              flexShrink: 0,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              minWidth: '36px',
+              height: '36px'
+            }}
+            onMouseOver={(e) => canScrollLeft && (e.target.style.backgroundColor = '#2980b9')}
+            onMouseOut={(e) => canScrollLeft && (e.target.style.backgroundColor = '#3498db')}
+            title="Scroll ke kiri"
+          >
+            ◀
+          </button>
+
+          {/* Tabel Container dengan Scroll */}
+          <div
+            ref={diagnosisTableWrapperRef}
+            onScroll={handleDiagnosisTableScroll}
+            style={{
+              flex: 1,
+              overflowX: 'auto',
+              overflowY: 'hidden',
+              borderRadius: '6px',
+              WebkitOverflowScrolling: 'touch',
+              scrollBehavior: 'smooth'
+            }}
+          >
+            <div className="u-overflow-x">
+              <table style={{ width: '100%', minWidth: '100%' }}>
             <thead>
               <tr style={{ textAlign: 'left', borderBottom: '1px solid #eee' }}>
                 <th style={{ padding: '10px' }}>Foto</th>
@@ -253,7 +408,7 @@ function SmartVisionPage() {
               </tr>
             </thead>
             <tbody>
-              {(expandedHistoryTable ? filteredHistory : filteredHistory.slice(0, 10)).map(item => (
+              {displayHistory.map(item => (
                 <tr 
                   key={item.id} 
                   style={{ 
@@ -273,6 +428,36 @@ function SmartVisionPage() {
               ))}
             </tbody>
           </table>
+            </div>
+          </div>
+
+          {/* Tombol Scroll Kanan */}
+          <button
+            onClick={scrollDiagnosisTableRight}
+            disabled={!canScrollRight}
+            style={{
+              padding: '8px 10px',
+              borderRadius: '6px',
+              border: 'none',
+              backgroundColor: canScrollRight ? '#3498db' : '#ecf0f1',
+              color: canScrollRight ? '#fff' : '#bdc3c7',
+              cursor: canScrollRight ? 'pointer' : 'not-allowed',
+              fontSize: '16px',
+              fontWeight: '600',
+              transition: 'all 0.3s ease',
+              flexShrink: 0,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              minWidth: '36px',
+              height: '36px'
+            }}
+            onMouseOver={(e) => canScrollRight && (e.target.style.backgroundColor = '#2980b9')}
+            onMouseOut={(e) => canScrollRight && (e.target.style.backgroundColor = '#3498db')}
+            title="Scroll ke kanan"
+          >
+            ▶
+          </button>
         </div>
       </section>
       <canvas ref={canvasRef} style={{ display: 'none' }} />

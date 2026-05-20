@@ -11,6 +11,18 @@ function TrendsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [expandedTrendsTable, setExpandedTrendsTable] = useState(false);
+  
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(0);
+  const [windowWidth, setWindowWidth] = useState(typeof window !== 'undefined' ? window.innerWidth : 1024);
+  const ITEMS_PER_PAGE = 15;
+
+  // Track window resize for responsive design
+  useEffect(() => {
+    const handleResize = () => setWindowWidth(window.innerWidth);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   // Fetch data dari Backend
   useEffect(() => {
@@ -38,6 +50,32 @@ function TrendsPage() {
 
     fetchWeather();
   }, []);
+  
+  // Pagination logic
+  const totalPages = Math.ceil(forecastData.length / ITEMS_PER_PAGE);
+  const startIndex = currentPage * ITEMS_PER_PAGE;
+  const endIndex = startIndex + ITEMS_PER_PAGE;
+  const displayData = forecastData.slice(startIndex, endIndex);
+  
+  const canGoPrevious = currentPage > 0;
+  const canGoNext = currentPage < totalPages - 1;
+  
+  const handlePreviousPage = () => {
+    if (canGoPrevious) {
+      setCurrentPage(currentPage - 1);
+    }
+  };
+  
+  const handleNextPage = () => {
+    if (canGoNext) {
+      setCurrentPage(currentPage + 1);
+    }
+  };
+  
+  // Reset page saat data berubah
+  useEffect(() => {
+    setCurrentPage(0);
+  }, [forecastData.length]);
 
   // Membuat rekomendasi dinamis berdasarkan data array 3 Hari
   const generateRecommendations = () => {
@@ -290,26 +328,64 @@ function TrendsPage() {
             <div className="card-title card-title-lg">Tabel Rincian Prediksi (3 Hari)</div>
             <div className="card-subtitle card-subtitle-lg">Berdasarkan integrasi cuaca BMKG dan Evapotranspirasi</div>
           </div>
-          {forecastData.length > 3 && (
-            <button
-              onClick={() => setExpandedTrendsTable(!expandedTrendsTable)}
-              style={{
-                padding: '8px 16px',
-                borderRadius: '8px',
-                border: 'none',
-                backgroundColor: expandedTrendsTable ? '#e74c3c' : '#27ae60',
-                color: '#ffffff',
-                fontWeight: '600',
-                cursor: 'pointer',
-                fontSize: '13px',
-                transition: 'all 0.3s ease',
+          {forecastData.length > 0 && (
+            <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+              {/* Info Halaman */}
+              <div style={{ 
+                fontSize: '12px', 
+                color: '#666', 
+                marginRight: '8px',
                 whiteSpace: 'nowrap'
-              }}
-              onMouseOver={(e) => e.target.style.transform = 'scale(1.05)'}
-              onMouseOut={(e) => e.target.style.transform = 'scale(1)'}
-            >
-              {expandedTrendsTable ? '🔽 Tutup' : '🔼 Lihat Semua (' + forecastData.length + ')'}
-            </button>
+              }}>
+                Hal. {currentPage + 1} dari {totalPages > 0 ? totalPages : 1}
+              </div>
+              
+              {/* Tombol Sebelumnya */}
+              <button
+                onClick={handlePreviousPage}
+                disabled={!canGoPrevious}
+                style={{
+                  padding: '8px 12px',
+                  borderRadius: '6px',
+                  border: 'none',
+                  backgroundColor: canGoPrevious ? '#3498db' : '#ecf0f1',
+                  color: canGoPrevious ? '#fff' : '#bdc3c7',
+                  cursor: canGoPrevious ? 'pointer' : 'not-allowed',
+                  fontWeight: '600',
+                  fontSize: '12px',
+                  transition: 'all 0.3s ease',
+                  whiteSpace: 'nowrap'
+                }}
+                onMouseOver={(e) => canGoPrevious && (e.target.style.backgroundColor = '#2980b9')}
+                onMouseOut={(e) => canGoPrevious && (e.target.style.backgroundColor = '#3498db')}
+                title="Lihat data sebelumnya"
+              >
+                ◀ Sebelumnya
+              </button>
+
+              {/* Tombol Sesudahnya */}
+              <button
+                onClick={handleNextPage}
+                disabled={!canGoNext}
+                style={{
+                  padding: '8px 12px',
+                  borderRadius: '6px',
+                  border: 'none',
+                  backgroundColor: canGoNext ? '#27ae60' : '#ecf0f1',
+                  color: canGoNext ? '#fff' : '#bdc3c7',
+                  cursor: canGoNext ? 'pointer' : 'not-allowed',
+                  fontWeight: '600',
+                  fontSize: '12px',
+                  transition: 'all 0.3s ease',
+                  whiteSpace: 'nowrap'
+                }}
+                onMouseOver={(e) => canGoNext && (e.target.style.backgroundColor = '#229954')}
+                onMouseOut={(e) => canGoNext && (e.target.style.backgroundColor = '#27ae60')}
+                title="Lihat data selanjutnya"
+              >
+                Sesudahnya ▶
+              </button>
+            </div>
           )}
         </div>
         <div className="table-wrapper u-mt-05">
@@ -330,8 +406,8 @@ function TrendsPage() {
                     ⏳ Memuat data dari server...
                   </td>
                 </tr>
-              ) : (expandedTrendsTable ? forecastData : forecastData.slice(0, 3)).length > 0 ? (
-                (expandedTrendsTable ? forecastData : forecastData.slice(0, 3)).map((day, idx) => (
+              ) : (displayData).length > 0 ? (
+                displayData.map((day, idx) => (
                   <tr key={idx}>
                     <td style={{ fontWeight: '500', paddingLeft: '15px' }}>{day.date}</td>
                     <td>{day.weather} ({day.temp}°C)</td>
