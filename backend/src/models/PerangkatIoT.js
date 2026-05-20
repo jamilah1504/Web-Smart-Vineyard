@@ -38,20 +38,28 @@ const PerangkatIoT = sequelize.define('Perangkat_IoT', {
 }, {
   tableName: 'Perangkat_IoT',
   timestamps: false,
-  // --- TRIGGER OTOMATIS (HOOKS) ---
+// --- TRIGGER OTOMATIS (HOOKS) ---
   hooks: {
     afterUpdate: async (perangkat, options) => {
-      // Cek apakah status_pompa_air berubah
-      if (perangkat.changed('status_pompa_air')) {
-        const status = perangkat.status_pompa_air ? 'NYALA' : 'MATI';
-        const mode = perangkat.mode_kerja.toUpperCase();
-        
-        await Notification.create({
-          perangkat_id: perangkat.id,
-          pesan: `Pompa Air di ${perangkat.nama_node} telah ${status} (Mode: ${mode})`,
-          tipe: 'info'
-        });
-        console.log(`🔔 Notifikasi otomatis dibuat: Pompa ${status}`);
+      try {
+        // Cek apakah status_pompa_air berubah
+        if (perangkat.changed('status_pompa_air')) {
+          const status = perangkat.status_pompa_air ? 'NYALA' : 'MATI';
+          
+          // 🌟 PERBAIKAN: Gunakan optional chaining (?.) dan berikan nilai default jika mode_kerja undefined
+          const modeKerjaAman = perangkat.mode_kerja ? String(perangkat.mode_kerja).toUpperCase() : 'UNKNOWN';
+          
+          await Notification.create({
+            perangkat_id: perangkat.id,
+            pesan: `Pompa Air di ${perangkat.nama_node} telah ${status} (Mode: ${modeKerjaAman})`,
+            tipe: 'info'
+          });
+          console.log(`🔔 Notifikasi otomatis dibuat: Pompa ${status}`);
+        }
+      } catch (hookError) {
+        // 🌟 JANGAN BIARKAN HOOKS MERUSAK UPDATE UTAMA
+        // Jika notifikasi gagal, biarkan data utama di MySQL tetap ter-update!
+        console.error("❌ Gagal membuat notifikasi otomatis di hooks:", hookError.message);
       }
     }
   }

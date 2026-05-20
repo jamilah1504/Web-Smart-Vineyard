@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
-// Pastikan path import ini sesuai dengan lokasi file services kamu
-import { getAllDevices, controlPump } from '../services/controlApi';
+import { getAllDevices, updateDeviceState } from '../services/controlApi';
+
 
 function OwnerManualControlPage() {
   const [deviceId, setDeviceId] = useState(null);
@@ -31,25 +31,30 @@ function OwnerManualControlPage() {
     fetchInitialStatus();
   }, []);
 
-  // 2. Fungsi Menyalakan/Mematikan Pompa Irigasi (Air)
+// 1. Fungsi Menyalakan/Mematikan Pompa Irigasi (Air)
   const togglePumpAir = async () => {
     if (!deviceId) return alert("Sistem masih memuat data perangkat...");
     
-    const targetStatus = !pumpAir; // Kebalikan dari status saat ini
+    const targetStatus = !pumpAir;
     setLoading(true);
 
     try {
-      // Panggil API Backend (perangkat_id, pompa_type, status)
-      await controlPump(deviceId, 'air', targetStatus);
-      setPumpAir(targetStatus); // Update UI jika sukses
+      // Kirim key 'status_pompa_air' sesuai ekspektasi req.body di Controller
+      await updateDeviceState(deviceId, { status_pompa_air: targetStatus });
+      setPumpAir(targetStatus); // Update UI
+      console.log(`✅ Pompa Air ${targetStatus ? 'NYALA' : 'MATI'}`);
     } catch (error) {
-      alert("❌ Gagal mengontrol pompa irigasi: " + error.message);
+      // Backend Anda mengirim pesan error jika tandon kosong (< 10 cm)
+      const errorMsg = error.response?.data?.message || error.message;
+      alert("❌ Gagal mengontrol pompa irigasi: " + errorMsg);
+      // Revert state jika gagal
+      setPumpAir(!targetStatus);
     } finally {
       setLoading(false);
     }
   };
 
-  // 3. Fungsi Menyalakan/Mematikan Pompa Pupuk
+  // 2. Fungsi Menyalakan/Mematikan Pompa Pupuk
   const togglePumpPupuk = async () => {
     if (!deviceId) return alert("Sistem masih memuat data perangkat...");
     
@@ -57,28 +62,36 @@ function OwnerManualControlPage() {
     setLoading(true);
 
     try {
-      // Panggil API Backend
-      await controlPump(deviceId, 'nutrisi', targetStatus);
-      setPumpPupuk(targetStatus); // Update UI jika sukses
+      // Kirim key 'status_pompa_pupuk' sesuai ekspektasi req.body di Controller
+      await updateDeviceState(deviceId, { status_pompa_pupuk: targetStatus });
+      setPumpPupuk(targetStatus); // Update UI
+      console.log(`✅ Pompa Pupuk ${targetStatus ? 'NYALA' : 'MATI'}`);
     } catch (error) {
-      alert("❌ Gagal mengontrol pompa pupuk: " + error.message);
+      const errorMsg = error.response?.data?.message || error.message;
+      alert("❌ Gagal mengontrol pompa pupuk: " + errorMsg);
+      setPumpPupuk(!targetStatus);
     } finally {
       setLoading(false);
     }
   };
 
-  // 4. Fungsi Toggle Mode Otomatis
-  const toggleAutoMode = async () => {
+  // 3. Fungsi Toggle Mode Otomatis
+const toggleAutoMode = async () => {
+    if (!deviceId) return alert("Sistem masih memuat data perangkat...");
+
     const targetMode = !autoMode;
+    // Sesuaikan persis dengan ENUM di database (huruf kecil)
+    const modeString = targetMode ? 'auto' : 'manual'; 
+    
     setLoading(true);
 
     try {
-      // Jika ada API untuk set auto mode, call di sini
-      // await setAutoMode(deviceId, targetMode);
-      setAutoMode(targetMode);
-      console.log(targetMode ? '✅ Mode Otomatis Diaktifkan' : '✅ Mode Manual Diaktifkan');
+      await updateDeviceState(deviceId, { mode_kerja: modeString });
+      setAutoMode(targetMode); // Update UI menjadi true/false
+      console.log(targetMode ? '✅ Mode auto Diaktifkan' : '✅ Mode manual Diaktifkan');
     } catch (error) {
-      alert("❌ Gagal mengubah mode: " + error.message);
+      const errorMsg = error.response?.data?.message || error.message;
+      alert("❌ Gagal mengubah mode: " + errorMsg);
     } finally {
       setLoading(false);
     }

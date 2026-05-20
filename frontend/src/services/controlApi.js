@@ -72,6 +72,16 @@ export const controlPump = async (perangkatId, pompaType, status) => {
   return response.data;
 };
 
+export const updateDeviceState = async (id, data) => {
+  const token = getAccessToken();
+  const response = await axios.post(
+    `${BASE_URL}/controls/pump/update/${id}`, 
+    data, 
+    { headers: { 'Authorization': `Bearer ${token}` } }
+  );
+  return response.data;
+};
+
 // 7. Record Level Air dari Sensor IoT (dari device, tanpa auth)
 export const recordWaterLevel = async (perangkatId, ketinggianAir, jenisTandon = 'air') => {
   const response = await axios.post(`${BASE_URL}/tandon-system/record`, {
