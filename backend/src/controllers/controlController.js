@@ -18,7 +18,7 @@ exports.updatePumpStatus = async (req, res) => {
         });
 
         // Jika ketinggian air di bawah 10 cm, tolak perintah nyala
-        if (tandonTerakhir && tandonTerakhir.ketinggian_air < 10.0) {
+        if (tandonTerakhir && tandonTerakhir.ketinggian_air !== null && tandonTerakhir.ketinggian_air < 10.0) {
             return res.status(403).json({ 
                 status: 'error', 
                 message: 'GAGAL: Air tandon habis (< 10 cm)! Pompa diblokir demi keamanan.' 
@@ -33,6 +33,42 @@ exports.updatePumpStatus = async (req, res) => {
 
     if (updated) {
       res.json({ status: 'success', message: 'Kontrol berhasil diperbarui' });
+
+      // ==========================================================
+      // FITUR TAMBAHAN: AUTO-OFF 5 DETIK SETELAH DISIMPAN
+      // ==========================================================
+      
+      // Jika pompa air dinyalakan (1 / true), set timer 5 detik untuk mematikan
+      if (status_pompa_air) {
+        setTimeout(async () => {
+          try {
+            await PerangkatIoT.update(
+              { status_pompa_air: false }, // atau 0
+              { where: { id: id } }
+            );
+            console.log(`⏱️ Pompa Air ${id} otomatis dimatikan setelah 5 detik`);
+          } catch (err) {
+            console.error("Gagal auto-off pompa air:", err);
+          }
+        }, 5000);
+      }
+
+      // Jika pompa pupuk dinyalakan (1 / true), set timer 5 detik untuk mematikan
+      if (status_pompa_pupuk) {
+        setTimeout(async () => {
+          try {
+            await PerangkatIoT.update(
+              { status_pompa_pupuk: false }, // atau 0
+              { where: { id: id } }
+            );
+            console.log(`⏱️ Pompa Pupuk ${id} otomatis dimatikan setelah 5 detik`);
+          } catch (err) {
+            console.error("Gagal auto-off pompa pupuk:", err);
+          }
+        }, 5000);
+      }
+      // ==========================================================
+
     } else {
       res.status(404).json({ status: 'error', message: 'Perangkat tidak ditemukan' });
     }
