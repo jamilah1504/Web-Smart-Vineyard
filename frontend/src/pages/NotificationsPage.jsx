@@ -260,7 +260,7 @@ function NotificationsPage() {
               Daftar semua alert dengan severity &amp; waktu kejadian.
             </div>
           </div>
-          {filteredNotifications && filteredNotifications.length > 0 && (
+          {totalPages > 1 && (
             <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: windowWidth < 768 ? 'wrap' : 'nowrap' }}>
               {/* Info Halaman */}
               <div style={{ 

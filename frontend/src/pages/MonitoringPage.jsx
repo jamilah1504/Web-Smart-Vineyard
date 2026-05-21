@@ -505,9 +505,9 @@ function MonitoringPage() {
         <div style={{ marginBottom: '20px', display: 'flex', flexDirection: windowWidth < 768 ? 'column' : 'row', justifyContent: windowWidth < 768 ? 'flex-start' : 'space-between', alignItems: windowWidth < 768 ? 'flex-start' : 'center', gap: windowWidth < 768 ? '12px' : '0' }}>
           <div>
             <div style={{ fontSize: '18px', fontWeight: '600', color: '#2c3e50', marginBottom: '4px' }}>📋 Data Sensor Real-Time</div>
-            <div style={{ fontSize: '13px', color: '#7f8c8d' }}>Riwayat pembacaan sensor terbaru {displayData.length > 0 && `(${displayData.length} data)`}</div>
+            <div style={{ fontSize: '13px', color: '#7f8c8d' }}>Riwayat pembacaan sensor terbaru {dataSource.length > 0 && `(${dataSource.length} data)`}</div>
           </div>
-          {dataSource.length > 0 && (
+          {totalPages > 1 && (
             <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: windowWidth < 768 ? 'wrap' : 'nowrap' }}>
               {/* Info Halaman */}
               <div style={{ 

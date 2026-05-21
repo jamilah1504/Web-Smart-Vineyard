@@ -328,7 +328,7 @@ function TrendsPage() {
             <div className="card-title card-title-lg">Tabel Rincian Prediksi (3 Hari)</div>
             <div className="card-subtitle card-subtitle-lg">Berdasarkan integrasi cuaca BMKG dan Evapotranspirasi</div>
           </div>
-          {forecastData.length > 0 && (
+          {totalPages > 1 && (
             <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
               {/* Info Halaman */}
               <div style={{ 
@@ -337,7 +337,7 @@ function TrendsPage() {
                 marginRight: '8px',
                 whiteSpace: 'nowrap'
               }}>
-                Hal. {currentPage + 1} dari {totalPages > 0 ? totalPages : 1}
+                Hal. {currentPage + 1} dari {totalPages}
               </div>
               
               {/* Tombol Sebelumnya */}

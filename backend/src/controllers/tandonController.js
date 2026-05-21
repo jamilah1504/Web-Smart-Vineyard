@@ -52,7 +52,7 @@ exports.getLatestWaterLevel = async (req, res) => {
         const data = await LogTandon.findAll({
             where: { perangkat_id },
             order: [['timestamp', 'DESC']], // Sesuai kolom di PHPMyAdmin kamu
-            limit: 10
+            limit: 100
         });
 
         if (!data || data.length === 0) {

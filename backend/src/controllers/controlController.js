@@ -24,8 +24,16 @@ exports.updatePumpStatus = async (req, res) => {
         }
     }
 
+    // 🔧 PERBAIKAN: Hanya update field yang dikirim, hindari undefined values
+    const updateData = {};
+    if (status_pompa_air !== undefined) updateData.status_pompa_air = status_pompa_air;
+    if (status_pompa_pupuk !== undefined) updateData.status_pompa_pupuk = status_pompa_pupuk;
+    if (mode_kerja !== undefined) updateData.mode_kerja = mode_kerja;
+
+    console.log(`📨 updatePumpStatus - ID: ${id}, Data: `, updateData);
+
     const [updated] = await PerangkatIoT.update(
-      { status_pompa_air, status_pompa_pupuk, mode_kerja },
+      updateData,
       { where: { id: id } }
     );
 
