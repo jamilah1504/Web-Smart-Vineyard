@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { getAllDevices, updateDeviceState } from '../services/controlApi';
+import { getAllDevices, updateDeviceState, getDeviceStatus } from '../services/controlApi';
 
 
 function OwnerManualControlPage() {
@@ -8,6 +8,7 @@ function OwnerManualControlPage() {
   const [pumpPupuk, setPumpPupuk] = useState(false);
   const [loading, setLoading] = useState(false);
   const [autoMode, setAutoMode] = useState(false);
+  const [initialLoading, setInitialLoading] = useState(true);
 
   // 1. Mengambil status awal perangkat saat halaman pertama kali dibuka
   useEffect(() => {
@@ -19,17 +20,66 @@ function OwnerManualControlPage() {
           const device = response.data[0];
           setDeviceId(device.id);
           
-          // Set status toggle sesuai dengan data di database
-          setPumpAir(device.status_pompa_air || false);
-          setPumpPupuk(device.status_pompa_pupuk || false);
+          // Tarik status lengkap dari API getDeviceStatus untuk mendapat mode_kerja
+          try {
+            const deviceStatusResponse = await getDeviceStatus(device.id);
+            const fullDevice = deviceStatusResponse.data || device;
+            
+            console.log(`📡 Status perangkat dari API:`, fullDevice);
+            
+            // Set status toggle sesuai dengan data di database
+            setPumpAir(fullDevice.status_pompa_air || false);
+            setPumpPupuk(fullDevice.status_pompa_pupuk || false);
+            
+            // ✅ PERBAIKAN: Load mode_kerja dari database dan convert ke boolean
+            const modeFromDb = fullDevice.mode_kerja?.toLowerCase() || 'manual';
+            setAutoMode(modeFromDb === 'auto');
+            console.log(`🤖 Mode kerja dari database: "${modeFromDb}" → autoMode: ${modeFromDb === 'auto'}`);
+          } catch (statusError) {
+            // Fallback jika getDeviceStatus gagal
+            console.warn("⚠️ getDeviceStatus gagal, gunakan data dari getAllDevices:", statusError);
+            setPumpAir(device.status_pompa_air || false);
+            setPumpPupuk(device.status_pompa_pupuk || false);
+            setAutoMode(device.mode_kerja?.toLowerCase() === 'auto' || false);
+          }
         }
       } catch (error) {
         console.error("🔴 Gagal mengambil data perangkat:", error);
+      } finally {
+        setInitialLoading(false);
       }
     };
 
     fetchInitialStatus();
   }, []);
+
+  // 2. Auto-refresh status SETIAP 2 DETIK untuk selalu sync dengan backend
+  // (Penting jika pompa otomatis mati dari sisi backend/ESP32)
+  useEffect(() => {
+    if (!deviceId) return;
+
+    const refreshStatus = async () => {
+      try {
+        const response = await getDeviceStatus(deviceId);
+        const device = response.data;
+        
+        // Sinkronisasi status dari database tanpa mengganggu interaksi user
+        setPumpAir(device.status_pompa_air || false);
+        setPumpPupuk(device.status_pompa_pupuk || false);
+        
+        const modeFromDb = device.mode_kerja?.toLowerCase() || 'manual';
+        setAutoMode(modeFromDb === 'auto');
+        
+        console.log(`🔄 [Real-time sync] Pompa Air: ${device.status_pompa_air}, Pompa Pupuk: ${device.status_pompa_pupuk}`);
+      } catch (error) {
+        console.warn("⚠️ Real-time sync gagal:", error.message);
+      }
+    };
+
+    // Refresh setiap 2 detik untuk catching perubahan pompa otomatis
+    const intervalId = setInterval(refreshStatus, 2000);
+    return () => clearInterval(intervalId);
+  }, [deviceId]);
 
 // 1. Fungsi Menyalakan/Mematikan Pompa Irigasi (Air)
   const togglePumpAir = async () => {
@@ -39,11 +89,27 @@ function OwnerManualControlPage() {
     setLoading(true);
 
     try {
+      console.log(`💧 Mengirim status_pompa_air: ${targetStatus} ke perangkat: ${deviceId}`);
       // Kirim key 'status_pompa_air' sesuai ekspektasi req.body di Controller
-      await updateDeviceState(deviceId, { status_pompa_air: targetStatus });
-      setPumpAir(targetStatus); // Update UI
+      const response = await updateDeviceState(deviceId, { status_pompa_air: targetStatus });
+      console.log(`✅ Response dari backend:`, response);
+      setPumpAir(targetStatus); // Update UI optimistic
+      
+      // Refresh status dari backend setelah 500ms untuk confirm perubahan
+      setTimeout(async () => {
+        try {
+          const statusResponse = await getDeviceStatus(deviceId);
+          const device = statusResponse.data;
+          setPumpAir(device.status_pompa_air || false);
+          console.log(`🔄 Status terkini dari database: ${device.status_pompa_air}`);
+        } catch (err) {
+          console.warn("⚠️ Refresh setelah toggle gagal:", err.message);
+        }
+      }, 500);
+      
       console.log(`✅ Pompa Air ${targetStatus ? 'NYALA' : 'MATI'}`);
     } catch (error) {
+      console.error(`❌ Error updateDeviceState:`, error);
       // Backend Anda mengirim pesan error jika tandon kosong (< 10 cm)
       const errorMsg = error.response?.data?.message || error.message;
       alert("❌ Gagal mengontrol pompa irigasi: " + errorMsg);
@@ -62,11 +128,27 @@ function OwnerManualControlPage() {
     setLoading(true);
 
     try {
+      console.log(`🧪 Mengirim status_pompa_pupuk: ${targetStatus} ke perangkat: ${deviceId}`);
       // Kirim key 'status_pompa_pupuk' sesuai ekspektasi req.body di Controller
-      await updateDeviceState(deviceId, { status_pompa_pupuk: targetStatus });
-      setPumpPupuk(targetStatus); // Update UI
+      const response = await updateDeviceState(deviceId, { status_pompa_pupuk: targetStatus });
+      console.log(`✅ Response dari backend:`, response);
+      setPumpPupuk(targetStatus); // Update UI optimistic
+      
+      // Refresh status dari backend setelah 500ms untuk confirm perubahan
+      setTimeout(async () => {
+        try {
+          const statusResponse = await getDeviceStatus(deviceId);
+          const device = statusResponse.data;
+          setPumpPupuk(device.status_pompa_pupuk || false);
+          console.log(`🔄 Status terkini dari database: ${device.status_pompa_pupuk}`);
+        } catch (err) {
+          console.warn("⚠️ Refresh setelah toggle gagal:", err.message);
+        }
+      }, 500);
+      
       console.log(`✅ Pompa Pupuk ${targetStatus ? 'NYALA' : 'MATI'}`);
     } catch (error) {
+      console.error(`❌ Error updateDeviceState:`, error);
       const errorMsg = error.response?.data?.message || error.message;
       alert("❌ Gagal mengontrol pompa pupuk: " + errorMsg);
       setPumpPupuk(!targetStatus);
@@ -86,10 +168,28 @@ const toggleAutoMode = async () => {
     setLoading(true);
 
     try {
-      await updateDeviceState(deviceId, { mode_kerja: modeString });
-      setAutoMode(targetMode); // Update UI menjadi true/false
+      console.log(`🤖 Mengirim mode_kerja: "${modeString}" ke perangkat: ${deviceId}`);
+      const response = await updateDeviceState(deviceId, { mode_kerja: modeString });
+      console.log(`✅ Response dari backend:`, response);
+      
+      setAutoMode(targetMode); // Update UI optimistic
+      
+      // Refresh status dari backend setelah 500ms untuk confirm perubahan
+      setTimeout(async () => {
+        try {
+          const statusResponse = await getDeviceStatus(deviceId);
+          const device = statusResponse.data;
+          const modeFromDb = device.mode_kerja?.toLowerCase() || 'manual';
+          setAutoMode(modeFromDb === 'auto');
+          console.log(`🔄 Status terkini dari database: mode_kerja = "${modeFromDb}"`);
+        } catch (err) {
+          console.warn("⚠️ Refresh setelah toggle gagal:", err.message);
+        }
+      }, 500);
+      
       console.log(targetMode ? '✅ Mode auto Diaktifkan' : '✅ Mode manual Diaktifkan');
     } catch (error) {
+      console.error(`❌ Error toggleAutoMode:`, error);
       const errorMsg = error.response?.data?.message || error.message;
       alert("❌ Gagal mengubah mode: " + errorMsg);
     } finally {
@@ -179,6 +279,30 @@ const toggleAutoMode = async () => {
           </div>
         </div>
       </div>
+
+      {/* LOADING STATE INDICATOR */}
+      {initialLoading && (
+        <div style={{
+          marginBottom: '20px',
+          backgroundColor: '#e3f2fd',
+          border: '2px solid #2196f3',
+          borderRadius: '12px',
+          padding: '16px',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '12px',
+          color: '#1565c0',
+          animation: 'pulse 1.5s infinite'
+        }}>
+          <span style={{ fontSize: '20px' }}>⏳</span>
+          <div>
+            <strong>Memuat status perangkat...</strong>
+            <p style={{ margin: '4px 0 0 0', fontSize: '0.9rem' }}>
+              Sinkronisasi dengan database untuk mendapatkan status terkini (mode auto/manual, pompa)
+            </p>
+          </div>
+        </div>
+      )}
 
       {/* MODE OTOMATIS SECTION */}
       <div style={{

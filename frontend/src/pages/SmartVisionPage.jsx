@@ -291,7 +291,7 @@ function SmartVisionPage() {
             <div className="card-title">Riwayat Log {filteredHistory.length > 0 && `(${filteredHistory.length} data)`}</div>
           </div>
           <div style={{ display: 'flex', gap: '10px', alignItems: 'center', flexWrap: windowWidth < 768 ? 'wrap' : 'nowrap' }}>
-            {filteredHistory.length > 0 && (
+            {totalPages > 1 && (
               <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
                 {/* Info Halaman */}
                 <div style={{ 

@@ -324,7 +324,7 @@ function TankMonitoringPage() {
               Data riwayat fluktuasi air berdasarkan waktu (Terbaru di atas)
             </div>
           </div>
-          {filtered.length > 0 && (
+          {totalPages > 1 && (
             <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: windowWidth < 768 ? 'wrap' : 'nowrap' }}>
               {/* Info Halaman */}
               <div style={{ 

@@ -106,7 +106,7 @@ exports.getLatestSensorData = async (req, res) => {
         const latestData = await LogSensorTanah.findAll({
             where: { perangkat_id },
             order: [['timestamp', 'DESC']], 
-            limit: 10
+            limit: 100
         });
 
         res.status(200).json({ status: 'success', data: latestData });

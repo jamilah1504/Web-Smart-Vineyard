@@ -26,49 +26,21 @@ exports.updatePumpStatus = async (req, res) => {
         }
     }
 
+    // 🔧 PERBAIKAN: Hanya update field yang dikirim, hindari undefined values
+    const updateData = {};
+    if (status_pompa_air !== undefined) updateData.status_pompa_air = status_pompa_air;
+    if (status_pompa_pupuk !== undefined) updateData.status_pompa_pupuk = status_pompa_pupuk;
+    if (mode_kerja !== undefined) updateData.mode_kerja = mode_kerja;
+
+    console.log(`📨 updatePumpStatus - ID: ${id}, Data: `, updateData);
+
     const [updated] = await PerangkatIoT.update(
-      { status_pompa_air, status_pompa_pupuk, mode_kerja },
+      updateData,
       { where: { id: id } }
     );
 
     if (updated) {
       res.json({ status: 'success', message: 'Kontrol berhasil diperbarui' });
-
-      // ==========================================================
-      // FITUR TAMBAHAN: AUTO-OFF 5 DETIK SETELAH DISIMPAN
-      // ==========================================================
-      
-      // Jika pompa air dinyalakan (1 / true), set timer 5 detik untuk mematikan
-      if (status_pompa_air) {
-        setTimeout(async () => {
-          try {
-            await PerangkatIoT.update(
-              { status_pompa_air: false }, // atau 0
-              { where: { id: id } }
-            );
-            console.log(`⏱️ Pompa Air ${id} otomatis dimatikan setelah 5 detik`);
-          } catch (err) {
-            console.error("Gagal auto-off pompa air:", err);
-          }
-        }, 5000);
-      }
-
-      // Jika pompa pupuk dinyalakan (1 / true), set timer 5 detik untuk mematikan
-      if (status_pompa_pupuk) {
-        setTimeout(async () => {
-          try {
-            await PerangkatIoT.update(
-              { status_pompa_pupuk: false }, // atau 0
-              { where: { id: id } }
-            );
-            console.log(`⏱️ Pompa Pupuk ${id} otomatis dimatikan setelah 5 detik`);
-          } catch (err) {
-            console.error("Gagal auto-off pompa pupuk:", err);
-          }
-        }, 5000);
-      }
-      // ==========================================================
-
     } else {
       res.status(404).json({ status: 'error', message: 'Perangkat tidak ditemukan' });
     }
