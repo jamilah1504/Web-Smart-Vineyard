@@ -1,5 +1,5 @@
 // 🌟 PASTIKAN menambahkan LogPompa di baris import ini
-const { PerangkatIoT, LogTandon, VarietasAnggur, LogSensorTanah, LogPompa } = require('../models'); 
+const { PerangkatIoT, LogTandon, VarietasAnggur, LogSensorTanah, LogPompa, Notification } = require('../models'); 
 
 // ========================================================================
 // 1. UPDATE KONTROL POMPA (Dari Web Frontend)
@@ -9,7 +9,30 @@ exports.updatePumpStatus = async (req, res) => {
   const { status_pompa_air, status_pompa_pupuk, mode_kerja } = req.body;
 
   try {
-    // 🔒 BACKEND SAFETY OVERRIDE
+    // 🔒 SAFETY CHECK 1: CEK STATUS KONEKSI - JIKA OFFLINE TOLAK
+    const perangkat = await PerangkatIoT.findByPk(id);
+    if (!perangkat) {
+      return res.status(404).json({ 
+        status: 'error', 
+        message: 'Perangkat tidak ditemukan.' 
+      });
+    }
+
+    if (perangkat.status_koneksi !== 'Online') {
+      // 📢 Buat notifikasi
+      await Notification.create({
+        perangkat_id: id,
+        pesan: `Gagal kontrol manual: Perangkat sedang ${perangkat.status_koneksi}. Hubungkan perangkat ke internet.`,
+        tipe: 'error'
+      });
+
+      return res.status(503).json({ 
+        status: 'error', 
+        message: `⚠️ Perangkat sedang ${perangkat.status_koneksi}. Kontrol manual tidak tersedia.` 
+      });
+    }
+
+    // 🔒 BACKEND SAFETY OVERRIDE - CEK LEVEL AIR TANDON
     if (status_pompa_air === true || status_pompa_pupuk === true) {
         const tandonTerakhir = await LogTandon.findOne({
             where: { perangkat_id: id, jenis_tandon: 'air' },
@@ -103,12 +126,14 @@ exports.getPumpStatus = async (req, res) => {
         const batasKering = perangkat.Varietas_Anggur ? perangkat.Varietas_Anggur.min_moisture : 40.0;
 
         // Struktur ini SUDAH SEMPURNA dan dikenali oleh ArduinoJson di ESP32
+        // 🌟 TAMBAHAN: Include status_koneksi untuk frontend
         res.status(200).json({
             status: 'success',
             data: {
                 mode_kerja: perangkat.mode_kerja,
                 status_pompa_air: perangkat.status_pompa_air,
                 status_pompa_pupuk: perangkat.status_pompa_pupuk,
+                status_koneksi: perangkat.status_koneksi,
                 batas_kering: batasKering 
             }
         });

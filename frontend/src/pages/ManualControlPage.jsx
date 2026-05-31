@@ -9,6 +9,8 @@ function OwnerManualControlPage() {
   const [loading, setLoading] = useState(false);
   const [autoMode, setAutoMode] = useState(false);
   const [initialLoading, setInitialLoading] = useState(true);
+  const [deviceStatus, setDeviceStatus] = useState('Online'); // 🌟 NEW: Track device connection status
+  const [offlineAlertShown, setOfflineAlertShown] = useState(false); // Track jika sudah tampil alert
 
   // 1. Mengambil status awal perangkat saat halaman pertama kali dibuka
   useEffect(() => {
@@ -31,16 +33,21 @@ function OwnerManualControlPage() {
             setPumpAir(fullDevice.status_pompa_air || false);
             setPumpPupuk(fullDevice.status_pompa_pupuk || false);
             
+            // 🌟 NEW: Track device connection status
+            setDeviceStatus(fullDevice.status_koneksi || 'Online');
+            
             // ✅ PERBAIKAN: Load mode_kerja dari database dan convert ke boolean
             const modeFromDb = fullDevice.mode_kerja?.toLowerCase() || 'manual';
             setAutoMode(modeFromDb === 'auto');
             console.log(`🤖 Mode kerja dari database: "${modeFromDb}" → autoMode: ${modeFromDb === 'auto'}`);
+            console.log(`📡 Status koneksi: ${fullDevice.status_koneksi}`);
           } catch (statusError) {
             // Fallback jika getDeviceStatus gagal
             console.warn("⚠️ getDeviceStatus gagal, gunakan data dari getAllDevices:", statusError);
             setPumpAir(device.status_pompa_air || false);
             setPumpPupuk(device.status_pompa_pupuk || false);
             setAutoMode(device.mode_kerja?.toLowerCase() === 'auto' || false);
+            setDeviceStatus(device.status_koneksi || 'Online');
           }
         }
       } catch (error) {
@@ -70,20 +77,41 @@ function OwnerManualControlPage() {
         const modeFromDb = device.mode_kerja?.toLowerCase() || 'manual';
         setAutoMode(modeFromDb === 'auto');
         
-        console.log(`🔄 [Real-time sync] Pompa Air: ${device.status_pompa_air}, Pompa Pupuk: ${device.status_pompa_pupuk}`);
+        // 🌟 NEW: Track perubahan status koneksi
+        const prevStatus = deviceStatus;
+        setDeviceStatus(device.status_koneksi || 'Online');
+        
+        // 🌟 NEW: Tampil notifikasi jika device berubah status jadi offline
+        if (device.status_koneksi !== 'Online' && !offlineAlertShown) {
+          alert(`⚠️ ALERT: Perangkat sedang ${device.status_koneksi}. Kontrol manual tidak tersedia.`);
+          setOfflineAlertShown(true);
+        }
+        
+        // Reset alert jika device kembali online
+        if (device.status_koneksi === 'Online' && offlineAlertShown) {
+          setOfflineAlertShown(false);
+        }
+        
+        console.log(`🔄 [Real-time sync] Status: ${device.status_koneksi}, Pompa Air: ${device.status_pompa_air}, Pompa Pupuk: ${device.status_pompa_pupuk}`);
       } catch (error) {
         console.warn("⚠️ Real-time sync gagal:", error.message);
       }
     };
 
-    // Refresh setiap 2 detik untuk catching perubahan pompa otomatis
-    const intervalId = setInterval(refreshStatus, 2000);
+    // Refresh setiap 3 detik untuk catching perubahan status dan pompa otomatis
+    const intervalId = setInterval(refreshStatus, 3000);
     return () => clearInterval(intervalId);
-  }, [deviceId]);
+  }, [deviceId, offlineAlertShown, deviceStatus]);
 
 // 1. Fungsi Menyalakan/Mematikan Pompa Irigasi (Air)
   const togglePumpAir = async () => {
     if (!deviceId) return alert("Sistem masih memuat data perangkat...");
+    
+    // 🌟 NEW: Check jika device offline
+    if (deviceStatus !== 'Online') {
+      alert(`❌ Perangkat sedang ${deviceStatus}. Kontrol manual tidak tersedia.\n\nHubungkan perangkat ke internet terlebih dahulu.`);
+      return;
+    }
     
     const targetStatus = !pumpAir;
     setLoading(true);
@@ -124,6 +152,12 @@ function OwnerManualControlPage() {
   const togglePumpPupuk = async () => {
     if (!deviceId) return alert("Sistem masih memuat data perangkat...");
     
+    // 🌟 NEW: Check jika device offline
+    if (deviceStatus !== 'Online') {
+      alert(`❌ Perangkat sedang ${deviceStatus}. Kontrol manual tidak tersedia.\n\nHubungkan perangkat ke internet terlebih dahulu.`);
+      return;
+    }
+    
     const targetStatus = !pumpPupuk;
     setLoading(true);
 
@@ -160,6 +194,12 @@ function OwnerManualControlPage() {
   // 3. Fungsi Toggle Mode Otomatis
 const toggleAutoMode = async () => {
     if (!deviceId) return alert("Sistem masih memuat data perangkat...");
+    
+    // 🌟 NEW: Check jika device offline
+    if (deviceStatus !== 'Online') {
+      alert(`❌ Perangkat sedang ${deviceStatus}. Kontrol manual tidak tersedia.\n\nHubungkan perangkat ke internet terlebih dahulu.`);
+      return;
+    }
 
     const targetMode = !autoMode;
     // Sesuaikan persis dengan ENUM di database (huruf kecil)
@@ -304,6 +344,30 @@ const toggleAutoMode = async () => {
         </div>
       )}
 
+      {/* 🌟 NEW: DEVICE OFFLINE WARNING BANNER */}
+      {deviceStatus !== 'Online' && (
+        <div style={{
+          marginBottom: '20px',
+          backgroundColor: '#fff3cd',
+          border: '3px solid #ff6b6b',
+          borderRadius: '12px',
+          padding: '16px',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '12px',
+          color: '#7f2a1b',
+          animation: 'pulse 1s infinite'
+        }}>
+          <span style={{ fontSize: '24px' }}>⚠️</span>
+          <div>
+            <strong style={{ fontSize: '1.1rem' }}>Status: Perangkat {deviceStatus}</strong>
+            <p style={{ margin: '6px 0 0 0', fontSize: '0.9rem' }}>
+              Perangkat IoT tidak terhubung ke internet. Kontrol manual tidak tersedia saat ini. Hubungkan perangkat ke jaringan untuk melanjutkan.
+            </p>
+          </div>
+        </div>
+      )}
+
       {/* MODE OTOMATIS SECTION */}
       <div style={{
         marginBottom: '40px',
@@ -344,7 +408,7 @@ const toggleAutoMode = async () => {
         </div>
         <button
           onClick={() => toggleAutoMode()}
-          disabled={loading || !deviceId}
+          disabled={loading || !deviceId || deviceStatus !== 'Online'}
           style={{
             padding: '12px 28px',
             borderRadius: '12px',
@@ -353,25 +417,26 @@ const toggleAutoMode = async () => {
             color: autoMode ? '#fff' : '#000',
             fontWeight: '700',
             fontSize: '1rem',
-            cursor: loading ? 'not-allowed' : 'pointer',
+            cursor: (loading || deviceStatus !== 'Online') ? 'not-allowed' : 'pointer',
             transition: 'all 0.3s ease',
             whiteSpace: 'nowrap',
             boxShadow: `0 4px 12px ${autoMode ? 'rgba(40, 167, 69, 0.3)' : 'rgba(255, 193, 7, 0.3)'}`,
-            opacity: loading ? 0.6 : 1,
+            opacity: (loading || deviceStatus !== 'Online') ? 0.6 : 1,
             marginLeft: '20px'
           }}
           onMouseOver={(e) => {
-            if (!loading) {
+            if (!loading && deviceStatus === 'Online') {
               e.target.style.transform = 'translateY(-2px)';
               e.target.style.boxShadow = `0 6px 16px ${autoMode ? 'rgba(40, 167, 69, 0.4)' : 'rgba(255, 193, 7, 0.4)'}`;
             }
           }}
           onMouseOut={(e) => {
-            if (!loading) {
+            if (!loading && deviceStatus === 'Online') {
               e.target.style.transform = 'translateY(0)';
               e.target.style.boxShadow = `0 4px 12px ${autoMode ? 'rgba(40, 167, 69, 0.3)' : 'rgba(255, 193, 7, 0.3)'}`;
             }
           }}
+          title={deviceStatus !== 'Online' ? `Perangkat ${deviceStatus} - Fitur tidak tersedia` : ''}
         >
           {loading ? '⏱️ Memproses...' : (autoMode ? '✅ Matikan Otomatis' : '🤖 Aktifkan Otomatis')}
         </button>
@@ -455,16 +520,23 @@ const toggleAutoMode = async () => {
                 {deviceId ? deviceId : 'Menghubungkan...'}
               </p>
               <p style={{ fontSize: '0.8rem', opacity: 0.85, margin: '8px 0 0 0' }}>
-                {pumpAir ? '▶ Arus daya mengalir' : '• Standby'}
+                {deviceStatus === 'Online' ? (pumpAir ? '▶ Arus daya mengalir' : '• Standby') : `⚠️ ${deviceStatus}`}
               </p>
             </div>
 
             <button
               onClick={() => togglePumpAir()}
-              disabled={loading || !deviceId || autoMode}
+              disabled={loading || !deviceId || autoMode || deviceStatus !== 'Online'}
               className={`toggle-switch ${pumpAir ? 'active' : 'inactive'}`}
-              style={{ marginBottom: '10px', opacity: autoMode ? 0.5 : 1 }}
-              title={autoMode ? 'Kontrol dinonaktifkan - Mode Otomatis aktif' : ''}
+              style={{ 
+                marginBottom: '10px', 
+                opacity: (autoMode || deviceStatus !== 'Online') ? 0.5 : 1 
+              }}
+              title={
+                deviceStatus !== 'Online' 
+                  ? `Perangkat ${deviceStatus} - Kontrol tidak tersedia` 
+                  : (autoMode ? 'Kontrol dinonaktifkan - Mode Otomatis aktif' : '')
+              }
             >
               {loading ? '⏱️ Memproses...' : (pumpAir ? '⏹️ Matikan Pompa' : '▶️ Nyalakan Pompa')}
             </button>
@@ -546,16 +618,23 @@ const toggleAutoMode = async () => {
                 {deviceId ? deviceId : 'Menghubungkan...'}
               </p>
               <p style={{ fontSize: '0.8rem', opacity: 0.85, margin: '8px 0 0 0' }}>
-                {pumpPupuk ? '▶ Arus daya mengalir' : '• Standby'}
+                {deviceStatus === 'Online' ? (pumpPupuk ? '▶ Arus daya mengalir' : '• Standby') : `⚠️ ${deviceStatus}`}
               </p>
             </div>
 
             <button
               onClick={() => togglePumpPupuk()}
-              disabled={loading || !deviceId || autoMode}
+              disabled={loading || !deviceId || autoMode || deviceStatus !== 'Online'}
               className={`toggle-switch ${pumpPupuk ? 'active' : 'inactive'}`}
-              style={{ marginBottom: '10px', opacity: autoMode ? 0.5 : 1 }}
-              title={autoMode ? 'Kontrol dinonaktifkan - Mode Otomatis aktif' : ''}
+              style={{ 
+                marginBottom: '10px', 
+                opacity: (autoMode || deviceStatus !== 'Online') ? 0.5 : 1 
+              }}
+              title={
+                deviceStatus !== 'Online' 
+                  ? `Perangkat ${deviceStatus} - Kontrol tidak tersedia` 
+                  : (autoMode ? 'Kontrol dinonaktifkan - Mode Otomatis aktif' : '')
+              }
             >
               {loading ? '⏱️ Memproses...' : (pumpPupuk ? '⏹️ Matikan Pompa' : '▶️ Nyalakan Pompa')}
             </button>
