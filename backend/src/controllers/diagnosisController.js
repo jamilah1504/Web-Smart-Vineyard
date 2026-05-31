@@ -94,11 +94,11 @@ exports.diagnoseLeaf = async (req, res) => {
 
         // --- VALIDASI AKURASI (> 70%) ---
         // Jika akurasi <= 0.7, hentikan proses (jangan simpan ke DB/Folder)
-        if (finalScore <= 0.7) {
-            console.log("⚠️ Ditolak: Akurasi di bawah 70%");
+        if (finalScore <= 0.4) {
+            console.log("⚠️ Ditolak: Akurasi di bawah 40%");
             return res.status(200).json({ 
                 status: 'invalid', 
-                message: `Hasil analisis (${(finalScore * 100).toFixed(1)}%) di bawah standar akurasi 70%. Silakan ambil foto ulang.`,
+                message: `Hasil analisis (${(finalScore * 100).toFixed(1)}%) di bawah standar akurasi 40%. Silakan ambil foto ulang.`,
                 diagnosis: finalLabel,
                 confidence: (finalScore * 100).toFixed(2) + "%"
             });

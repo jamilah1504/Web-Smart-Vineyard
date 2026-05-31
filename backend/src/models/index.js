@@ -6,6 +6,7 @@ const LogSensorTanah = require('./LogSensorTanah');
 const LogDiagnosisAI = require('./LogDiagnosisAI');
 const LogTandon = require('./LogTandon');
 const Notification = require('./Notification');
+const LogPompa = require('./LogPompa'); 
 
 // User <-> Perangkat
 User.hasMany(PerangkatIoT, { foreignKey: 'user_id' });
@@ -31,6 +32,9 @@ LogTandon.belongsTo(PerangkatIoT, { foreignKey: 'perangkat_id' });
 PerangkatIoT.hasMany(Notification, { foreignKey: 'perangkat_id' });
 Notification.belongsTo(PerangkatIoT, { foreignKey: 'perangkat_id' });
 
+PerangkatIoT.hasMany(LogPompa, { foreignKey: 'perangkat_id', as: 'Histori_Pompa' });
+LogPompa.belongsTo(PerangkatIoT, { foreignKey: 'perangkat_id' });
+
 module.exports = {
   sequelize,
   User,
@@ -40,4 +44,5 @@ module.exports = {
   LogDiagnosisAI,
   LogTandon,
   Notification,
+  LogPompa
 };

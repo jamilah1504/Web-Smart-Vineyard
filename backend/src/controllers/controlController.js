@@ -1,4 +1,5 @@
-const { PerangkatIoT, LogTandon, VarietasAnggur, LogSensorTanah } = require('../models'); // Pastikan LogSensorTanah di-import
+// 🌟 PASTIKAN menambahkan LogPompa di baris import ini
+const { PerangkatIoT, LogTandon, VarietasAnggur, LogSensorTanah, LogPompa } = require('../models'); 
 
 // ========================================================================
 // 1. UPDATE KONTROL POMPA (Dari Web Frontend)
@@ -12,7 +13,7 @@ exports.updatePumpStatus = async (req, res) => {
     if (status_pompa_air === true || status_pompa_pupuk === true) {
         const tandonTerakhir = await LogTandon.findOne({
             where: { perangkat_id: id, jenis_tandon: 'air' },
-            order: [['createdAt', 'DESC']] // Disarankan pakai createdAt bawaan sequelize jika timestamp error
+            order: [['timestamp', 'DESC']] // Disarankan pakai createdAt bawaan sequelize jika timestamp error
         });
 
         // Di ESP32 batasnya 5cm, di backend 10cm (Bagus untuk double safety)
@@ -38,7 +39,37 @@ exports.updatePumpStatus = async (req, res) => {
     );
 
     if (updated) {
-      // 🌟 PERBAIKAN: setTimeout 5 detik DIHAPUS dari sini.
+      // =======================================================
+      // 🌟 TAMBAHAN: SIMPAN KE TABEL HISTORI POMPA
+      // =======================================================
+      try {
+        const currentMode = mode_kerja ? String(mode_kerja).toUpperCase() : 'UNKNOWN';
+
+        // Catat histori pompa air jika ada perubahan
+        if (status_pompa_air !== undefined) {
+          await LogPompa.create({
+            perangkat_id: id,
+            jenis_pompa: 'air',
+            status: status_pompa_air ? 'NYALA' : 'MATI',
+            mode_trigger: currentMode
+          });
+        }
+        
+        // Catat histori pompa pupuk jika ada perubahan
+        if (status_pompa_pupuk !== undefined) {
+          await LogPompa.create({
+            perangkat_id: id,
+            jenis_pompa: 'pupuk',
+            status: status_pompa_pupuk ? 'NYALA' : 'MATI',
+            mode_trigger: currentMode
+          });
+        }
+      } catch (logErr) {
+        // Jika histori gagal dicatat (misal tabel belum dibuat), tidak akan merusak sistem utama
+        console.error("⚠️ Gagal mencatat histori pompa:", logErr.message);
+      }
+      // =======================================================
+
       // Kontrol durasi 5 detik sepenuhnya diserahkan ke hardware ESP32 agar tidak race condition.
       res.json({ status: 'success', message: 'Kontrol berhasil diperbarui' });
     } else {
@@ -135,6 +166,30 @@ exports.saveSensorData = async (req, res) => {
 
     } catch (error) {
         console.error("❌ Error saveSensorData:", error.message);
+        res.status(500).json({ status: 'error', message: error.message });
+    }
+};
+
+// ========================================================================
+// 4. GET HISTORI POMPA (Untuk ditampilkan di Tabel/Frontend)
+// ========================================================================
+exports.getPumpHistory = async (req, res) => {
+    try {
+        const { id } = req.params;
+        
+        const history = await LogPompa.findAll({
+            where: { perangkat_id: id },
+            order: [['createdAt', 'DESC']], // Diurutkan dari yang paling baru
+            limit: 50 // Batasi 50 data terakhir agar ringan dimuat
+        });
+
+        res.status(200).json({
+            status: 'success',
+            data: history
+        });
+
+    } catch (error) {
+        console.error("❌ Error getPumpHistory:", error.message);
         res.status(500).json({ status: 'error', message: error.message });
     }
 };

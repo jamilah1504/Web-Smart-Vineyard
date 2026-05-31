@@ -39,7 +39,8 @@ export const getLatestWaterLevel = async (perangkatId) => {
 // 4. Ambil Status Perangkat Lengkap
 export const getDeviceStatus = async (perangkatId) => {
   const token = getAccessToken();
-  const response = await axios.get(`${BASE_URL}/tandon-system/status/${perangkatId}`, {
+  // UBAH URL INI DARI /tandon-system/status/... MENJADI /controls/pump/...
+  const response = await axios.get(`${BASE_URL}/controls/pump/${perangkatId}`, {
     headers: { 'Authorization': `Bearer ${token}` }
   });
   return response.data;
