@@ -81,7 +81,7 @@ function TankMonitoringPage() {
         const transformed = response.data.map(item => {
           // 1. Ambil nilai aktual (ESP32 SUDAH mengirimkan tinggi air dalam cm, bukan jarak sensor)
           const tinggiAirAsli = parseFloat(item.ketinggian_air) || 0;
-          const TINGGI_MAKSIMAL_TANDON = 42.0; 
+          const TINGGI_MAKSIMAL_TANDON = 31.0; 
 
           // 2. Kalkulasi Sisa Air dalam Persentase
           let persentase = Math.round((tinggiAirAsli / TINGGI_MAKSIMAL_TANDON) * 100);

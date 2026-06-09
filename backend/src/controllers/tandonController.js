@@ -5,7 +5,7 @@ const sendTelegram = require('../utils/telegram');
 exports.recordWaterLevel = async (req, res) => {
     try {
         const { perangkat_id, ketinggian_air, jenis_tandon } = req.body;
-        const TINGGI_MAX = 42.0;
+        const TINGGI_MAX = 31.0;
         const persentase = (ketinggian_air / TINGGI_MAX) * 100;
 
         await LogTandon.create({ perangkat_id, ketinggian_air, jenis_tandon });
