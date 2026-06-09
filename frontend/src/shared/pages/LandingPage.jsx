@@ -56,31 +56,6 @@ export default function LandingPage() {
         boxShadow: '0 4px 20px rgba(0, 0, 0, 0.15)',
         marginBottom: '0'
       }}>
-        {/* Top Bar */}
-        <div style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          padding: '10px 40px',
-          borderBottom: '1px solid rgba(255, 255, 255, 0.12)',
-          backgroundColor: 'rgba(0, 0, 0, 0.15)',
-          fontSize: '11px',
-          color: '#e8e8e8',
-          fontWeight: '500',
-          letterSpacing: '0.5px'
-        }}>
-          <div style={{ display: 'flex', gap: '25px' }}>
-            <a href="#" style={{ color: '#e8e8e8', textDecoration: 'none', transition: 'all 0.3s', cursor: 'pointer' }} onMouseEnter={(e) => e.target.style.color = '#FFD700'} onMouseLeave={(e) => e.target.style.color = '#e8e8e8'}>FAQ</a>
-            <a href="#" style={{ color: '#e8e8e8', textDecoration: 'none', transition: 'all 0.3s', cursor: 'pointer' }} onMouseEnter={(e) => e.target.style.color = '#FFD700'} onMouseLeave={(e) => e.target.style.color = '#e8e8e8'}>WEBMAIL</a>
-            <a href="#" style={{ color: '#e8e8e8', textDecoration: 'none', transition: 'all 0.3s', cursor: 'pointer' }} onMouseEnter={(e) => e.target.style.color = '#FFD700'} onMouseLeave={(e) => e.target.style.color = '#e8e8e8'}>PETA SITUS</a>
-          </div>
-          <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
-            <button style={{ background: 'none', border: 'none', color: '#e8e8e8', cursor: 'pointer', fontSize: '11px', padding: '2px 6px', borderRadius: '4px', transition: 'all 0.3s' }} onMouseEnter={(e) => { e.target.style.background = 'rgba(255,255,255,0.1)'; e.target.style.color = '#FFD700'; }} onMouseLeave={(e) => { e.target.style.background = 'none'; e.target.style.color = '#e8e8e8'; }}>🇮🇩 ID</button>
-            <span style={{ opacity: '0.5' }}>|</span>
-            <button style={{ background: 'none', border: 'none', color: '#e8e8e8', cursor: 'pointer', fontSize: '11px', padding: '2px 6px', borderRadius: '4px', transition: 'all 0.3s' }} onMouseEnter={(e) => { e.target.style.background = 'rgba(255,255,255,0.1)'; e.target.style.color = '#FFD700'; }} onMouseLeave={(e) => { e.target.style.background = 'none'; e.target.style.color = '#e8e8e8'; }}>🇬🇧 EN</button>
-          </div>
-        </div>
-
         {/* Main Header */}
         <div style={{
           display: 'flex',

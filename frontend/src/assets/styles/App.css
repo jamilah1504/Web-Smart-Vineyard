@@ -179,6 +179,16 @@
   background: #f5a623;
 }
 
+.chip-offline {
+  background: #fdecea;
+  color: #c0392b;
+}
+
+.chip-offline .chip-dot {
+  background: #e74c3c;
+  animation: none;
+}
+
 .page {
   display: flex;
   flex-direction: column;

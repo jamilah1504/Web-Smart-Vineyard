@@ -3,6 +3,7 @@ import { NavLink, Outlet, useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../core/auth/AuthContext'
 import { roleNavConfig } from './roleNavConfig'
 import { PublicPaths } from '../routes/routePaths'
+import { useSystemStatus } from '../hooks/useSystemStatus'
 
 function SidebarLink({ to, label, onNavigate }) {
   return (
@@ -18,11 +19,21 @@ function SidebarLink({ to, label, onNavigate }) {
   )
 }
 
+const STATUS_CHIP_CLASS = {
+  online: 'chip',
+  partial: 'chip chip-warning',
+  offline: 'chip chip-offline',
+  error: 'chip chip-offline',
+  unknown: 'chip chip-warning',
+  loading: 'chip',
+}
+
 export function RoleLayout({ role }) {
   const [sidebarOpen, setSidebarOpen] = useState(false)
-  const { user, logout } = useAuth()
+  const { currentUser, logout } = useAuth()
   const navigate = useNavigate()
   const location = useLocation()
+  const systemStatus = useSystemStatus(15000)
 
   const config = useMemo(() => {
     return roleNavConfig[role] ?? { title: 'Smart Vineyard', subtitle: '', links: [] }
@@ -115,12 +126,19 @@ export function RoleLayout({ role }) {
           </div>
 
           <div className="topbar-status">
-            <div className="chip">
+            <div
+              className={STATUS_CHIP_CLASS[systemStatus.level] || 'chip'}
+              title={
+                systemStatus.totalCount > 0
+                  ? `${systemStatus.onlineCount} dari ${systemStatus.totalCount} perangkat online`
+                  : 'Status koneksi perangkat IoT'
+              }
+            >
               <span className="chip-dot" />
-              System Online
+              {systemStatus.label}
             </div>
             <span className="small-text">
-              User <strong>{user?.name ?? '-'}</strong>
+              User <strong>{currentUser?.nama_lengkap ?? '-'}</strong>
             </span>
           </div>
         </div>

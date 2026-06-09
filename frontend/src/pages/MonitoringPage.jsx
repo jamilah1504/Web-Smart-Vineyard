@@ -371,37 +371,76 @@ function MonitoringPage() {
           </div>
         </div>
 
-        {/* Status Cards */}
+        {/* Lokasi Sensor */}
         <div className="card-responsive" style={{
+          alignSelf: 'start',
           background: 'linear-gradient(135deg, #27ae60 0%, #1e8449 100%)',
           color: 'white',
-          padding: '24px',
-          boxShadow: '0 4px 15px rgba(39, 174, 96, 0.3)'
+          padding: '20px',
+          boxShadow: '0 4px 15px rgba(39, 174, 96, 0.3)',
+          borderRadius: '15px',
         }}>
-          <div style={{ marginBottom: '20px' }}>
-            <div style={{ fontSize: '14px', fontWeight: '500', opacity: 0.9 }}>📍 Lokasi Sensor</div>
-            <div style={{ fontSize: '11px', opacity: 0.7 }}>Perangkat aktif</div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '14px' }}>
+            <div>
+              <div style={{ fontSize: '15px', fontWeight: '700' }}>📍 Lokasi Sensor</div>
+              <div style={{ fontSize: '11px', opacity: 0.75, marginTop: '2px' }}>Perangkat aktif di kebun</div>
+            </div>
+            <span style={{
+              fontSize: '10px', fontWeight: '700', padding: '4px 10px', borderRadius: '20px',
+              backgroundColor: error ? 'rgba(231,76,60,0.25)' : 'rgba(255,255,255,0.2)',
+              border: `1px solid ${error ? 'rgba(231,76,60,0.5)' : 'rgba(255,255,255,0.3)'}`,
+            }}>
+              {error ? '● Offline' : '● Online'}
+            </span>
           </div>
-          <div style={{
-            backgroundColor: 'rgba(255,255,255,0.1)',
-            borderRadius: '12px',
-            padding: '16px',
-            textAlign: 'center',
-            backdropFilter: 'blur(10px)'
-          }}>
-            <div style={{ fontSize: '24px', marginBottom: '8px' }}>✓</div>
-            <div style={{ fontSize: '18px', fontWeight: '600', marginBottom: '4px' }}>Blok A</div>
-            <div style={{ fontSize: '12px', opacity: 0.9 }}>
-              <strong>{DEVICE_ID}</strong>
+
+          <div style={{ backgroundColor: 'rgba(255,255,255,0.12)', borderRadius: '12px', padding: '14px', marginBottom: '12px', backdropFilter: 'blur(8px)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+              <div style={{
+                width: '44px', height: '44px', borderRadius: '12px', flexShrink: 0,
+                backgroundColor: 'rgba(255,255,255,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '22px',
+              }}>🌿</div>
+              <div>
+                <div style={{ fontSize: '17px', fontWeight: '700' }}>Blok A</div>
+                <div style={{ fontSize: '11px', opacity: 0.85, fontFamily: 'monospace' }}>{DEVICE_ID}</div>
+              </div>
             </div>
           </div>
-          <div style={{
-            marginTop: '16px',
-            paddingTop: '12px',
-            borderTop: '1px solid rgba(255,255,255,0.2)',
-            fontSize: '13px'
-          }}>
-            Status: <strong>{error ? '🔴 Offline' : '🟢 Online'}</strong>
+
+          {/* Mini peta blok */}
+          <div style={{ backgroundColor: 'rgba(0,0,0,0.15)', borderRadius: '10px', padding: '10px', marginBottom: '12px' }}>
+            <div style={{ fontSize: '10px', opacity: 0.7, marginBottom: '6px', fontWeight: '600' }}>PETA BLOK KEBUN</div>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '5px' }}>
+              {['B1', 'B2', 'B3', 'A1', 'A2', 'A3', 'C1', 'C2', 'C3'].map((blok) => (
+                <div key={blok} style={{
+                  padding: '6px 4px', borderRadius: '6px', textAlign: 'center', fontSize: '10px', fontWeight: '600',
+                  backgroundColor: blok === 'A1' ? 'rgba(255,255,255,0.35)' : 'rgba(255,255,255,0.08)',
+                  border: blok === 'A1' ? '2px solid rgba(255,255,255,0.7)' : '1px solid rgba(255,255,255,0.1)',
+                  boxShadow: blok === 'A1' ? '0 0 8px rgba(255,255,255,0.3)' : 'none',
+                }}>
+                  {blok === 'A1' ? '📡' : blok}
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Info singkat */}
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+            {[
+              { icon: '🔄', label: 'Interval', value: '15 detik' },
+              { icon: '📊', label: 'Data', value: `${sensorData.length} entri` },
+              {
+                icon: '🕐', label: 'Terakhir', value: latestData?.timestamp
+                  ? new Date(latestData.timestamp).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })
+                  : '--:--',
+              },
+              { icon: '📶', label: 'Node', value: 'ESP32' },
+            ].map((item) => (
+              <div key={item.label} style={{ backgroundColor: 'rgba(255,255,255,0.1)', borderRadius: '8px', padding: '8px 10px' }}>
+                <div style={{ fontSize: '9px', opacity: 0.7, fontWeight: '600' }}>{item.icon} {item.label}</div>
+                <div style={{ fontSize: '12px', fontWeight: '700', marginTop: '2px' }}>{item.value}</div>
+              </div>
+            ))}
           </div>
         </div>
 
