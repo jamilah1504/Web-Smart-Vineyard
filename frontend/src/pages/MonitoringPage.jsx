@@ -157,40 +157,42 @@ function MonitoringPage() {
   };
 
   // === FUNGSI SCROLL TABEL HORIZONTAL ===
-  const handleMonitoringTableScroll = () => {
-    if (tableWrapperRef.current) {
-      const element = tableWrapperRef.current;
-      setCanScrollLeft(element.scrollLeft > 0);
-      setCanScrollRight(element.scrollLeft < element.scrollWidth - element.clientWidth - 10);
-    }
-  };
+  const updateTableScrollButtons = useCallback(() => {
+    const element = tableWrapperRef.current;
+    if (!element) return;
+    const maxScroll = element.scrollWidth - element.clientWidth;
+    setCanScrollLeft(element.scrollLeft > 1);
+    setCanScrollRight(maxScroll > 1 && element.scrollLeft < maxScroll - 1);
+  }, []);
 
   const scrollMonitoringTableLeft = () => {
-    if (tableWrapperRef.current) {
-      tableWrapperRef.current.scrollBy({
-        left: -300,
-        behavior: 'smooth'
-      });
-    }
+    if (!tableWrapperRef.current) return;
+    tableWrapperRef.current.scrollBy({ left: -280, behavior: 'smooth' });
+    setTimeout(updateTableScrollButtons, 350);
   };
 
   const scrollMonitoringTableRight = () => {
-    if (tableWrapperRef.current) {
-      tableWrapperRef.current.scrollBy({
-        left: 300,
-        behavior: 'smooth'
-      });
-    }
+    if (!tableWrapperRef.current) return;
+    tableWrapperRef.current.scrollBy({ left: 280, behavior: 'smooth' });
+    setTimeout(updateTableScrollButtons, 350);
   };
 
   // === EFFECT: CEK SCROLL POSITION SAAT TABEL BERUBAH ===
   useEffect(() => {
-    if (tableWrapperRef.current) {
-      setTimeout(handleMonitoringTableScroll, 300);
-    }
-    // Reset ke halaman 1 saat data berubah
     setCurrentPage(0);
-  }, [displayData.length]);
+  }, [useFilter, startDate, endDate, selectedParam, sensorData.length]);
+
+  useEffect(() => {
+    updateTableScrollButtons();
+    const t1 = setTimeout(updateTableScrollButtons, 150);
+    const t2 = setTimeout(updateTableScrollButtons, 500);
+    window.addEventListener('resize', updateTableScrollButtons);
+    return () => {
+      clearTimeout(t1);
+      clearTimeout(t2);
+      window.removeEventListener('resize', updateTableScrollButtons);
+    };
+  }, [displayData, windowWidth, updateTableScrollButtons]);
 
   // ✅ FIX 2: chartData sekarang memetakan EC, P, dan K
   const chartData = useMemo(() => {
@@ -371,37 +373,76 @@ function MonitoringPage() {
           </div>
         </div>
 
-        {/* Status Cards */}
+        {/* Lokasi Sensor */}
         <div className="card-responsive" style={{
+          alignSelf: 'start',
           background: 'linear-gradient(135deg, #27ae60 0%, #1e8449 100%)',
           color: 'white',
-          padding: '24px',
-          boxShadow: '0 4px 15px rgba(39, 174, 96, 0.3)'
+          padding: '20px',
+          boxShadow: '0 4px 15px rgba(39, 174, 96, 0.3)',
+          borderRadius: '15px',
         }}>
-          <div style={{ marginBottom: '20px' }}>
-            <div style={{ fontSize: '14px', fontWeight: '500', opacity: 0.9 }}>📍 Lokasi Sensor</div>
-            <div style={{ fontSize: '11px', opacity: 0.7 }}>Perangkat aktif</div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '14px' }}>
+            <div>
+              <div style={{ fontSize: '15px', fontWeight: '700' }}>📍 Lokasi Sensor</div>
+              <div style={{ fontSize: '11px', opacity: 0.75, marginTop: '2px' }}>Perangkat aktif di kebun</div>
+            </div>
+            <span style={{
+              fontSize: '10px', fontWeight: '700', padding: '4px 10px', borderRadius: '20px',
+              backgroundColor: error ? 'rgba(231,76,60,0.25)' : 'rgba(255,255,255,0.2)',
+              border: `1px solid ${error ? 'rgba(231,76,60,0.5)' : 'rgba(255,255,255,0.3)'}`,
+            }}>
+              {error ? '● Offline' : '● Online'}
+            </span>
           </div>
-          <div style={{
-            backgroundColor: 'rgba(255,255,255,0.1)',
-            borderRadius: '12px',
-            padding: '16px',
-            textAlign: 'center',
-            backdropFilter: 'blur(10px)'
-          }}>
-            <div style={{ fontSize: '24px', marginBottom: '8px' }}>✓</div>
-            <div style={{ fontSize: '18px', fontWeight: '600', marginBottom: '4px' }}>Blok A</div>
-            <div style={{ fontSize: '12px', opacity: 0.9 }}>
-              <strong>{DEVICE_ID}</strong>
+
+          <div style={{ backgroundColor: 'rgba(255,255,255,0.12)', borderRadius: '12px', padding: '14px', marginBottom: '12px', backdropFilter: 'blur(8px)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+              <div style={{
+                width: '44px', height: '44px', borderRadius: '12px', flexShrink: 0,
+                backgroundColor: 'rgba(255,255,255,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '22px',
+              }}>🌿</div>
+              <div>
+                <div style={{ fontSize: '17px', fontWeight: '700' }}>Blok A</div>
+                <div style={{ fontSize: '11px', opacity: 0.85, fontFamily: 'monospace' }}>{DEVICE_ID}</div>
+              </div>
             </div>
           </div>
-          <div style={{
-            marginTop: '16px',
-            paddingTop: '12px',
-            borderTop: '1px solid rgba(255,255,255,0.2)',
-            fontSize: '13px'
-          }}>
-            Status: <strong>{error ? '🔴 Offline' : '🟢 Online'}</strong>
+
+          {/* Mini peta blok */}
+          <div style={{ backgroundColor: 'rgba(0,0,0,0.15)', borderRadius: '10px', padding: '10px', marginBottom: '12px' }}>
+            <div style={{ fontSize: '10px', opacity: 0.7, marginBottom: '6px', fontWeight: '600' }}>PETA BLOK KEBUN</div>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '5px' }}>
+              {['B1', 'B2', 'B3', 'A1', 'A2', 'A3', 'C1', 'C2', 'C3'].map((blok) => (
+                <div key={blok} style={{
+                  padding: '6px 4px', borderRadius: '6px', textAlign: 'center', fontSize: '10px', fontWeight: '600',
+                  backgroundColor: blok === 'A1' ? 'rgba(255,255,255,0.35)' : 'rgba(255,255,255,0.08)',
+                  border: blok === 'A1' ? '2px solid rgba(255,255,255,0.7)' : '1px solid rgba(255,255,255,0.1)',
+                  boxShadow: blok === 'A1' ? '0 0 8px rgba(255,255,255,0.3)' : 'none',
+                }}>
+                  {blok === 'A1' ? '📡' : blok}
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Info singkat */}
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+            {[
+              { icon: '🔄', label: 'Interval', value: '15 detik' },
+              { icon: '📊', label: 'Data', value: `${sensorData.length} entri` },
+              {
+                icon: '🕐', label: 'Terakhir', value: latestData?.timestamp
+                  ? new Date(latestData.timestamp).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })
+                  : '--:--',
+              },
+              { icon: '📶', label: 'Node', value: 'ESP32' },
+            ].map((item) => (
+              <div key={item.label} style={{ backgroundColor: 'rgba(255,255,255,0.1)', borderRadius: '8px', padding: '8px 10px' }}>
+                <div style={{ fontSize: '9px', opacity: 0.7, fontWeight: '600' }}>{item.icon} {item.label}</div>
+                <div style={{ fontSize: '12px', fontWeight: '700', marginTop: '2px' }}>{item.value}</div>
+              </div>
+            ))}
           </div>
         </div>
 
@@ -571,6 +612,7 @@ function MonitoringPage() {
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', position: 'relative' }}>
           {/* Tombol Scroll Kiri */}
           <button
+            type="button"
             onClick={scrollMonitoringTableLeft}
             disabled={!canScrollLeft}
             style={{
@@ -590,9 +632,10 @@ function MonitoringPage() {
               minWidth: '36px',
               height: '36px'
             }}
-            onMouseOver={(e) => canScrollLeft && (e.target.style.backgroundColor = '#2980b9')}
-            onMouseOut={(e) => canScrollLeft && (e.target.style.backgroundColor = '#3498db')}
+            onMouseOver={(e) => canScrollLeft && (e.currentTarget.style.backgroundColor = '#2980b9')}
+            onMouseOut={(e) => canScrollLeft && (e.currentTarget.style.backgroundColor = '#3498db')}
             title="Scroll ke kiri"
+            aria-label="Scroll tabel ke kiri"
           >
             ◀
           </button>
@@ -600,18 +643,18 @@ function MonitoringPage() {
           {/* Tabel Container dengan Scroll */}
           <div
             ref={tableWrapperRef}
-            onScroll={handleMonitoringTableScroll}
+            onScroll={updateTableScrollButtons}
             style={{
               flex: 1,
               overflowX: 'auto',
               overflowY: 'hidden',
-              borderRadius: '6px',
+              borderRadius: '12px',
+              border: '1px solid #ecf0f1',
               WebkitOverflowScrolling: 'touch',
-              scrollBehavior: 'smooth'
+              scrollBehavior: 'smooth',
             }}
           >
-            <div style={{ overflowX: 'auto', borderRadius: '12px', border: '1px solid #ecf0f1' }}>
-              <table style={{ width: '100%', minWidth: '100%', borderCollapse: 'collapse', fontSize: '14px' }}>
+              <table style={{ width: '100%', minWidth: '920px', borderCollapse: 'collapse', fontSize: '14px' }}>
             <thead>
               <tr style={{ backgroundColor: '#f8f9fa', borderBottom: '2px solid #ecf0f1' }}>
                 <th style={{ padding: '12px 16px', textAlign: 'left', color: '#2c3e50', fontWeight: '600' }}>Waktu</th>
@@ -676,11 +719,11 @@ function MonitoringPage() {
               )}
             </tbody>
           </table>
-            </div>
           </div>
 
           {/* Tombol Scroll Kanan */}
           <button
+            type="button"
             onClick={scrollMonitoringTableRight}
             disabled={!canScrollRight}
             style={{
@@ -700,9 +743,10 @@ function MonitoringPage() {
               minWidth: '36px',
               height: '36px'
             }}
-            onMouseOver={(e) => canScrollRight && (e.target.style.backgroundColor = '#2980b9')}
-            onMouseOut={(e) => canScrollRight && (e.target.style.backgroundColor = '#3498db')}
+            onMouseOver={(e) => canScrollRight && (e.currentTarget.style.backgroundColor = '#2980b9')}
+            onMouseOut={(e) => canScrollRight && (e.currentTarget.style.backgroundColor = '#3498db')}
             title="Scroll ke kanan"
+            aria-label="Scroll tabel ke kanan"
           >
             ▶
           </button>

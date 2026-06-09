@@ -1,6 +1,7 @@
 const PerangkatIoT = require('../models/PerangkatIoT');
 const User = require('../models/User');
 const VarietasAnggur = require('../models/VarietasAnggur');
+const { Notification } = require('../models');
 const { Op } = require('sequelize');
 
 exports.createPerangkat = async (req, res) => {
@@ -35,17 +36,30 @@ exports.checkDeviceStatus = async (req, res) => {
 
         // Cari semua perangkat Online yang terakhir update-nya sudah lama
         // (Pastikan tabel Perangkat_IoT punya kolom 'updatedAt')
-        const [updatedRows] = await PerangkatIoT.update(
-            { status_koneksi: 'Offline' },
-            { 
-                where: { 
-                    status_koneksi: 'Online',
-                    updatedAt: { [Op.lt]: limitTime } 
-                } 
+        const offlineDevices = await PerangkatIoT.findAll({
+            where: { 
+                status_koneksi: 'Online',
+                updatedAt: { [Op.lt]: limitTime } 
             }
-        );
+        });
 
-        res.json({ status: 'success', message: `${updatedRows} perangkat diatur ke Offline.` });
+        // Update status ke Offline
+        for (const device of offlineDevices) {
+            await device.update({ status_koneksi: 'Offline' });
+            
+            // 📢 Buat notifikasi untuk setiap device yang offline
+            await Notification.create({
+                perangkat_id: device.id,
+                pesan: `⚠️ Perangkat "${device.nama_node}" kehilangan koneksi. Terakhir online: ${new Date().toLocaleString()}`,
+                tipe: 'warning'
+            }).catch(err => console.warn("⚠️ Gagal buat notif offline:", err.message));
+        }
+
+        res.json({ 
+            status: 'success', 
+            message: `${offlineDevices.length} perangkat diatur ke Offline.`,
+            offlineDevices: offlineDevices.map(d => d.id)
+        });
     } catch (error) {
         res.status(500).json({ error: error.message });
     }

@@ -98,28 +98,48 @@ function ThresholdsPage() {
     }
   }
 
-  // --- KOMPONEN INPUT BANTUAN UNTUK MIN/MAX ---
-  // Membuat komponen kecil agar kode tidak terlalu panjang di bawah
-  const MinMaxInput = ({ label, fieldMin, fieldMax, step = "1" }) => (
-    <div className="form-grid-2 u-mt-05" style={{ gap: '10px', marginBottom: '15px' }}>
-      <div>
-        <div className="small-text text-sm-muted">Min {label}</div>
-        <input
-          type="number" step={step} className="form-control"
-          value={selectedVarietas[fieldMin] || 0}
-          onChange={(e) => setSelectedVarietas({...selectedVarietas, [fieldMin]: parseFloat(e.target.value)})}
-        />
+  const MinMaxInput = ({ label, fieldMin, fieldMax, step = '1', icon = '📊', color = '#3498db', unit = '' }) => {
+    const minVal = selectedVarietas[fieldMin] || 0
+    const maxVal = selectedVarietas[fieldMax] || 0
+    const range = maxVal - minVal
+  return (
+    <div style={{ padding: '14px', backgroundColor: '#f8fafc', borderRadius: '12px', border: '1px solid #f1f5f9', marginBottom: '12px' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '10px' }}>
+        <span style={{ fontSize: '18px' }}>{icon}</span>
+        <span style={{ fontSize: '13px', fontWeight: '700', color: '#334155' }}>{label}</span>
+        <span style={{ marginLeft: 'auto', fontSize: '11px', fontWeight: '600', color, backgroundColor: `${color}15`, padding: '2px 8px', borderRadius: '20px' }}>
+          Rentang: {minVal}{unit} – {maxVal}{unit}
+        </span>
       </div>
-      <div>
-        <div className="small-text text-sm-muted">Max {label}</div>
-        <input
-          type="number" step={step} className="form-control"
-          value={selectedVarietas[fieldMax] || 0}
-          onChange={(e) => setSelectedVarietas({...selectedVarietas, [fieldMax]: parseFloat(e.target.value)})}
-        />
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '10px' }}>
+        <div>
+          <div style={{ fontSize: '11px', color: '#94a3b8', fontWeight: '600', marginBottom: '4px' }}>Min</div>
+          <input
+            type="number" step={step}
+            value={minVal}
+            onChange={(e) => setSelectedVarietas({ ...selectedVarietas, [fieldMin]: parseFloat(e.target.value) })}
+            style={{ width: '100%', padding: '9px 12px', borderRadius: '8px', border: '1px solid #e2e8f0', fontSize: '13px', fontWeight: '600', boxSizing: 'border-box' }}
+          />
+        </div>
+        <div>
+          <div style={{ fontSize: '11px', color: '#94a3b8', fontWeight: '600', marginBottom: '4px' }}>Max</div>
+          <input
+            type="number" step={step}
+            value={maxVal}
+            onChange={(e) => setSelectedVarietas({ ...selectedVarietas, [fieldMax]: parseFloat(e.target.value) })}
+            style={{ width: '100%', padding: '9px 12px', borderRadius: '8px', border: '1px solid #e2e8f0', fontSize: '13px', fontWeight: '600', boxSizing: 'border-box' }}
+          />
+        </div>
+      </div>
+      <div style={{ backgroundColor: '#e2e8f0', borderRadius: '20px', height: '6px', overflow: 'hidden' }}>
+        <div style={{
+          marginLeft: `${Math.min(90, Math.max(0, (minVal / (maxVal || 1)) * 50))}%`,
+          width: `${Math.min(100, Math.max(5, (range / (maxVal || 1)) * 80))}%`,
+          height: '100%', backgroundColor: color, borderRadius: '20px', transition: 'all 0.3s',
+        }} />
       </div>
     </div>
-  )
+  )}
 
   if (loading) return (
     <div className="page page-with-padding" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '400px', color: '#95a5a6' }}>
@@ -132,74 +152,67 @@ function ThresholdsPage() {
 
   return (
     <div className="page page-with-padding page-shell" style={{ backgroundColor: '#f8f9fa' }}>
-      <style>{`
-        @keyframes slideIn {
-          from { opacity: 0; transform: translateY(10px); }
-          to { opacity: 1; transform: translateY(0); }
-        }
-        .card-responsive {
-          animation: slideIn 0.5s ease-out;
-          transition: all 0.3s ease;
-          border-radius: 15px;
-          box-shadow: 0 2px 8px rgba(0,0,0,0.04);
-        }
-        .card-responsive:hover {
-          transform: translateY(-4px);
-          box-shadow: 0 8px 20px rgba(0,0,0,0.1) !important;
-        }
-        .form-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
-      `}</style>
-
       <div className="page-header u-mb-15">
         <div>
-          <div className="page-title page-title-lg">⚙️ Atur Threshold Varietas</div>
+          <div className="page-title page-title-lg">⚙️ Konfigurasi Threshold</div>
           <div className="page-caption page-caption-lg">Sesuaikan ambang batas sensor untuk setiap varietas anggur</div>
         </div>
+        {selectedVarietas && (
+          <div style={{ backgroundColor: '#fff', padding: '10px 16px', borderRadius: '12px', border: '1px solid #e0e0e0', boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}>
+            <div style={{ fontSize: '10px', color: '#94a3b8', fontWeight: '600' }}>Varietas Aktif</div>
+            <div style={{ fontSize: '15px', fontWeight: '700', color: '#2c3e50' }}>🍇 {selectedVarietas.nama_varietas}</div>
+          </div>
+        )}
       </div>
 
-      {/* Info & Guidelines */}
-      <section className="card card-animate card-elevated">
-        <div className="card-header card-header-top">
-          <div>
-            <div className="card-title card-title-lg">Panduan Threshold Bibit Anggur Pilihan</div>
-          </div>
+      {/* Panduan */}
+      <section style={{ backgroundColor: '#fff', borderRadius: '15px', padding: '20px', marginBottom: '20px', border: '1px solid #e0e0e0' }}>
+        <div style={{ fontSize: '15px', fontWeight: '700', color: '#2c3e50', marginBottom: '14px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '30px', height: '30px', borderRadius: '8px', background: 'linear-gradient(135deg, #667eea, #764ba2)', fontSize: '14px' }}>📖</span>
+          Panduan Threshold Bibit Anggur
         </div>
-        <div className="simple-list u-mt-05">
-          <div className="small-text" style={{ paddingBottom: '8px', borderBottom: '1px solid #f0f0f0' }}>
-            <strong>Moisture:</strong> {selectedVarietas?.min_moisture}% – Batas bawah sebelum pompa aktif.
-          </div>
-          <div className="small-text" style={{ paddingBottom: '8px', borderBottom: '1px solid #f0f0f0' }}>
-            <strong>Nutrisi:</strong> Pastikan nilai NPK tidak di bawah standar agar fase vegetatif tidak terganggu.
-          </div>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '12px' }}>
+          {[
+            { icon: '💧', label: 'Moisture', desc: `${selectedVarietas?.min_moisture ?? 40}%–${selectedVarietas?.max_moisture ?? 80}% — batas sebelum pompa aktif` },
+            { icon: '🌡️', label: 'Suhu', desc: `${selectedVarietas?.min_suhu ?? 20}°C–${selectedVarietas?.max_suhu ?? 35}°C — rentang optimal pertumbuhan` },
+            { icon: '🧪', label: 'Nutrisi NPK', desc: 'Pastikan nilai NPK tidak di bawah standar fase vegetatif' },
+            { icon: '⚗️', label: 'pH & EC', desc: 'Jaga keasaman & salinitas agar penyerapan nutrisi optimal' },
+          ].map((item) => (
+            <div key={item.label} style={{ padding: '12px', backgroundColor: '#f8fafc', borderRadius: '10px', borderLeft: '3px solid #764ba2' }}>
+              <div style={{ fontSize: '12px', fontWeight: '700', color: '#334155', marginBottom: '4px' }}>{item.icon} {item.label}</div>
+              <div style={{ fontSize: '11px', color: '#64748b', lineHeight: 1.5 }}>{item.desc}</div>
+            </div>
+          ))}
         </div>
       </section>
-      {/* Bagian Selector Varietas & Modal (Sama seperti kode aslimu) */}
-      <section className="card-responsive" style={{ backgroundColor: '#ffffff', padding: '24px', marginBottom: '30px', border: '1px solid #ecf0f1' }}>
-        {/* ... Kode Selector ... */}
-        <div style={{ marginBottom: '20px' }}>
-          <div style={{ fontSize: '16px', fontWeight: '600', color: '#2c3e50', marginBottom: '4px' }}>🌾 Pilih Varietas</div>
+
+      {/* Pilih Varietas */}
+      <section style={{ backgroundColor: '#ffffff', padding: '24px', marginBottom: '24px', borderRadius: '15px', border: '1px solid #e0e0e0' }}>
+        <div style={{ marginBottom: '18px' }}>
+          <div style={{ fontSize: '16px', fontWeight: '700', color: '#2c3e50' }}>🌾 Pilih Varietas</div>
+          <div style={{ fontSize: '12px', color: '#7f8c8d', marginTop: '2px' }}>Cari atau pilih varietas untuk dikonfigurasi</div>
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '16px', alignItems: 'flex-end' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '14px', alignItems: 'flex-end' }}>
           <div>
-            <label style={{ fontSize: '12px', fontWeight: '500', color: '#7f8c8d', display: 'block', marginBottom: '8px' }}>Cari Varietas</label>
+            <label style={{ fontSize: '12px', fontWeight: '600', color: '#7f8c8d', display: 'block', marginBottom: '6px' }}>Cari Varietas</label>
             <input
-              type="text" className="form-control" placeholder="Ketik nama varietas..."
+              type="text" placeholder="Ketik nama varietas..."
               value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)}
-              style={{ width: '100%', padding: '10px 12px', borderRadius: '8px', border: '1px solid #ecf0f1' }}
+              style={{ width: '100%', padding: '10px 12px', borderRadius: '8px', border: '1px solid #e2e8f0', boxSizing: 'border-box', fontSize: '13px' }}
             />
           </div>
 
           <div>
-            <label style={{ fontSize: '12px', fontWeight: '500', color: '#7f8c8d', display: 'block', marginBottom: '8px' }}>Atau Pilih</label>
-            <select 
-              className="form-control" value={selectedVarietas?.id || ''}
+            <label style={{ fontSize: '12px', fontWeight: '600', color: '#7f8c8d', display: 'block', marginBottom: '6px' }}>Pilih dari Daftar</label>
+            <select
+              value={selectedVarietas?.id || ''}
               onChange={(e) => {
                 const selected = varietasList.find(v => v.id === e.target.value)
                 setSelectedVarietas(selected)
                 setSearchTerm('')
               }}
-              style={{ width: '100%', padding: '10px 12px', borderRadius: '8px', border: '1px solid #ecf0f1' }}
+              style={{ width: '100%', padding: '10px 12px', borderRadius: '8px', border: '1px solid #e2e8f0', fontSize: '13px' }}
             >
               <option value="">-- Pilih Varietas --</option>
               {filteredList.map(v => (
@@ -208,14 +221,34 @@ function ThresholdsPage() {
             </select>
           </div>
 
-          <button 
-            type="button" 
+          <button
+            type="button"
             onClick={() => setShowAddModal(true)}
-            style={{ backgroundColor: '#27ae60', color: 'white', border: 'none', padding: '10px 20px', borderRadius: '8px', fontWeight: '500', cursor: 'pointer' }}
+            style={{ backgroundColor: '#27ae60', color: 'white', border: 'none', padding: '10px 20px', borderRadius: '8px', fontWeight: '600', cursor: 'pointer', fontSize: '13px', boxShadow: '0 2px 6px rgba(39,174,96,0.3)' }}
           >
             ➕ Tambah Varietas
           </button>
         </div>
+
+        {filteredList.length > 0 && (
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginTop: '16px' }}>
+            {filteredList.map(v => (
+              <button
+                key={v.id}
+                type="button"
+                onClick={() => { setSelectedVarietas(v); setSearchTerm('') }}
+                style={{
+                  padding: '6px 14px', borderRadius: '20px', fontSize: '12px', fontWeight: '600', cursor: 'pointer',
+                  border: selectedVarietas?.id === v.id ? '2px solid #764ba2' : '1px solid #e2e8f0',
+                  backgroundColor: selectedVarietas?.id === v.id ? '#764ba215' : '#fff',
+                  color: selectedVarietas?.id === v.id ? '#764ba2' : '#64748b',
+                }}
+              >
+                🍇 {v.nama_varietas}
+              </button>
+            ))}
+          </div>
+        )}
       </section>
 
       {/* Modal Tambah */}
@@ -252,52 +285,56 @@ function ThresholdsPage() {
         </div>
       )}
 
-      {/* 🌟 THRESHOLD SETTINGS CARDS */}
       {selectedVarietas && (
         <>
-          <section style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(350px, 1fr))', gap: '20px' }}>
-            
-            {/* Card 1: Fisik Lingkungan */}
-            <div className="card card-animate card-elevated">
-              <div className="card-header card-header-top">
-                <div>
-                  <div className="card-title card-title-lg">Fisik & Lingkungan</div>
-                  <div className="card-subtitle card-subtitle-lg">Moisture, Suhu & Keasaman Tanah</div>
+          <section style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(340px, 1fr))', gap: '20px' }}>
+            <div style={{ backgroundColor: '#fff', borderRadius: '15px', padding: '24px', border: '1px solid #e0e0e0' }}>
+              <div style={{ marginBottom: '18px' }}>
+                <div style={{ fontSize: '16px', fontWeight: '700', color: '#2c3e50', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '32px', height: '32px', borderRadius: '10px', background: 'linear-gradient(135deg, #84fab0, #8fd3f4)', fontSize: '16px' }}>🌡️</span>
+                  Fisik & Lingkungan
                 </div>
+                <div style={{ fontSize: '12px', color: '#7f8c8d', marginTop: '4px', marginLeft: '40px' }}>Moisture, Suhu & Keasaman Tanah</div>
               </div>
-              <div className="simple-card-list u-mt-05">
-                <MinMaxInput label="Moisture (%)" fieldMin="min_moisture" fieldMax="max_moisture" />
-                <MinMaxInput label="Suhu (°C)" fieldMin="min_suhu" fieldMax="max_suhu" step="0.1" />
-                <MinMaxInput label="pH Tanah" fieldMin="min_ph" fieldMax="max_ph" step="0.1" />
-              </div>
+              <MinMaxInput label="Moisture" fieldMin="min_moisture" fieldMax="max_moisture" icon="💧" color="#3498db" unit="%" />
+              <MinMaxInput label="Suhu" fieldMin="min_suhu" fieldMax="max_suhu" step="0.1" icon="🌡️" color="#e67e22" unit="°C" />
+              <MinMaxInput label="pH Tanah" fieldMin="min_ph" fieldMax="max_ph" step="0.1" icon="⚗️" color="#9b59b6" unit="" />
             </div>
 
-            {/* Card 2: Nutrisi & Elektrolit */}
-            <div className="card card-animate card-elevated">
-              <div className="card-header card-header-top">
-                <div>
-                  <div className="card-title card-title-lg">Kondisi Kimiawi & Nutrisi</div>
-                  <div className="card-subtitle card-subtitle-lg">EC & NPK (Nitrogen, Fosfor, Kalium)</div>
+            <div style={{ backgroundColor: '#fff', borderRadius: '15px', padding: '24px', border: '1px solid #e0e0e0' }}>
+              <div style={{ marginBottom: '18px' }}>
+                <div style={{ fontSize: '16px', fontWeight: '700', color: '#2c3e50', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '32px', height: '32px', borderRadius: '10px', background: 'linear-gradient(135deg, #f6d365, #fda085)', fontSize: '16px' }}>🧪</span>
+                  Kimiawi & Nutrisi
                 </div>
+                <div style={{ fontSize: '12px', color: '#7f8c8d', marginTop: '4px', marginLeft: '40px' }}>EC & NPK (Nitrogen, Fosfor, Kalium)</div>
               </div>
-              <div className="simple-card-list u-mt-05">
-                <MinMaxInput label="EC (µS/cm)" fieldMin="min_ec" fieldMax="max_ec" />
-                <MinMaxInput label="Nitrogen (mg/kg)" fieldMin="min_n" fieldMax="max_n" />
-                <MinMaxInput label="Fosfor (mg/kg)" fieldMin="min_p" fieldMax="max_p" />
-                <MinMaxInput label="Kalium (mg/kg)" fieldMin="min_k" fieldMax="max_k" />
-              </div>
+              <MinMaxInput label="EC" fieldMin="min_ec" fieldMax="max_ec" icon="⚡" color="#f39c12" unit=" µS/cm" />
+              <MinMaxInput label="Nitrogen" fieldMin="min_n" fieldMax="max_n" icon="🟢" color="#27ae60" unit=" mg/kg" />
+              <MinMaxInput label="Fosfor" fieldMin="min_p" fieldMax="max_p" icon="🔵" color="#2980b9" unit=" mg/kg" />
+              <MinMaxInput label="Kalium" fieldMin="min_k" fieldMax="max_k" icon="🟣" color="#8e44ad" unit=" mg/kg" />
             </div>
           </section>
 
-          {/* Tombol Simpan Global */}
-          <div style={{ marginTop: '20px', textAlign: 'right' }}>
-             <button 
-                type="button" 
-                onClick={() => handleSave(selectedVarietas.id, selectedVarietas)}
-                style={{ backgroundColor: '#3498db', color: 'white', border: 'none', padding: '12px 24px', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer', fontSize: '14px', boxShadow: '0 4px 6px rgba(52, 152, 219, 0.3)' }}
-              >
-                💾 Simpan Semua Threshold "{selectedVarietas.nama_varietas}"
-              </button>
+          <div style={{
+            marginTop: '20px', padding: '16px 20px', borderRadius: '12px',
+            backgroundColor: '#fff', border: '1px solid #e0e0e0',
+            display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px',
+          }}>
+            <div style={{ fontSize: '13px', color: '#64748b' }}>
+              Mengubah threshold untuk <strong style={{ color: '#2c3e50' }}>{selectedVarietas.nama_varietas}</strong>
+            </div>
+            <button
+              type="button"
+              onClick={() => handleSave(selectedVarietas.id, selectedVarietas)}
+              style={{
+                backgroundColor: '#3498db', color: 'white', border: 'none',
+                padding: '12px 28px', borderRadius: '10px', fontWeight: '700',
+                cursor: 'pointer', fontSize: '14px', boxShadow: '0 4px 12px rgba(52,152,219,0.3)',
+              }}
+            >
+              💾 Simpan Semua Threshold
+            </button>
           </div>
         </>
       )}

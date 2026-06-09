@@ -14,8 +14,12 @@ function DeviceManagementPage() {
     varietas_id: '',
   })
 
+  // 🌟 NEW: Polling status untuk real-time update
   useEffect(() => {
     fetchAll()
+    // Refresh device status setiap 5 detik untuk mendeteksi offline
+    const interval = setInterval(fetchAll, 5000)
+    return () => clearInterval(interval)
   }, [])
 
   const fetchAll = async () => {
