@@ -157,40 +157,42 @@ function MonitoringPage() {
   };
 
   // === FUNGSI SCROLL TABEL HORIZONTAL ===
-  const handleMonitoringTableScroll = () => {
-    if (tableWrapperRef.current) {
-      const element = tableWrapperRef.current;
-      setCanScrollLeft(element.scrollLeft > 0);
-      setCanScrollRight(element.scrollLeft < element.scrollWidth - element.clientWidth - 10);
-    }
-  };
+  const updateTableScrollButtons = useCallback(() => {
+    const element = tableWrapperRef.current;
+    if (!element) return;
+    const maxScroll = element.scrollWidth - element.clientWidth;
+    setCanScrollLeft(element.scrollLeft > 1);
+    setCanScrollRight(maxScroll > 1 && element.scrollLeft < maxScroll - 1);
+  }, []);
 
   const scrollMonitoringTableLeft = () => {
-    if (tableWrapperRef.current) {
-      tableWrapperRef.current.scrollBy({
-        left: -300,
-        behavior: 'smooth'
-      });
-    }
+    if (!tableWrapperRef.current) return;
+    tableWrapperRef.current.scrollBy({ left: -280, behavior: 'smooth' });
+    setTimeout(updateTableScrollButtons, 350);
   };
 
   const scrollMonitoringTableRight = () => {
-    if (tableWrapperRef.current) {
-      tableWrapperRef.current.scrollBy({
-        left: 300,
-        behavior: 'smooth'
-      });
-    }
+    if (!tableWrapperRef.current) return;
+    tableWrapperRef.current.scrollBy({ left: 280, behavior: 'smooth' });
+    setTimeout(updateTableScrollButtons, 350);
   };
 
   // === EFFECT: CEK SCROLL POSITION SAAT TABEL BERUBAH ===
   useEffect(() => {
-    if (tableWrapperRef.current) {
-      setTimeout(handleMonitoringTableScroll, 300);
-    }
-    // Reset ke halaman 1 saat data berubah
     setCurrentPage(0);
-  }, [displayData.length]);
+  }, [useFilter, startDate, endDate, selectedParam, sensorData.length]);
+
+  useEffect(() => {
+    updateTableScrollButtons();
+    const t1 = setTimeout(updateTableScrollButtons, 150);
+    const t2 = setTimeout(updateTableScrollButtons, 500);
+    window.addEventListener('resize', updateTableScrollButtons);
+    return () => {
+      clearTimeout(t1);
+      clearTimeout(t2);
+      window.removeEventListener('resize', updateTableScrollButtons);
+    };
+  }, [displayData, windowWidth, updateTableScrollButtons]);
 
   // ✅ FIX 2: chartData sekarang memetakan EC, P, dan K
   const chartData = useMemo(() => {
@@ -610,6 +612,7 @@ function MonitoringPage() {
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', position: 'relative' }}>
           {/* Tombol Scroll Kiri */}
           <button
+            type="button"
             onClick={scrollMonitoringTableLeft}
             disabled={!canScrollLeft}
             style={{
@@ -629,9 +632,10 @@ function MonitoringPage() {
               minWidth: '36px',
               height: '36px'
             }}
-            onMouseOver={(e) => canScrollLeft && (e.target.style.backgroundColor = '#2980b9')}
-            onMouseOut={(e) => canScrollLeft && (e.target.style.backgroundColor = '#3498db')}
+            onMouseOver={(e) => canScrollLeft && (e.currentTarget.style.backgroundColor = '#2980b9')}
+            onMouseOut={(e) => canScrollLeft && (e.currentTarget.style.backgroundColor = '#3498db')}
             title="Scroll ke kiri"
+            aria-label="Scroll tabel ke kiri"
           >
             ◀
           </button>
@@ -639,18 +643,18 @@ function MonitoringPage() {
           {/* Tabel Container dengan Scroll */}
           <div
             ref={tableWrapperRef}
-            onScroll={handleMonitoringTableScroll}
+            onScroll={updateTableScrollButtons}
             style={{
               flex: 1,
               overflowX: 'auto',
               overflowY: 'hidden',
-              borderRadius: '6px',
+              borderRadius: '12px',
+              border: '1px solid #ecf0f1',
               WebkitOverflowScrolling: 'touch',
-              scrollBehavior: 'smooth'
+              scrollBehavior: 'smooth',
             }}
           >
-            <div style={{ overflowX: 'auto', borderRadius: '12px', border: '1px solid #ecf0f1' }}>
-              <table style={{ width: '100%', minWidth: '100%', borderCollapse: 'collapse', fontSize: '14px' }}>
+              <table style={{ width: '100%', minWidth: '920px', borderCollapse: 'collapse', fontSize: '14px' }}>
             <thead>
               <tr style={{ backgroundColor: '#f8f9fa', borderBottom: '2px solid #ecf0f1' }}>
                 <th style={{ padding: '12px 16px', textAlign: 'left', color: '#2c3e50', fontWeight: '600' }}>Waktu</th>
@@ -715,11 +719,11 @@ function MonitoringPage() {
               )}
             </tbody>
           </table>
-            </div>
           </div>
 
           {/* Tombol Scroll Kanan */}
           <button
+            type="button"
             onClick={scrollMonitoringTableRight}
             disabled={!canScrollRight}
             style={{
@@ -739,9 +743,10 @@ function MonitoringPage() {
               minWidth: '36px',
               height: '36px'
             }}
-            onMouseOver={(e) => canScrollRight && (e.target.style.backgroundColor = '#2980b9')}
-            onMouseOut={(e) => canScrollRight && (e.target.style.backgroundColor = '#3498db')}
+            onMouseOver={(e) => canScrollRight && (e.currentTarget.style.backgroundColor = '#2980b9')}
+            onMouseOut={(e) => canScrollRight && (e.currentTarget.style.backgroundColor = '#3498db')}
             title="Scroll ke kanan"
+            aria-label="Scroll tabel ke kanan"
           >
             ▶
           </button>
