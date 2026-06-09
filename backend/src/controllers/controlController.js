@@ -40,21 +40,26 @@ exports.updatePumpStatus = async (req, res) => {
     if (status_pompa_air !== undefined) updateData.status_pompa_air = status_pompa_air;
     if (status_pompa_pupuk !== undefined) updateData.status_pompa_pupuk = status_pompa_pupuk;
 
-    // 🌟 KUNCI PERBAIKAN B: Cari data perangkat saat ini untuk mengambil mode_kerja asli dari DB
+    // Cari data perangkat saat ini untuk memastikan fisik node terdaftar
     const perangkat = await PerangkatIoT.findOne({ where: { id: id } });
     if (!perangkat) {
         return res.status(404).json({ status: 'error', message: 'Perangkat tidak ditemukan' });
     }
 
-    // Eksekusi update data ke database MySQL
-    await PerangkatIoT.update(updateData, { where: { id: id } });
+    // 🌟 PERBAIKAN LOGIKA: Gunakan individualHooks agar siklus hidup Sequelize berjalan sinkron
+    await PerangkatIoT.update(updateData, { 
+        where: { id: id },
+        individualHooks: true 
+    });
 
     // ========================================================================
-    // 🌟 SEKARANG DATA COCOK: AMBIL MODE ASLI DARI DATABASE ATAU UPDATE-AN BARU
+    // SINKRONISASI HISTORI POMPA KE DB LOG_POMPA (Dibuat Aman & Akurat)
     // ========================================================================
     try {
-        // Jika ada update mode baru pakai yang baru, jika tidak, pakai mode yang sedang aktif di DB
-        const currentMode = updateData.mode_kerja || perangkat.mode_kerja || 'manual';
+        // Ambil nilai mode paling segar setelah proses database update selesai
+        const freshPerangkat = await PerangkatIoT.findOne({ where: { id: id } });
+        const currentMode = freshPerangkat ? freshPerangkat.mode_kerja : (updateData.mode_kerja || 'manual');
+        const finalModeString = String(currentMode).toUpperCase();
 
         // Catat histori pompa air jika ada perubahan status
         if (status_pompa_air !== undefined) {
@@ -62,7 +67,7 @@ exports.updatePumpStatus = async (req, res) => {
             perangkat_id: id,
             jenis_pompa: 'air',
             status: status_pompa_air ? 'NYALA' : 'MATI',
-            mode_trigger: currentMode.toUpperCase() // 🔥 Sekarang nilainya dinamis (AUTO/MANUAL)
+            mode_trigger: finalModeString
           });
         }
         
@@ -72,7 +77,7 @@ exports.updatePumpStatus = async (req, res) => {
             perangkat_id: id,
             jenis_pompa: 'pupuk',
             status: status_pompa_pupuk ? 'NYALA' : 'MATI',
-            mode_trigger: currentMode.toUpperCase() // 🔥 Bukan UNKNOWN lagi
+            mode_trigger: finalModeString
           });
         }
     } catch (logErr) {
@@ -108,15 +113,16 @@ exports.getPumpStatus = async (req, res) => {
         }
 
         const batasKering = perangkat.Varietas_Anggur ? perangkat.Varietas_Anggur.min_moisture : 40.0;
+        const batasNitrogen = perangkat.Varietas_Anggur ? perangkat.Varietas_Anggur.min_n : 30.0; 
 
-        // Struktur ini SUDAH SEMPURNA dan dikenali oleh ArduinoJson di ESP32
         res.status(200).json({
             status: 'success',
             data: {
                 mode_kerja: perangkat.mode_kerja,
                 status_pompa_air: perangkat.status_pompa_air,
                 status_pompa_pupuk: perangkat.status_pompa_pupuk,
-                batas_kering: batasKering 
+                batas_kering: batasKering,
+                batas_nitrogen: batasNitrogen 
             }
         });
 
@@ -127,11 +133,10 @@ exports.getPumpStatus = async (req, res) => {
 };
 
 // ========================================================================
-// 3. TAMBAHAN WAJIB: MENERIMA DATA SENSOR (Ditembak oleh ESP32 tiap 15 detik)
+// 3. MENERIMA DATA SENSOR (Ditembak oleh ESP32 tiap 15 detik)
 // ========================================================================
 exports.saveSensorData = async (req, res) => {
     try {
-        // Ekstrak data sesuai dengan nama key JSON yang dikirim dari Arduino IDE
         const {
             perangkat_id,
             kelembapan_tanah,
@@ -147,7 +152,6 @@ exports.saveSensorData = async (req, res) => {
 
         console.log(`📥 Menerima data sensor dari perangkat: ${perangkat_id}`);
 
-        // 1. Simpan data log tanah ke database
         await LogSensorTanah.create({
             perangkat_id,
             moisture: kelembapan_tanah,
@@ -159,7 +163,6 @@ exports.saveSensorData = async (req, res) => {
             k: kalium
         });
 
-        // 2. Simpan data log tandon ke database
         await LogTandon.create({
             perangkat_id,
             ketinggian_air,
@@ -186,8 +189,8 @@ exports.getPumpHistory = async (req, res) => {
         
         const history = await LogPompa.findAll({
             where: { perangkat_id: id },
-            order: [['createdAt', 'DESC']], // Diurutkan dari yang paling baru
-            limit: 50 // Batasi 50 data terakhir agar ringan dimuat
+            order: [['createdAt', 'DESC']], 
+            limit: 50 
         });
 
         res.status(200).json({

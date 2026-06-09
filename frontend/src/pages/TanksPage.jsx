@@ -304,7 +304,7 @@ function TankMonitoringPage() {
                 <span style={{ fontWeight: '600', color: '#34495e', fontSize: '13px' }}>Ambang Kritis</span>
               </div>
               <span style={{ backgroundColor: '#ffebee', color: '#c62828', padding: '4px 12px', borderRadius: '20px', fontSize: '11px', fontWeight: '800' }}>
-                &lt; 10 cm (~24%)
+                &lt; 10 cm (~28,57%)
               </span>
             </div>
           </div>

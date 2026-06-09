@@ -1,11 +1,13 @@
 const { LogTandon, PerangkatIoT, Notification } = require('../models');
 const sendTelegram = require('../utils/telegram');
 
+// Definisikan TINGGI_MAX di luar agar bisa dipakai di semua fungsi jika dibutuhkan
+const TINGGI_MAX = 35.0;
+
 // 1. Fungsi untuk Mencatat Ketinggian Air & Proteksi Hardware
 exports.recordWaterLevel = async (req, res) => {
     try {
         const { perangkat_id, ketinggian_air, jenis_tandon } = req.body;
-        const TINGGI_MAX = 31.0;
         const persentase = (ketinggian_air / TINGGI_MAX) * 100;
 
         await LogTandon.create({ perangkat_id, ketinggian_air, jenis_tandon });
@@ -27,9 +29,9 @@ exports.recordWaterLevel = async (req, res) => {
         
         // 2. LOGIKA RECOVERY (Otomatis kembali ke AUTO jika air sudah cukup, misal > 25%)
         else if (persentase > 25 && jenis_tandon === 'air') {
-            // Cek apakah saat ini sedang manual karena error sebelumnya
             const perangkat = await PerangkatIoT.findByPk(perangkat_id);
-            if (perangkat.mode_kerja === 'manual' && perangkat.status_pompa_air === false) {
+            // Tambahkan pengecekan aman jika perangkat tidak ditemukan
+            if (perangkat && perangkat.mode_kerja === 'manual' && perangkat.status_pompa_air === false) {
                 await PerangkatIoT.update(
                     { mode_kerja: 'auto' }, 
                     { where: { id: perangkat_id } }
@@ -40,7 +42,7 @@ exports.recordWaterLevel = async (req, res) => {
 
         return res.status(201).json({ status: 'success' });
     } catch (error) {
-        // ... error handling
+        return res.status(500).json({ status: 'error', message: error.message });
     }
 };
 
@@ -49,17 +51,31 @@ exports.getLatestWaterLevel = async (req, res) => {
     try {
         const { perangkat_id } = req.params;
 
-        const data = await LogTandon.findAll({
+        const logs = await LogTandon.findAll({
             where: { perangkat_id },
-            order: [['timestamp', 'DESC']], // Sesuai kolom di PHPMyAdmin kamu
+            order: [['timestamp', 'DESC']], // Pastikan kolom ini sesuai di DB (biasanya createdAt jika bawaan Sequelize)
             limit: 100
         });
 
-        if (!data || data.length === 0) {
+        if (!logs || logs.length === 0) {
             return res.status(404).json({ status: 'error', message: 'Data tidak ditemukan.' });
         }
 
-        return res.status(200).json({ status: 'success', data });
+        // ✨ Modifikasi data sebelum dikirim ke frontend untuk menyertakan persentase dan tinggi maks
+        const dataWithPercentage = logs.map(log => {
+            // Karena data dari Sequelize berbentuk instance, kita ubah ke JSON biasa dulu
+            const logJson = log.toJSON(); 
+            const persentase = (logJson.ketinggian_air / TINGGI_MAX) * 100;
+            
+            return {
+                ...logJson,
+                tinggi_maks: TINGGI_MAX,
+                persentase: parseFloat(persentase.toFixed(1)) // membatasi 1 angka di belakang koma (misal: 85.5)
+            };
+        });
+
+        // Sekarang frontend akan menerima objek yang punya properti tinggi_maks dan persentase
+        return res.status(200).json({ status: 'success', data: dataWithPercentage });
     } catch (error) {
         return res.status(500).json({ status: 'error', message: error.message });
     }
@@ -70,7 +86,6 @@ exports.controlPump = async (req, res) => {
         const { perangkat_id, pompa_type, status } = req.body;
 
         const updateData = {
-            // 🌟 SETIAP KLIK TOMBOL, UBAH MODE JADI MANUAL 🌟
             mode_kerja: 'manual' 
         };
 
@@ -85,8 +100,8 @@ exports.controlPump = async (req, res) => {
             individualHooks: true 
         });
 
-        res.status(200).json({ status: 'success', message: 'Mode manual aktif & status diubah' });
+        return res.status(200).json({ status: 'success', message: 'Mode manual aktif & status diubah' });
     } catch (error) {
-        res.status(500).json({ status: 'error', message: error.message });
+        return res.status(500).json({ status: 'error', message: error.message });
     }
 };
