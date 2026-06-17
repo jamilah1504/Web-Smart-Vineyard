@@ -194,7 +194,7 @@ function TankMonitoringPage() {
       </div>
 
       {/* KOTAK-KOTAK ATAS (DASHBOARD) */}
-      <section style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '20px', marginBottom: '30px' }}>
+      <section className="responsive-grid-section">
         
         {/* KARTU 1: FILTER */}
         <div className="card-responsive" style={{ backgroundColor: '#fff', borderRadius: '15px', padding: '24px', border: '1px solid #ecf0f1', boxShadow: '0 4px 15px rgba(0,0,0,0.03)', display: 'flex', flexDirection: 'column' }}>
@@ -205,16 +205,16 @@ function TankMonitoringPage() {
             <div style={{ fontSize: '12px', color: '#7f8c8d' }}>Pilih rentang waktu & tandon</div>
           </div>
           
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', flex: 1 }}>
+          <div className={`responsive-filter-grid${windowWidth < 576 ? '' : ''}`}>
             <div>
               <label style={{ fontSize: '11px', fontWeight: '600', color: '#7f8c8d', marginBottom: '4px', display: 'block' }}>Tanggal Mulai</label>
-              <input type="date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} style={{ width: '100%', padding: '8px 12px', borderRadius: '8px', border: '1px solid #ddd', outline: 'none', fontSize: '13px', color: '#2c3e50' }} />
+              <input type="date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} style={{ width: '100%', padding: '8px 12px', borderRadius: '8px', border: '1px solid #ddd', outline: 'none', fontSize: '13px', color: '#2c3e50', boxSizing: 'border-box' }} />
             </div>
             <div>
               <label style={{ fontSize: '11px', fontWeight: '600', color: '#7f8c8d', marginBottom: '4px', display: 'block' }}>Tanggal Akhir</label>
-              <input type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)} style={{ width: '100%', padding: '8px 12px', borderRadius: '8px', border: '1px solid #ddd', outline: 'none', fontSize: '13px', color: '#2c3e50' }} />
+              <input type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)} style={{ width: '100%', padding: '8px 12px', borderRadius: '8px', border: '1px solid #ddd', outline: 'none', fontSize: '13px', color: '#2c3e50', boxSizing: 'border-box' }} />
             </div>
-            <div style={{ gridColumn: 'span 2' }}>
+            <div className="span-full">
               <label style={{ fontSize: '11px', fontWeight: '600', color: '#7f8c8d', marginBottom: '4px', display: 'block' }}>Pilih Tandon</label>
               <select value={tank} onChange={(e) => setTank(e.target.value)} style={{ width: '100%', padding: '10px 12px', borderRadius: '8px', border: '1px solid #ddd', outline: 'none', fontSize: '13px', color: '#2c3e50', backgroundColor: '#f9f9f9', cursor: 'pointer' }}>
                 <option value="all">💧 Semua Tandon</option>
@@ -317,15 +317,15 @@ function TankMonitoringPage() {
 
       {/* TABEL RIWAYAT DI BAWAH */}
       <section className="card card-animate card-animate-delay-4 card-elevated">
-        <div style={{ marginBottom: '20px', display: 'flex', flexDirection: windowWidth < 768 ? 'column' : 'row', justifyContent: windowWidth < 768 ? 'flex-start' : 'space-between', alignItems: windowWidth < 768 ? 'flex-start' : 'center', gap: windowWidth < 768 ? '12px' : '0' }}>
-          <div>
+        <div style={{ marginBottom: '20px' }} className="responsive-toolbar">
+          <div style={{ flex: '1 1 200px', minWidth: 0 }}>
             <div style={{ fontSize: '18px', fontWeight: '600', color: '#2c3e50' }}>💧 Riwayat Level Tandon {filtered.length > 0 && `(${filtered.length} data)`}</div>
             <div style={{ fontSize: '13px', color: '#7f8c8d' }}>
               Data riwayat fluktuasi air berdasarkan waktu (Terbaru di atas)
             </div>
           </div>
           {totalPages > 1 && (
-            <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: windowWidth < 768 ? 'wrap' : 'nowrap' }}>
+            <div className="responsive-toolbar-actions">
               {/* Info Halaman */}
               <div style={{ 
                 fontSize: '12px', 
@@ -387,6 +387,8 @@ function TankMonitoringPage() {
         <div className="table-wrapper u-mt-05" style={{ display: 'flex', alignItems: 'center', gap: '8px', position: 'relative' }}>
           {/* Tombol Scroll Kiri */}
           <button
+            type="button"
+            className="table-scroll-btn"
             onClick={scrollTableLeft}
             disabled={!canScrollLeft}
             style={{
@@ -475,6 +477,8 @@ function TankMonitoringPage() {
 
           {/* Tombol Scroll Kanan */}
           <button
+            type="button"
+            className="table-scroll-btn"
             onClick={scrollTableRight}
             disabled={!canScrollRight}
             style={{

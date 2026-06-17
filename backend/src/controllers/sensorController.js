@@ -102,14 +102,29 @@ exports.receiveAllData = async (req, res) => {
 exports.getLatestSensorData = async (req, res) => {
     try {
         const { perangkat_id } = req.params;
-        
-        const latestData = await LogSensorTanah.findAll({
-            where: { perangkat_id },
-            order: [['timestamp', 'DESC']], 
-            limit: 100
-        });
+        const requestedLimit = parseInt(req.query.limit, 10);
+        const limit = Number.isFinite(requestedLimit)
+            ? Math.min(Math.max(requestedLimit, 1), 2000)
+            : 500;
 
-        res.status(200).json({ status: 'success', data: latestData });
+        const where = { perangkat_id };
+
+        const [latestData, total] = await Promise.all([
+            LogSensorTanah.findAll({
+                where,
+                order: [['timestamp', 'DESC']],
+                limit,
+            }),
+            LogSensorTanah.count({ where }),
+        ]);
+
+        res.status(200).json({
+            status: 'success',
+            data: latestData,
+            total,
+            limit,
+            returned: latestData.length,
+        });
     } catch (error) {
         res.status(500).json({ status: 'error', message: error.message });
     }

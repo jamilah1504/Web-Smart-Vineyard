@@ -9,8 +9,15 @@ function OwnerManualControlPage() {
   const [loading, setLoading] = useState(false);
   const [autoMode, setAutoMode] = useState(false);
   const [initialLoading, setInitialLoading] = useState(true);
-  const [deviceStatus, setDeviceStatus] = useState('Online'); // 🌟 NEW: Track device connection status
-  const [offlineAlertShown, setOfflineAlertShown] = useState(false); // Track jika sudah tampil alert
+  const [deviceStatus, setDeviceStatus] = useState('Online');
+  const [offlineAlertShown, setOfflineAlertShown] = useState(false);
+  const [windowWidth, setWindowWidth] = useState(typeof window !== 'undefined' ? window.innerWidth : 1024);
+
+  useEffect(() => {
+    const handleResize = () => setWindowWidth(window.innerWidth);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   // 1. Mengambil status awal perangkat saat halaman pertama kali dibuka
   useEffect(() => {
@@ -369,29 +376,27 @@ const toggleAutoMode = async () => {
       )}
 
       {/* MODE OTOMATIS SECTION */}
-      <div style={{
+      <div className="responsive-mode-banner" style={{
         marginBottom: '40px',
         background: autoMode 
           ? 'linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%)'
           : 'linear-gradient(135deg, #fff3cd 0%, #ffeeba 100%)',
         borderRadius: '16px',
-        padding: '24px',
+        padding: windowWidth < 576 ? '16px' : '24px',
         border: `3px solid ${autoMode ? '#28a745' : '#ffc107'}`,
         boxShadow: `0 6px 20px ${autoMode ? 'rgba(40, 167, 69, 0.2)' : 'rgba(255, 193, 7, 0.2)'}`,
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
         animation: 'slideIn 0.5s ease-out'
       }}>
-        <div style={{ flex: 1 }}>
+        <div className="responsive-mode-banner-content">
           <div style={{
-            fontSize: '1.3rem',
+            fontSize: windowWidth < 576 ? '1.1rem' : '1.3rem',
             fontWeight: '700',
             color: autoMode ? '#155724' : '#856404',
             marginBottom: '8px',
             display: 'flex',
             alignItems: 'center',
-            gap: '10px'
+            gap: '10px',
+            flexWrap: 'wrap'
           }}>
             {autoMode ? '🤖 Mode Otomatis AKTIF' : '🕹️ Mode Manual AKTIF'}
           </div>
@@ -407,22 +412,22 @@ const toggleAutoMode = async () => {
           </p>
         </div>
         <button
+          className="responsive-mode-banner-btn"
           onClick={() => toggleAutoMode()}
           disabled={loading || !deviceId || deviceStatus !== 'Online'}
           style={{
-            padding: '12px 28px',
+            padding: '12px 20px',
             borderRadius: '12px',
             border: 'none',
             backgroundColor: autoMode ? '#28a745' : '#ffc107',
             color: autoMode ? '#fff' : '#000',
             fontWeight: '700',
-            fontSize: '1rem',
+            fontSize: windowWidth < 576 ? '0.9rem' : '1rem',
             cursor: (loading || deviceStatus !== 'Online') ? 'not-allowed' : 'pointer',
             transition: 'all 0.3s ease',
-            whiteSpace: 'nowrap',
             boxShadow: `0 4px 12px ${autoMode ? 'rgba(40, 167, 69, 0.3)' : 'rgba(255, 193, 7, 0.3)'}`,
             opacity: (loading || deviceStatus !== 'Online') ? 0.6 : 1,
-            marginLeft: '20px'
+            marginLeft: windowWidth < 576 ? 0 : '20px'
           }}
           onMouseOver={(e) => {
             if (!loading && deviceStatus === 'Online') {
@@ -472,7 +477,7 @@ const toggleAutoMode = async () => {
         </h2>
         <section style={{
           display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 280px), 1fr))',
           gap: '24px'
         }}>
           {/* Pump */}
@@ -570,7 +575,7 @@ const toggleAutoMode = async () => {
         </h2>
         <section style={{
           display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 280px), 1fr))',
           gap: '24px'
         }}>
           {/* Pompa Pupuk */}
@@ -675,7 +680,7 @@ const toggleAutoMode = async () => {
         }}>
           <div style={{
             display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 240px), 1fr))',
             gap: '20px'
           }}>
             <div className="card-responsive" style={{

@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { animate } from 'animejs'
 import { PublicPaths } from '../../routes/routePaths'
@@ -6,6 +6,8 @@ import grapeImg from '../../assets/images/anggur.jpg'
 import './LandingPage.css'
 
 export default function LandingPage() {
+  const [mobileNavOpen, setMobileNavOpen] = useState(false)
+
   useEffect(() => {
     if (typeof window === 'undefined') return
 
@@ -46,230 +48,45 @@ export default function LandingPage() {
 
   return (
     <div className="page page-with-padding page-shell lp-page js-lp-page">
-      {/* PREMIUM HEADER */}
-      <header style={{
-        background: 'linear-gradient(135deg, #1e5a3a 0%, #2c5f2d 50%, #1a472e 100%)',
-        padding: '0',
-        position: 'sticky',
-        top: 0,
-        zIndex: 1000,
-        boxShadow: '0 4px 20px rgba(0, 0, 0, 0.15)',
-        marginBottom: '0'
-      }}>
-        {/* Main Header */}
-        <div style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          padding: '12px 40px',
-          gap: '20px'
-        }}>
-          {/* Logo & Brand + Search (Kiri) */}
-          <div style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '15px'
-          }}>
-            <div style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '12px',
-              minWidth: 'fit-content',
-              cursor: 'pointer',
-              transition: 'all 0.3s'
-            }}
-            onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+      <header className="lp-header">
+        <div className="lp-header-inner">
+          <div className="lp-header-brand">
+            <div
+              className="lp-header-logo"
+              onClick={() => { window.scrollTo({ top: 0, behavior: 'smooth' }); setMobileNavOpen(false) }}
+              onKeyDown={(e) => e.key === 'Enter' && window.scrollTo({ top: 0, behavior: 'smooth' })}
+              role="button"
+              tabIndex={0}
             >
-              <div style={{
-                fontSize: '28px',
-                fontWeight: '800',
-                background: 'linear-gradient(135deg, #FFD700, #FFA500)',
-                WebkitBackgroundClip: 'text',
-                WebkitTextFillColor: 'transparent',
-                backgroundClip: 'text',
-                filter: 'drop-shadow(0 2px 4px rgba(255,215,0,0.3))'
-              }}>
-                🌱
-              </div>
-              <div style={{ color: '#fff' }}>
-                <div style={{ fontSize: '13px', fontWeight: '700', letterSpacing: '0.3px' }}>Smart Vineyard</div>
-                <div style={{ fontSize: '10px', opacity: 0.75, marginTop: '1px' }}>Saung Tinanggur</div>
+              <div className="lp-header-logo-icon">🌱</div>
+              <div className="lp-header-logo-text">
+                <div>Smart Vineyard</div>
+                <div>Saung Tinanggur</div>
               </div>
             </div>
-
-            {/* Search Bar */}
-            <div style={{
-              display: 'flex',
-              alignItems: 'center',
-              background: '#fff',
-              borderRadius: '28px',
-              padding: '8px 16px',
-              gap: '10px',
-              boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
-              transition: 'all 0.3s'
-            }}
-            onMouseEnter={(e) => e.currentTarget.style.boxShadow = '0 4px 16px rgba(0, 0, 0, 0.15)'}
-            onMouseLeave={(e) => e.currentTarget.style.boxShadow = '0 2px 8px rgba(0, 0, 0, 0.1)'}
-            >
-              <span style={{ fontSize: '16px', opacity: 0.6 }}>🔍</span>
-              <input 
-                type="text" 
-                placeholder="Cari fitur..."
-                style={{
-                  border: 'none',
-                  outline: 'none',
-                  fontSize: '12px',
-                  fontFamily: 'inherit',
-                  backgroundColor: 'transparent',
-                  width: '120px'
-                }}
-              />
+            <div className="lp-header-search">
+              <span>🔍</span>
+              <input type="text" placeholder="Cari fitur..." />
             </div>
           </div>
 
-          {/* Navigation Menu + Login (Kanan) */}
-          <nav style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '20px',
-            fontSize: '12px',
-            fontWeight: '700',
-            color: '#fff',
-            letterSpacing: '0.5px'
-          }}>
-            <a href="javascript:void(0)" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })} style={{ 
-              color: '#FFD700', 
-              textDecoration: 'none',
-              display: 'inline-block',
-              transition: 'all 0.3s',
-              cursor: 'pointer',
-              whiteSpace: 'nowrap'
-            }}>
-              BERANDA
-            </a>
-            <a href="#features" style={{ 
-              color: '#fff', 
-              textDecoration: 'none',
-              display: 'inline-block',
-              transition: 'all 0.3s',
-              cursor: 'pointer',
-              whiteSpace: 'nowrap'
-            }}
-            onClick={(e) => {
-              e.preventDefault();
-              document.getElementById('features')?.scrollIntoView({ behavior: 'smooth' });
-            }}
-            onMouseEnter={(e) => {
-              e.target.style.color = '#FFD700';
-            }}
-            onMouseLeave={(e) => {
-              e.target.style.color = '#fff';
-            }}
-            >
-              FITUR
-            </a>
-            <a href="#sma-video-section" style={{ 
-              color: '#fff', 
-              textDecoration: 'none',
-              display: 'inline-block',
-              transition: 'all 0.3s',
-              cursor: 'pointer',
-              whiteSpace: 'nowrap'
-            }}
-            onClick={(e) => {
-              e.preventDefault();
-              const videoSection = document.getElementById('sma-video-section');
-              if (videoSection) {
-                videoSection.scrollIntoView({ behavior: 'smooth' });
-              }
-            }}
-            onMouseEnter={(e) => {
-              e.target.style.color = '#FFD700';
-            }}
-            onMouseLeave={(e) => {
-              e.target.style.color = '#fff';
-            }}
-            >
-              VIDEO
-            </a>
-            <a href="#lp-section" style={{ 
-              color: '#fff', 
-              textDecoration: 'none',
-              display: 'inline-block',
-              transition: 'all 0.3s',
-              cursor: 'pointer',
-              whiteSpace: 'nowrap'
-            }}
-            onClick={(e) => {
-              e.preventDefault();
-              const section = document.querySelector('.lp-section');
-              if (section) {
-                section.scrollIntoView({ behavior: 'smooth' });
-              }
-            }}
-            onMouseEnter={(e) => {
-              e.target.style.color = '#FFD700';
-            }}
-            onMouseLeave={(e) => {
-              e.target.style.color = '#fff';
-            }}
-            >
-              TENTANG KAMI
-            </a>
-            <a href="#footer" style={{ 
-              color: '#fff', 
-              textDecoration: 'none',
-              display: 'inline-block',
-              transition: 'all 0.3s',
-              cursor: 'pointer',
-              whiteSpace: 'nowrap'
-            }}
-            onClick={(e) => {
-              e.preventDefault();
-              const footer = document.querySelector('.lp-footer');
-              if (footer) {
-                footer.scrollIntoView({ behavior: 'smooth' });
-              }
-            }}
-            onMouseEnter={(e) => {
-              e.target.style.color = '#FFD700';
-            }}
-            onMouseLeave={(e) => {
-              e.target.style.color = '#fff';
-            }}
-            >
-              KONTAK
-            </a>
+          <button
+            type="button"
+            className="lp-header-toggle"
+            onClick={() => setMobileNavOpen((v) => !v)}
+            aria-label={mobileNavOpen ? 'Tutup menu' : 'Buka menu'}
+            aria-expanded={mobileNavOpen}
+          >
+            {mobileNavOpen ? '✕' : '☰'}
+          </button>
 
-            {/* CTA Button */}
-            <Link 
-              to={PublicPaths.login}
-              style={{
-                background: 'linear-gradient(135deg, #FFD700, #FFA500)',
-                color: '#2c5f2d',
-                padding: '9px 24px',
-                borderRadius: '25px',
-                fontSize: '12px',
-                fontWeight: '700',
-                textDecoration: 'none',
-                cursor: 'pointer',
-                transition: 'all 0.3s',
-                boxShadow: '0 4px 12px rgba(255, 215, 0, 0.3)',
-                display: 'inline-block',
-                letterSpacing: '0.5px',
-                whiteSpace: 'nowrap'
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.transform = 'translateY(-2px)';
-                e.currentTarget.style.boxShadow = '0 6px 20px rgba(255, 215, 0, 0.4)';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.transform = 'translateY(0)';
-                e.currentTarget.style.boxShadow = '0 4px 12px rgba(255, 215, 0, 0.3)';
-              }}
-            >
-              Masuk
-            </Link>
+          <nav className={`lp-header-nav ${mobileNavOpen ? 'open' : ''}`}>
+            <a href="#top" className="active" onClick={(e) => { e.preventDefault(); window.scrollTo({ top: 0, behavior: 'smooth' }); setMobileNavOpen(false) }}>BERANDA</a>
+            <a href="#features" onClick={(e) => { e.preventDefault(); document.getElementById('features')?.scrollIntoView({ behavior: 'smooth' }); setMobileNavOpen(false) }}>FITUR</a>
+            <a href="#sma-video-section" onClick={(e) => { e.preventDefault(); document.getElementById('sma-video-section')?.scrollIntoView({ behavior: 'smooth' }); setMobileNavOpen(false) }}>VIDEO</a>
+            <a href="#lp-section" onClick={(e) => { e.preventDefault(); document.querySelector('.lp-section')?.scrollIntoView({ behavior: 'smooth' }); setMobileNavOpen(false) }}>TENTANG KAMI</a>
+            <a href="#footer" onClick={(e) => { e.preventDefault(); document.querySelector('.lp-footer')?.scrollIntoView({ behavior: 'smooth' }); setMobileNavOpen(false) }}>KONTAK</a>
+            <Link to={PublicPaths.login} className="lp-header-cta" onClick={() => setMobileNavOpen(false)}>Masuk</Link>
           </nav>
         </div>
       </header>

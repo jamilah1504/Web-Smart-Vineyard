@@ -171,7 +171,7 @@ function ThresholdsPage() {
           <span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '30px', height: '30px', borderRadius: '8px', background: 'linear-gradient(135deg, #667eea, #764ba2)', fontSize: '14px' }}>📖</span>
           Panduan Threshold Bibit Anggur
         </div>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '12px' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 220px), 1fr))', gap: '12px' }}>
           {[
             { icon: '💧', label: 'Moisture', desc: `${selectedVarietas?.min_moisture ?? 40}%–${selectedVarietas?.max_moisture ?? 80}% — batas sebelum pompa aktif` },
             { icon: '🌡️', label: 'Suhu', desc: `${selectedVarietas?.min_suhu ?? 20}°C–${selectedVarietas?.max_suhu ?? 35}°C — rentang optimal pertumbuhan` },
@@ -193,7 +193,7 @@ function ThresholdsPage() {
           <div style={{ fontSize: '12px', color: '#7f8c8d', marginTop: '2px' }}>Cari atau pilih varietas untuk dikonfigurasi</div>
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '14px', alignItems: 'flex-end' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 220px), 1fr))', gap: '14px', alignItems: 'flex-end' }}>
           <div>
             <label style={{ fontSize: '12px', fontWeight: '600', color: '#7f8c8d', display: 'block', marginBottom: '6px' }}>Cari Varietas</label>
             <input
@@ -287,7 +287,7 @@ function ThresholdsPage() {
 
       {selectedVarietas && (
         <>
-          <section style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(340px, 1fr))', gap: '20px' }}>
+          <section style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 340px), 1fr))', gap: '20px' }}>
             <div style={{ backgroundColor: '#fff', borderRadius: '15px', padding: '24px', border: '1px solid #e0e0e0' }}>
               <div style={{ marginBottom: '18px' }}>
                 <div style={{ fontSize: '16px', fontWeight: '700', color: '#2c3e50', display: 'flex', alignItems: 'center', gap: '8px' }}>

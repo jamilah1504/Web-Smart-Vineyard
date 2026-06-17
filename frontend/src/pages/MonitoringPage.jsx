@@ -6,6 +6,7 @@ import { getLatestSensorData } from '../services/sensorApi'; // Sesuaikan path i
 function MonitoringPage() {
   // === STATE MANAGEMENT ===
   const [sensorData, setSensorData] = useState([]);
+  const [totalRecords, setTotalRecords] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [canScrollLeft, setCanScrollLeft] = useState(false);
@@ -24,7 +25,8 @@ function MonitoringPage() {
   // Pagination state
   const [currentPage, setCurrentPage] = useState(0);
   const [windowWidth, setWindowWidth] = useState(typeof window !== 'undefined' ? window.innerWidth : 1024);
-  const ITEMS_PER_PAGE = 15;
+  const ITEMS_PER_PAGE = 20;
+  const FETCH_LIMIT = 500;
 
   // Track window resize for responsive design
   useEffect(() => {
@@ -38,8 +40,9 @@ function MonitoringPage() {
   // === FUNGSI TARIK DATA & RETRY LOGIC ===
   const fetchData = useCallback(async () => {
     try {
-      const response = await getLatestSensorData(DEVICE_ID);
-      setSensorData(response.data);
+      const response = await getLatestSensorData(DEVICE_ID, FETCH_LIMIT);
+      setSensorData(Array.isArray(response.data) ? response.data : []);
+      setTotalRecords(response.total ?? response.data?.length ?? 0);
       setError(''); 
       setRetryCount(0); 
     } catch (err) {
@@ -196,19 +199,22 @@ function MonitoringPage() {
 
   // ✅ FIX 2: chartData sekarang memetakan EC, P, dan K
   const chartData = useMemo(() => {
-    if (displayData.length === 0) return [];
-    
-    return displayData.map(item => ({
+    const source = useFilter ? filteredData : sensorData;
+    if (source.length === 0) return [];
+
+    return [...source]
+      .sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp))
+      .map(item => ({
       time: new Date(item.timestamp).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }),
       soilMoisture: parseFloat(item.kelembapan_val) || 0,
       pH: parseFloat(item.ph_val) || 0,
       suhu: parseFloat(item.suhu_val) || 0,
       N: parseFloat(item.n_val) || 0,
-      P: parseFloat(item.p_val) || 0,   // ✅ Ditambahkan
-      K: parseFloat(item.k_val) || 0,   // ✅ Ditambahkan
-      EC: parseFloat(item.ec_val) || 0  // ✅ Ditambahkan
+      P: parseFloat(item.p_val) || 0,
+      K: parseFloat(item.k_val) || 0,
+      EC: parseFloat(item.ec_val) || 0
     }));
-  }, [displayData]);
+  }, [sensorData, filteredData, useFilter]);
 
   // === Tentukan Line mana yang ditampilkan berdasarkan selectedParam ===
   const showLine = (param) => {
@@ -274,12 +280,7 @@ function MonitoringPage() {
       )}
 
       {/* Filter + Status Cards */}
-      <section style={{
-        display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
-        gap: '20px',
-        marginBottom: '30px'
-      }}>
+      <section className="responsive-grid-section">
         {/* Filter Card */}
         <div className="card-responsive filter-section" style={{
           backgroundColor: '#ffffff',
@@ -430,7 +431,7 @@ function MonitoringPage() {
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
             {[
               { icon: '🔄', label: 'Interval', value: '15 detik' },
-              { icon: '📊', label: 'Data', value: `${sensorData.length} entri` },
+              { icon: '📊', label: 'Data', value: totalRecords > 0 ? `${sensorData.length}/${totalRecords}` : `${sensorData.length} entri` },
               {
                 icon: '🕐', label: 'Terakhir', value: latestData?.timestamp
                   ? new Date(latestData.timestamp).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })
@@ -447,12 +448,12 @@ function MonitoringPage() {
         </div>
 
         {/* All Parameters in One Card */}
-        <div className="card-responsive" style={{
+        <div className="card-responsive monitoring-params-card" style={{
           background: 'linear-gradient(135deg, #3498db 0%, #2980b9 100%)',
           color: 'white',
           padding: '24px',
           boxShadow: '0 4px 15px rgba(52, 152, 219, 0.3)',
-          gridColumn: 'span 2'
+          gridColumn: windowWidth >= 768 ? 'span 2' : 'span 1',
         }}>
           <div style={{ marginBottom: '20px' }}>
             <div style={{ fontSize: '14px', fontWeight: '500', opacity: 0.9 }}>📊 Semua Parameter</div>
@@ -475,11 +476,7 @@ function MonitoringPage() {
               ))}
             </div>
           ) : (
-            <div style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))',
-              gap: '16px'
-            }}>
+            <div className="responsive-param-grid">
               {/* Moisture */}
               <div style={{ backgroundColor: 'rgba(255,255,255,0.1)', borderRadius: '12px', padding: '16px', textAlign: 'center', backdropFilter: 'blur(10px)' }}>
                 <div style={{ fontSize: '12px', opacity: 0.8, marginBottom: '8px' }}>💧 Kelembapan</div>
@@ -543,13 +540,23 @@ function MonitoringPage() {
         boxShadow: '0 2px 8px rgba(0,0,0,0.04)',
         animation: 'slideIn 0.5s ease-out'
       }}>
-        <div style={{ marginBottom: '20px', display: 'flex', flexDirection: windowWidth < 768 ? 'column' : 'row', justifyContent: windowWidth < 768 ? 'flex-start' : 'space-between', alignItems: windowWidth < 768 ? 'flex-start' : 'center', gap: windowWidth < 768 ? '12px' : '0' }}>
-          <div>
+        <div style={{ marginBottom: '20px' }} className="responsive-toolbar">
+          <div style={{ flex: '1 1 200px', minWidth: 0 }}>
             <div style={{ fontSize: '18px', fontWeight: '600', color: '#2c3e50', marginBottom: '4px' }}>📋 Data Sensor Real-Time</div>
-            <div style={{ fontSize: '13px', color: '#7f8c8d' }}>Riwayat pembacaan sensor terbaru {dataSource.length > 0 && `(${dataSource.length} data)`}</div>
+            <div style={{ fontSize: '13px', color: '#7f8c8d' }}>
+              Riwayat pembacaan sensor terbaru
+              {dataSource.length > 0 && (
+                <span>
+                  {' '}({dataSource.length} ditampilkan
+                  {totalRecords > dataSource.length && ` dari ${totalRecords} total`}
+                  {sensorData.length >= FETCH_LIMIT && totalRecords > FETCH_LIMIT && ` · ${FETCH_LIMIT} terbaru`}
+                  )
+                </span>
+              )}
+            </div>
           </div>
           {totalPages > 1 && (
-            <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: windowWidth < 768 ? 'wrap' : 'nowrap' }}>
+            <div className="responsive-toolbar-actions">
               {/* Info Halaman */}
               <div style={{ 
                 fontSize: '12px', 
@@ -613,6 +620,7 @@ function MonitoringPage() {
           {/* Tombol Scroll Kiri */}
           <button
             type="button"
+            className="table-scroll-btn"
             onClick={scrollMonitoringTableLeft}
             disabled={!canScrollLeft}
             style={{
@@ -724,6 +732,7 @@ function MonitoringPage() {
           {/* Tombol Scroll Kanan */}
           <button
             type="button"
+            className="table-scroll-btn"
             onClick={scrollMonitoringTableRight}
             disabled={!canScrollRight}
             style={{
