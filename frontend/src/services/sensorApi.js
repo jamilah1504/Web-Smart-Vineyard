@@ -2,14 +2,14 @@ import { getAccessToken } from '../utils/authStorage';
 
 const BASE_URL = 'https://d34f3d5l-5000.asse.devtunnels.ms'; // Pastikan port sesuai backend Anda
 
-export async function getLatestSensorData(perangkatId) {
-  const token = getAccessToken(); // Ambil token Satpam dari storage
+export async function getLatestSensorData(perangkatId, limit = 500) {
+  const token = getAccessToken();
   
-  const res = await fetch(`${BASE_URL}/api/sensor/data/${perangkatId}`, {
+  const res = await fetch(`${BASE_URL}/api/sensor/data/${perangkatId}?limit=${limit}`, {
     method: 'GET',
     headers: {
       'Content-Type': 'application/json',
-      'Authorization': `Bearer ${token}` // Bawa kunci tokennya
+      'Authorization': `Bearer ${token}`
     },
   });
 

@@ -225,7 +225,7 @@ function SmartVisionPage() {
       </div>
 
       {/* Action Buttons */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px', marginBottom: '20px' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: windowWidth < 576 ? '1fr' : '1fr 1fr', gap: '15px', marginBottom: '20px' }}>
         <button className="btn-primary" onClick={handleOpenCamera} style={{ padding: '15px', borderRadius: '12px' }}>📷 Kamera</button>
         <button className="btn-pill-outline" onClick={() => fileInputRef.current.click()} style={{ padding: '15px', borderRadius: '12px', backgroundColor: '#fff' }}>📁 Galeri</button>
         <input ref={fileInputRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={handleFileSelect} />
@@ -286,13 +286,13 @@ function SmartVisionPage() {
 
       {/* Riwayat & Filter */}
       <section className="card card-elevated">
-        <div className="card-header" style={{ display: 'flex', flexDirection: windowWidth < 768 ? 'column' : 'row', justifyContent: windowWidth < 768 ? 'flex-start' : 'space-between', alignItems: windowWidth < 768 ? 'flex-start' : 'center', gap: windowWidth < 768 ? '12px' : '0' }}>
-          <div style={{ flex: 1 }}>
+        <div className="card-header responsive-toolbar">
+          <div style={{ flex: '1 1 200px', minWidth: 0 }}>
             <div className="card-title">Riwayat Log {filteredHistory.length > 0 && `(${filteredHistory.length} data)`}</div>
           </div>
-          <div style={{ display: 'flex', gap: '10px', alignItems: 'center', flexWrap: windowWidth < 768 ? 'wrap' : 'nowrap' }}>
+          <div className="responsive-toolbar-actions">
             {totalPages > 1 && (
-              <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+              <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap', width: '100%' }}>
                 {/* Info Halaman */}
                 <div style={{ 
                   fontSize: '12px', 
@@ -350,7 +350,7 @@ function SmartVisionPage() {
                 </button>
               </div>
             )}
-            <select value={filterDevice} onChange={(e) => setFilterDevice(e.target.value)} style={{ padding: '5px', borderRadius: '8px' }}>
+            <select value={filterDevice} onChange={(e) => setFilterDevice(e.target.value)} style={{ padding: '8px 10px', borderRadius: '8px', width: windowWidth < 576 ? '100%' : 'auto', boxSizing: 'border-box' }}>
               {DEVICES.map(d => <option key={d} value={d}>{d}</option>)}
             </select>
           </div>
@@ -358,6 +358,8 @@ function SmartVisionPage() {
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', position: 'relative' }}>
           {/* Tombol Scroll Kiri */}
           <button
+            type="button"
+            className="table-scroll-btn"
             onClick={scrollDiagnosisTableLeft}
             disabled={!canScrollLeft}
             style={{
@@ -433,6 +435,8 @@ function SmartVisionPage() {
 
           {/* Tombol Scroll Kanan */}
           <button
+            type="button"
+            className="table-scroll-btn"
             onClick={scrollDiagnosisTableRight}
             disabled={!canScrollRight}
             style={{

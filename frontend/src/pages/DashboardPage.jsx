@@ -158,7 +158,7 @@ const handleToggleControl = async (type, currentStatus) => {
         <div style={{ fontSize: '16px', fontWeight: '700', color: '#2c3e50', marginBottom: '15px', display: 'flex', alignItems: 'center', gap: '10px' }}>
             📖 Rubrik Indikator (Ambang Batas Normal)
         </div>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '15px' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 200px), 1fr))', gap: '15px' }}>
             {[
                 { label: 'Nitrogen (N)', range: '> 30', unit: 'mg/kg', desc: 'Pembentukan klorofil & vegetatif' },
                 { label: 'Fosfor (P)', range: '> 20', unit: 'mg/kg', desc: 'Energi tanaman & perkembangan akar' },
@@ -181,7 +181,7 @@ const handleToggleControl = async (type, currentStatus) => {
       </section>
 
       {/* 4 Stats Cards */}
-      <section style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '20px', marginBottom: '30px' }}>
+      <section style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 240px), 1fr))', gap: '20px', marginBottom: '30px' }}>
         <div className="card-responsive" style={{ background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', borderRadius: '15px', padding: '20px', color: 'white' }}>
           <div style={{ fontSize: '12px', opacity: 0.8 }}>Nutrisi NPK</div>
           <div style={{ display: 'flex', gap: '10px', marginTop: '10px' }}>
@@ -214,7 +214,7 @@ const handleToggleControl = async (type, currentStatus) => {
       </section>
 
       {/* Kontrol & Stok Terintegrasi */}
-      <section style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '20px', marginBottom: '30px' }}>
+      <section className="responsive-grid-section">
         
         {/* Kontrol Card */}
         {(() => {
@@ -235,7 +235,7 @@ const handleToggleControl = async (type, currentStatus) => {
               </div>
 
               {/* Visual Tandon + Ringkasan */}
-              <div style={{ display: 'flex', gap: '16px', marginBottom: '16px', flex: 1, minHeight: '140px' }}>
+              <div className="dashboard-control-visual" style={{ display: 'flex', gap: '16px', marginBottom: '16px', flex: 1, minHeight: '140px' }}>
                 {/* Tank Visual */}
                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'flex-end', flexShrink: 0 }}>
                   <div style={{ position: 'relative', width: '72px', height: '130px', borderRadius: '12px 12px 8px 8px', border: '3px solid #cbd5e1', background: 'linear-gradient(180deg, #f1f5f9 0%, #e2e8f0 100%)', overflow: 'hidden', boxShadow: 'inset 0 2px 8px rgba(0,0,0,0.06)' }}>

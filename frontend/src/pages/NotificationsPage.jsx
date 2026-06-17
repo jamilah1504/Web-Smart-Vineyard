@@ -330,6 +330,8 @@ function NotificationsPage() {
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', position: 'relative' }}>
               {/* Tombol Scroll Kiri */}
               <button
+                type="button"
+                className="table-scroll-btn"
                 onClick={scrollNotificationTableLeft}
                 disabled={!canScrollLeft}
                 style={{
@@ -433,6 +435,8 @@ function NotificationsPage() {
 
               {/* Tombol Scroll Kanan */}
               <button
+                type="button"
+                className="table-scroll-btn"
                 onClick={scrollNotificationTableRight}
                 disabled={!canScrollRight}
                 style={{
