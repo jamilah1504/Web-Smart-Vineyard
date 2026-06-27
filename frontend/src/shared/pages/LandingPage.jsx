@@ -91,74 +91,287 @@ export default function LandingPage() {
         </div>
       </header>
 
-      {/* HERO */}
-      <section className="lp-hero js-lp-hero">
-        <div className="lp-hero-grid">
-          <div className="lp-hero-left">
-            <div className="lp-hero-badge">
-              <span className="lp-hero-badge-dot" />
+{/* KUMPULAN STYLE KHUSUS HERO & FEATURE STRIP */}
+      <style>{`
+        /* --- HERO SECTION --- */
+        .hero-section {
+          position: relative;
+          padding: 120px 20px 180px; 
+          background: linear-gradient(135deg, #f0fdf4 0%, #ffffff 100%);
+          overflow: hidden;
+        }
+        
+        .hero-bg-shape-1 {
+          position: absolute;
+          top: -100px;
+          right: -100px;
+          width: 500px;
+          height: 500px;
+          border-radius: 50%;
+          background: radial-gradient(circle, rgba(39,174,96,0.08) 0%, rgba(255,255,255,0) 70%);
+          z-index: 0;
+        }
+        
+        .hero-bg-shape-2 {
+          position: absolute;
+          bottom: 50px;
+          left: -150px;
+          width: 400px;
+          height: 400px;
+          border-radius: 50%;
+          background: radial-gradient(circle, rgba(52,152,219,0.05) 0%, rgba(255,255,255,0) 70%);
+          z-index: 0;
+        }
+
+        .hero-gradient-text {
+          background: linear-gradient(135deg, #27ae60 0%, #00b09b 100%);
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+        }
+
+        /* --- MENGAMBANG & ANIMASI --- */
+        .glass-badge {
+          background: rgba(255, 255, 255, 0.85);
+          backdrop-filter: blur(12px);
+          border: 1px solid rgba(255, 255, 255, 0.6);
+          box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+          border-radius: 20px;
+          padding: 12px 24px;
+          display: flex;
+          align-items: center;
+          gap: 10px;
+          font-weight: 700;
+          color: #2c3e50;
+        }
+
+        @keyframes float {
+          0% { transform: translateY(0px); }
+          50% { transform: translateY(-15px); }
+          100% { transform: translateY(0px); }
+        }
+        .animate-float { animation: float 6s ease-in-out infinite; }
+        .animate-float-delayed { animation: float 6s ease-in-out 3s infinite; }
+
+        /* --- FEATURE STRIP (CARDS) --- */
+        .feature-strip-container {
+          max-width: 1200px;
+          margin: -100px auto 60px; /* Overlap ke atas hero */
+          position: relative;
+          z-index: 10;
+          display: grid;
+          grid-template-columns: repeat(3, 1fr); /* Default Desktop: 3 Kolom */
+          gap: 24px;
+          padding: 0 20px;
+        }
+
+        .feature-strip-card {
+          background: rgba(255, 255, 255, 0.95);
+          backdrop-filter: blur(10px);
+          border-radius: 24px;
+          padding: 35px 30px;
+          box-shadow: 0 10px 40px rgba(0,0,0,0.04);
+          border: 1px solid rgba(255, 255, 255, 1);
+          border-bottom: 4px solid #2ecc71; /* Aksen garis bawah */
+          transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); /* Efek pantulan (bouncy) */
+          display: flex;
+          flex-direction: column;
+          height: 100%;
+        }
+
+        .feature-strip-card:hover {
+          transform: translateY(-12px);
+          box-shadow: 0 20px 50px rgba(39, 174, 96, 0.15);
+          border-bottom: 4px solid #27ae60;
+        }
+
+        .feature-icon-wrapper {
+          width: 56px;
+          height: 56px;
+          border-radius: 16px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 28px;
+          margin-bottom: 24px;
+          transition: transform 0.3s ease;
+        }
+
+        .feature-strip-card:hover .feature-icon-wrapper {
+          transform: scale(1.1) rotate(5deg);
+        }
+
+        /* --- RESPONSIVE MEDIA QUERIES (SANGAT PENTING) --- */
+        
+        /* 1. Tablet (Di bawah 992px) */
+        @media (max-width: 992px) {
+          .feature-strip-container {
+            grid-template-columns: repeat(2, 1fr); /* Jadi 2 Kolom */
+          }
+          /* Kartu ke-3 agar posisinya di tengah jika sisa 1 */
+          .feature-strip-card:nth-child(3) {
+            grid-column: 1 / -1; 
+            max-width: 50%;
+            margin: 0 auto;
+          }
+        }
+
+        /* 2. Mobile / HP (Di bawah 768px) */
+        @media (max-width: 768px) {
+          .hero-section {
+            padding: 100px 15px 140px;
+            text-align: center;
+          }
+          .hero-section .lp-cta-row {
+            justify-content: center;
+            display: flex;
+            flex-direction: column;
+            width: 100%;
+          }
+          .hero-section .lp-cta-row > * {
+            width: 100%;
+            text-align: center;
+            box-sizing: border-box;
+          }
+          .hero-section .lp-hero-stats {
+            justify-content: center;
+            flex-wrap: wrap;
+          }
+          
+          /* Penyesuaian Visual Kanan untuk HP */
+          .glass-badge {
+            padding: 8px 16px;
+            font-size: 12px;
+          }
+          .glass-badge:nth-of-type(1) { right: 0px; top: 10px; }
+          .glass-badge:nth-of-type(2) { left: 0px; bottom: 10px; }
+
+          /* Kartu Fitur Jadi 1 Kolom Penuh di HP */
+          .feature-strip-container {
+            grid-template-columns: 1fr; 
+            margin-top: -60px; /* Jarak overlap dikurangi sedikit di HP */
+            gap: 16px;
+          }
+          .feature-strip-card:nth-child(3) {
+            max-width: 100%; /* Kembalikan ke lebar penuh di HP */
+          }
+        }
+      `}</style>
+
+      {/* HERO SECTION */}
+      <section className="hero-section" id="hero">
+        <div className="hero-bg-shape-1"></div>
+        <div className="hero-bg-shape-2"></div>
+
+        <div style={{ maxWidth: '1200px', margin: '0 auto', display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '50px', position: 'relative', zIndex: 1 }}>
+          
+          {/* BAGIAN KIRI: Teks & CTA */}
+          <div style={{ flex: '1 1 500px' }}>
+            <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '6px 16px', backgroundColor: '#e8f5e9', color: '#27ae60', borderRadius: '30px', fontSize: '13px', fontWeight: '700', letterSpacing: '0.5px', marginBottom: '24px' }}>
+              <span style={{ width: '8px', height: '8px', backgroundColor: '#2ecc71', borderRadius: '50%', display: 'inline-block', boxShadow: '0 0 10px #2ecc71' }} />
               Smart Vineyard Management System
             </div>
-            <h1 className="lp-hero-title js-lp-hero-title">
-              <span>Agriculture</span>
-              <span>&amp; Smart</span>
-              <span>Vineyard Market</span>
+            
+            <h1 style={{ fontSize: 'clamp(36px, 5vw, 56px)', fontWeight: '900', color: '#2c3e50', lineHeight: '1.1', marginBottom: '24px', letterSpacing: '-1px' }}>
+              Agriculture &amp; Smart <br />
+              <span className="hero-gradient-text">Vineyard Market</span>
             </h1>
-            <p className="lp-hero-subtitle js-lp-hero-subtitle">
-              Pantau kelembapan tanah, nutrisi media, dan kesehatan daun anggur dengan sensor IoT
-              dan AI, sehingga kebun selalu dalam kondisi terbaik.
+            
+            <p style={{ fontSize: 'clamp(15px, 2vw, 18px)', color: '#7f8c8d', lineHeight: '1.7', marginBottom: '40px', maxWidth: '540px', marginInline: 'auto' }}>
+              Pantau kelembapan tanah, nutrisi media, dan kesehatan daun anggur secara presisi dengan integrasi sensor IoT dan kecerdasan buatan (AI). Kebun Anda, selalu dalam kondisi terbaik.
             </p>
-            <div className="lp-cta-row js-lp-hero-cta">
-              <Link to={PublicPaths.login} className="btn-pill-primary lp-cta-primary">
-                Masuk Dashboard
+            
+            <div className="lp-cta-row" style={{ display: 'flex', flexWrap: 'wrap', gap: '16px', alignItems: 'center', marginBottom: '50px' }}>
+              <Link 
+                to={PublicPaths.login} 
+                style={{ backgroundColor: '#27ae60', color: '#fff', padding: '16px 32px', borderRadius: '50px', fontWeight: '700', textDecoration: 'none', fontSize: '16px', boxShadow: '0 8px 20px rgba(39, 174, 96, 0.3)', transition: 'all 0.3s' }}
+              >
+                Masuk Dashboard ➔
               </Link>
-              <a href="#features" className="lp-cta-secondary">
-                Lihat fitur sistem
+              <a 
+                href="#features" 
+                style={{ color: '#34495e', padding: '16px 24px', fontWeight: '700', textDecoration: 'none', fontSize: '16px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', transition: 'color 0.3s' }}
+              >
+                Lihat Fitur Sistem
               </a>
             </div>
-            <div className="lp-hero-stats js-lp-hero-stats">
-              <div className="lp-stat-card">
-                <div className="lp-stat-value">24/7</div>
-                <div className="lp-stat-label">Monitoring IoT</div>
+
+            {/* Statistik Garis Bawah */}
+            <div className="lp-hero-stats" style={{ display: 'flex', gap: '20px', borderTop: '2px solid #ecf0f1', paddingTop: '30px' }}>
+              <div>
+                <div style={{ fontSize: '24px', fontWeight: '900', color: '#2c3e50' }}>24/7</div>
+                <div style={{ fontSize: '12px', color: '#95a5a6', fontWeight: '600', textTransform: 'uppercase' }}>Monitoring IoT</div>
               </div>
-              <div className="lp-stat-card">
-                <div className="lp-stat-value">92%</div>
-                <div className="lp-stat-label">Akurasi diagnosis AI</div>
+              <div style={{ width: '2px', backgroundColor: '#ecf0f1' }}></div>
+              <div>
+                <div style={{ fontSize: '24px', fontWeight: '900', color: '#2c3e50' }}>92%</div>
+                <div style={{ fontSize: '12px', color: '#95a5a6', fontWeight: '600', textTransform: 'uppercase' }}>Akurasi AI</div>
               </div>
-              <div className="lp-stat-card">
-                <div className="lp-stat-value">3</div>
-                <div className="lp-stat-label">Role pengguna (Owner, Agronomis, Staff)</div>
+              <div style={{ width: '2px', backgroundColor: '#ecf0f1' }}></div>
+              <div>
+                <div style={{ fontSize: '24px', fontWeight: '900', color: '#2c3e50' }}>3 Role</div>
+                <div style={{ fontSize: '12px', color: '#95a5a6', fontWeight: '600', textTransform: 'uppercase' }}>Sistem Akses</div>
               </div>
             </div>
           </div>
 
-          <div className="lp-hero-right">
-            <div className="lp-hero-visual">
-              <img src={grapeImg} alt="Anggur segar di kebun" className="lp-hero-grape" />
-              <div className="lp-grape-orbit">
-                <div className="lp-grape-core" />
+          {/* BAGIAN KANAN: Visual Dinamis */}
+          <div style={{ flex: '1 1 400px', position: 'relative', display: 'flex', justifyContent: 'center', marginTop: '40px' }}>
+            <div style={{ position: 'relative', width: '100%', maxWidth: '450px', aspectRatio: '1/1' }}>
+              <div style={{ position: 'absolute', top: '5%', left: '5%', right: '5%', bottom: '5%', border: '2px dashed rgba(39, 174, 96, 0.3)', borderRadius: '50%', animation: 'spin 25s linear infinite' }}></div>
+              
+              {/* Gambar Utama */}
+              <img 
+                src={grapeImg} 
+                alt="Anggur segar di kebun" 
+                style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '30px 100px 30px 100px', boxShadow: '0 20px 50px rgba(0,0,0,0.1)', position: 'relative', zIndex: 2 }} 
+              />
+              
+              <div className="glass-badge animate-float" style={{ position: 'absolute', top: '10%', right: '-5%', zIndex: 3 }}>
+                <span style={{ fontSize: '20px' }}>📡</span> IoT Sensors
               </div>
-              <div className="lp-hero-tag lp-hero-tag-top">IoT Sensors</div>
-              <div className="lp-hero-tag lp-hero-tag-bottom">AI Leaf Diagnosis</div>
+              
+              <div className="glass-badge animate-float-delayed" style={{ position: 'absolute', bottom: '15%', left: '-10%', zIndex: 3 }}>
+                <span style={{ fontSize: '20px' }}>🤖</span> AI Diagnosis
+              </div>
             </div>
           </div>
+
         </div>
       </section>
 
-      {/* FEATURE STRIP (seperti Return Policy / Shipping / Store Locator) */}
-      <section className="lp-feature-strip" id="features">
-        <div className="lp-feature-strip-item">
-          <h3>Real-time Monitoring</h3>
-          <p>Data sensor kelembapan &amp; nutrisi diperbarui otomatis setiap beberapa detik.</p>
+      {/* FEATURE STRIP (OVERLAPPING & FULLY RESPONSIVE) */}
+      <section id="features" className="feature-strip-container">
+        
+        <div className="feature-strip-card">
+          <div className="feature-icon-wrapper" style={{ backgroundColor: '#e8f5e9', color: '#27ae60' }}>
+            ⏱️
+          </div>
+          <h3 style={{ fontSize: '20px', fontWeight: '800', color: '#2c3e50', marginBottom: '12px' }}>Real-time Monitoring</h3>
+          <p style={{ fontSize: '15px', color: '#7f8c8d', lineHeight: '1.7', margin: 0 }}>
+            Data sensor kelembapan & nutrisi dari tandon maupun lahan diperbarui otomatis setiap beberapa detik tanpa perlu muat ulang halaman.
+          </p>
         </div>
-        <div className="lp-feature-strip-item">
-          <h3>AI Diagnosis</h3>
-          <p>Analisis citra daun untuk mendeteksi gejala penyakit lebih awal.</p>
+
+        <div className="feature-strip-card">
+          <div className="feature-icon-wrapper" style={{ backgroundColor: '#e3f2fd', color: '#2980b9' }}>
+            🔬
+          </div>
+          <h3 style={{ fontSize: '20px', fontWeight: '800', color: '#2c3e50', marginBottom: '12px' }}>AI Diagnosis</h3>
+          <p style={{ fontSize: '15px', color: '#7f8c8d', lineHeight: '1.7', margin: 0 }}>
+            Analisis citra visual daun cerdas untuk mendeteksi gejala klorosis, nekrosis, dan hama lebih awal demi mencegah gagal panen.
+          </p>
         </div>
-        <div className="lp-feature-strip-item">
-          <h3>Threshold &amp; Notifikasi</h3>
-          <p>Atur batas aman lalu terima notifikasi saat kondisi tanaman kritis.</p>
+
+        <div className="feature-strip-card">
+          <div className="feature-icon-wrapper" style={{ backgroundColor: '#fff3e0', color: '#d35400' }}>
+            🔔
+          </div>
+          <h3 style={{ fontSize: '20px', fontWeight: '800', color: '#2c3e50', marginBottom: '12px' }}>Threshold & Notifikasi</h3>
+          <p style={{ fontSize: '15px', color: '#7f8c8d', lineHeight: '1.7', margin: 0 }}>
+            Tentukan sendiri batas minimum kebutuhan varietas anggur Anda, lalu terima peringatan langsung saat kondisi kritis terpenuhi.
+          </p>
         </div>
+
       </section>
 
 {/* SECTION: “Latest Products” / Modul Utama */}

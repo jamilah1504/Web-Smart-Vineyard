@@ -13,6 +13,7 @@ function SidebarLink({ to, label, onNavigate }) {
       className={({ isActive }) =>
         ['sidebar-link', isActive ? 'active' : ''].join(' ').trim()
       }
+      style={{ display: 'block', padding: '10px 16px', textDecoration: 'none' }} // Opsional: Sesuaikan style jika perlu
     >
       <span>{label}</span>
     </NavLink>
@@ -35,8 +36,9 @@ export function RoleLayout({ role }) {
   const location = useLocation()
   const systemStatus = useSystemStatus(15000)
 
+  // 1. UPDATE DI SINI: Ubah default fallback menjadi menuGroups: []
   const config = useMemo(() => {
-    return roleNavConfig[role] ?? { title: 'Smart Vineyard', subtitle: '', links: [] }
+    return roleNavConfig[role] ?? { title: 'Smart Vineyard', subtitle: '', menuGroups: [] }
   }, [role])
 
   useEffect(() => {
@@ -56,14 +58,35 @@ export function RoleLayout({ role }) {
           <div className="sidebar-logo">{config.title}</div>
           <div className="sidebar-subtitle">{config.subtitle}</div>
         </div>
+        
+        {/* 2. UPDATE DI SINI: Render berdasarkan menuGroups */}
         <nav className="sidebar-nav">
-          {config.links.map((l) => (
-            <SidebarLink
-              key={l.to}
-              to={l.to}
-              label={l.label}
-              onNavigate={() => setSidebarOpen(false)}
-            />
+          {config.menuGroups.map((group, index) => (
+            <div key={index} style={{ marginBottom: '16px' }}>
+              
+              {/* Render Subtitle (Group Title) */}
+              <div style={{ 
+                fontSize: '11px', 
+                color: '#95a5a6', 
+                fontWeight: '800', 
+                letterSpacing: '1px', 
+                padding: '8px 16px', 
+                textTransform: 'uppercase' 
+              }}>
+                {group.groupTitle}
+              </div>
+
+              {/* Render Link di dalam Grup Tersebut */}
+              {group.links.map((l) => (
+                <SidebarLink
+                  key={l.to}
+                  to={l.to}
+                  label={l.label}
+                  onNavigate={() => setSidebarOpen(false)}
+                />
+              ))}
+              
+            </div>
           ))}
         </nav>
 
@@ -148,5 +171,3 @@ export function RoleLayout({ role }) {
     </div>
   )
 }
-
-
